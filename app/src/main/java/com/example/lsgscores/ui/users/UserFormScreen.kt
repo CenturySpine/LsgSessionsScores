@@ -4,8 +4,10 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,13 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.compose.foundation.Image
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import java.io.File
-import android.provider.MediaStore
-import android.graphics.ImageDecoder
-import android.net.Uri
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,13 +33,13 @@ fun UserFormScreen(
     userViewModel: UserViewModel
 ) {
     var name by remember { mutableStateOf("") }
-    var shouldLaunchCamera by remember { mutableStateOf(false) }
 
-    // État pour la photo prise
-    var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // State for the cropped photo URI
+    var croppedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var photoPath by remember { mutableStateOf<String?>(null) }
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+    // Camera permission state
     val context = LocalContext.current
-
-    // State to store if permission is granted
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -43,62 +48,65 @@ fun UserFormScreen(
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
+    // Launcher for cropping image
+    val cropImageLauncher = rememberLauncherForActivityResult(
+        CropImageContract()
+    ) { result ->
+        if (result.isSuccessful) {
+            result.uriContent?.let { croppedUri ->
+                croppedPhotoUri = croppedUri
+                val savedPath = saveCroppedImageToInternalStorage(context, croppedUri)
+                photoPath = savedPath
+            }
+        }
 
-    // Launcher to request CAMERA permission
+    }
+
+    // Launcher for taking a picture (returns a Bitmap)
+    var pendingCameraAction by remember { mutableStateOf(false) }
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        bitmap?.let {
+            // Convert Bitmap to Uri for cropping
+            val imageUri = saveBitmapToCacheAndGetUri(context, it)
+            imageUri?.let { uri ->
+                cropImageLauncher.launch(
+                    CropImageContractOptions(uri, CropImageOptions())
+                )
+            }
+        }
+        pendingCameraAction = false
+    }
+
+    // Launcher for CAMERA permission request
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasCameraPermission = granted
-    }
-
-    // Launcher pour prendre une photo
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        if (bitmap != null) {
-            photoBitmap = bitmap
+        if (granted) {
+            // If permission is granted, trigger camera photo selection immediately
+            takePictureLauncher.launch(null)
         }
     }
 
-    fun saveBitmapToInternalStorage(context: Context, bitmap: Bitmap): String? {
-        val filename = "user_photo_${System.currentTimeMillis()}.jpg"
-        return try {
-            context.openFileOutput(filename, Context.MODE_PRIVATE).use { fos ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
-            }
-            // Retourne le chemin absolu du fichier
-            File(context.filesDir, filename).absolutePath
-        } catch (e: Exception) {
-            null
-        }
-    }
 
-    LaunchedEffect(hasCameraPermission, shouldLaunchCamera) {
-        if (hasCameraPermission && shouldLaunchCamera) {
-            shouldLaunchCamera = false
-            cameraLauncher.launch(null)
-        }
-    }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
+    // Launcher for picking from gallery
+    val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            // Convert URI to Bitmap
-            val bitmap = if (android.os.Build.VERSION.SDK_INT < 28) {
-                @Suppress("DEPRECATION")
-                android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-            } else {
-                val source = ImageDecoder.createSource(context.contentResolver, uri)
-                ImageDecoder.decodeBitmap(source)
-            }
-            photoBitmap = bitmap
+    ) { uri: Uri? ->
+        uri?.let {
+            cropImageLauncher.launch(
+                CropImageContractOptions(it, CropImageOptions())
+            )
         }
     }
+
 
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Ajouter un utilisateur") }) }
+        topBar = { TopAppBar(title = { Text("Add User") }) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -109,52 +117,99 @@ fun UserFormScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nom") },
+                label = { Text("Name") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(16.dp))
-            // Affichage de la photo si prise
-            photoBitmap?.let {
+
+            // Show cropped photo if available
+            croppedPhotoUri?.let {
                 Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "Photo du joueur",
+                    painter = rememberAsyncImagePainter(it),
+                    contentDescription = "User photo",
                     modifier = Modifier.size(128.dp)
                 )
             }
+
             Spacer(Modifier.height(16.dp))
 
-            // Bouton pour prendre une photo
-            Button(onClick = {
-                if (hasCameraPermission) {
-                    cameraLauncher.launch(null)
-                } else {
-                    shouldLaunchCamera = true // On veut prendre la photo dès que la permission est donnée
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                }
-            }) {
-                Text("Prendre une photo")
-            }
-            Button(
-                onClick = { galleryLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Select photo from gallery")
-            }
-            Spacer(Modifier.height(16.dp))
+            // Button to take photo
             Button(
                 onClick = {
-                    if (name.isNotBlank()  ) {
-                        val uri = photoBitmap?.let { saveBitmapToInternalStorage(context, it) }
-                        userViewModel.addUser(name,uri) {
+                    if (hasCameraPermission) {
+                        takePictureLauncher.launch(null)
+                    } else {
+                        pendingCameraAction = true
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                }
+            ) {
+                Text("Take Photo")
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // Button to pick photo from gallery
+            Button(
+                onClick = {
+                    pickImageLauncher.launch("image/*")
+                }
+            ) {
+                Text("Choose Photo")
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        userViewModel.addUser(
+                            name = name,
+                            photoUri = photoPath
+                        ) {
                             navController.popBackStack()
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Enregistrer")
+                Text("Save")
             }
         }
+    }
+}
+
+// Helper: Save Bitmap to cache, return content URI (required for CropImage)
+private fun saveBitmapToCacheAndGetUri(context: Context, bitmap: Bitmap): Uri? {
+    val filename = "photo_${System.currentTimeMillis()}.png"
+    val stream = context.openFileOutput(filename, Context.MODE_PRIVATE)
+    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+    stream.close()
+    val file = context.getFileStreamPath(filename)
+    return try {
+        androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun saveCroppedImageToInternalStorage(context: Context, sourceUri: Uri): String? {
+    try {
+        val inputStream: InputStream? = context.contentResolver.openInputStream(sourceUri)
+        val fileName = "user_photo_${UUID.randomUUID()}.jpg"
+        val file = File(context.filesDir, fileName)
+        val outputStream: OutputStream = file.outputStream()
+        inputStream?.copyTo(outputStream)
+        inputStream?.close()
+        outputStream.close()
+        return file.absolutePath // <-- c’est ça que tu mets dans User
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
     }
 }

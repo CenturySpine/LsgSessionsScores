@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.LsgScores" parent="android:Theme.Material.Light.NoActionBar" />
+        <!-- Base application theme. -->
+        <style name="Theme.LsgScores" parent="Theme.AppCompat.Light.DarkActionBar">
+
+        </style>
+
 </resources>
