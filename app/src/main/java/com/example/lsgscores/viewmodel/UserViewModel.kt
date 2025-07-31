@@ -29,9 +29,9 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addUser(name: String,  onUserAdded: () -> Unit) {
+    fun addUser(name: String, photoUri: String?, onUserAdded: () -> Unit) {
         viewModelScope.launch {
-            repository.insertUser(User(name = name))
+            repository.insertUser(User(name = name, photoUri = photoUri))
             loadUsers()
             onUserAdded()
         }

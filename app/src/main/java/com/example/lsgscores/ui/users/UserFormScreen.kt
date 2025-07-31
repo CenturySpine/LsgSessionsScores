@@ -1,6 +1,7 @@
 package com.example.lsgscores.ui.users
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.foundation.Image
 import androidx.core.content.ContextCompat
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +55,20 @@ fun UserFormScreen(
             photoBitmap = bitmap
         }
     }
+
+    fun saveBitmapToInternalStorage(context: Context, bitmap: Bitmap): String? {
+        val filename = "user_photo_${System.currentTimeMillis()}.jpg"
+        return try {
+            context.openFileOutput(filename, Context.MODE_PRIVATE).use { fos ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
+            }
+            // Retourne le chemin absolu du fichier
+            File(context.filesDir, filename).absolutePath
+        } catch (e: Exception) {
+            null
+        }
+    }
+
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Ajouter un utilisateur") }) }
@@ -96,7 +112,8 @@ fun UserFormScreen(
             Button(
                 onClick = {
                     if (name.isNotBlank()  ) {
-                        userViewModel.addUser(name) {
+                        val uri = photoBitmap?.let { saveBitmapToInternalStorage(context, it) }
+                        userViewModel.addUser(name,uri) {
                             navController.popBackStack()
                         }
                     }
