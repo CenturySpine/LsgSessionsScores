@@ -17,7 +17,9 @@ class MainActivity : ComponentActivity() {
         val db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "streetgolf-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
         val userRepository = UserRepository(db.userDao())
 
         setContent {

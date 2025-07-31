@@ -40,9 +40,8 @@ fun UserListScreen(
                         .padding(8.dp)
                 ) {
                     Text(text = user.name, style = MaterialTheme.typography.titleMedium)
-                    Text(text = user.nickname, style = MaterialTheme.typography.bodyMedium)
                 }
-                Divider()
+                HorizontalDivider()
             }
         }
     }

@@ -14,7 +14,6 @@ fun UserFormScreen(
     userViewModel: UserViewModel
 ) {
     var name by remember { mutableStateOf("") }
-    var nickname by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Ajouter un utilisateur") }) }
@@ -31,17 +30,12 @@ fun UserFormScreen(
                 label = { Text("Nom") },
                 modifier = Modifier.fillMaxWidth()
             )
-            OutlinedTextField(
-                value = nickname,
-                onValueChange = { nickname = it },
-                label = { Text("Surnom") },
-                modifier = Modifier.fillMaxWidth()
-            )
+
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = {
-                    if (name.isNotBlank() && nickname.isNotBlank()) {
-                        userViewModel.addUser(name, nickname) {
+                    if (name.isNotBlank()  ) {
+                        userViewModel.addUser(name) {
                             navController.popBackStack()
                         }
                     }
