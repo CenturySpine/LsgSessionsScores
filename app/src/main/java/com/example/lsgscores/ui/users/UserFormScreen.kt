@@ -17,6 +17,9 @@ import androidx.navigation.NavController
 import androidx.compose.foundation.Image
 import androidx.core.content.ContextCompat
 import java.io.File
+import android.provider.MediaStore
+import android.graphics.ImageDecoder
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +80,23 @@ fun UserFormScreen(
         }
     }
 
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            // Convert URI to Bitmap
+            val bitmap = if (android.os.Build.VERSION.SDK_INT < 28) {
+                @Suppress("DEPRECATION")
+                android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            } else {
+                val source = ImageDecoder.createSource(context.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source)
+            }
+            photoBitmap = bitmap
+        }
+    }
+
+
     Scaffold(
         topBar = { TopAppBar(title = { Text("Ajouter un utilisateur") }) }
     ) { padding ->
@@ -103,6 +123,7 @@ fun UserFormScreen(
                 )
             }
             Spacer(Modifier.height(16.dp))
+
             // Bouton pour prendre une photo
             Button(onClick = {
                 if (hasCameraPermission) {
@@ -113,6 +134,12 @@ fun UserFormScreen(
                 }
             }) {
                 Text("Prendre une photo")
+            }
+            Button(
+                onClick = { galleryLauncher.launch("image/*") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Select photo from gallery")
             }
             Spacer(Modifier.height(16.dp))
             Button(
