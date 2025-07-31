@@ -25,6 +25,7 @@ fun UserFormScreen(
     userViewModel: UserViewModel
 ) {
     var name by remember { mutableStateOf("") }
+    var shouldLaunchCamera by remember { mutableStateOf(false) }
 
     // État pour la photo prise
     var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -69,6 +70,12 @@ fun UserFormScreen(
         }
     }
 
+    LaunchedEffect(hasCameraPermission, shouldLaunchCamera) {
+        if (hasCameraPermission && shouldLaunchCamera) {
+            shouldLaunchCamera = false
+            cameraLauncher.launch(null)
+        }
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Ajouter un utilisateur") }) }
@@ -99,10 +106,9 @@ fun UserFormScreen(
             // Bouton pour prendre une photo
             Button(onClick = {
                 if (hasCameraPermission) {
-                    // Launch the camera
                     cameraLauncher.launch(null)
                 } else {
-                    // Ask for the CAMERA permission
+                    shouldLaunchCamera = true // On veut prendre la photo dès que la permission est donnée
                     cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 }
             }) {
