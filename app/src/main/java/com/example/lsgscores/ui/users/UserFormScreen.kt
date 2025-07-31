@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -40,7 +39,7 @@ fun UserFormScreen(
     // State for the cropped photo URI
     var croppedPhotoUri by remember { mutableStateOf<Uri?>(null) }
     var photoPath by remember { mutableStateOf<String?>(null) }
-    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+
     // Camera permission state
     val context = LocalContext.current
     var hasCameraPermission by remember {
@@ -66,7 +65,6 @@ fun UserFormScreen(
     }
 
     // Launcher for taking a picture (returns a Bitmap)
-    var pendingCameraAction by remember { mutableStateOf(false) }
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
@@ -79,7 +77,6 @@ fun UserFormScreen(
                 )
             }
         }
-        pendingCameraAction = false
     }
 
     // Launcher for CAMERA permission request
@@ -132,7 +129,6 @@ fun UserFormScreen(
                 if (hasCameraPermission) {
                     takePictureLauncher.launch(null)
                 } else {
-                    pendingCameraAction = true
                     cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 }
             }
@@ -202,6 +198,7 @@ private fun saveBitmapToCacheAndGetUri(context: Context, bitmap: Bitmap): Uri? {
             file
         )
     } catch (e: Exception) {
+        e.printStackTrace()
         null
     }
 }
@@ -215,7 +212,7 @@ fun saveCroppedImageToInternalStorage(context: Context, sourceUri: Uri): String?
         inputStream?.copyTo(outputStream)
         inputStream?.close()
         outputStream.close()
-        return file.absolutePath // <-- c’est ça que tu mets dans User
+        return file.absolutePath
     } catch (e: Exception) {
         e.printStackTrace()
         return null
