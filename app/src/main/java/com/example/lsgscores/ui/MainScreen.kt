@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.lsgscores.ui.users.UserListScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
+import com.example.lsgscores.ui.home.HomeScreen
 import com.example.lsgscores.ui.users.UserFormScreen
 import com.example.lsgscores.ui.users.UserViewModel
 
@@ -18,6 +19,7 @@ import com.example.lsgscores.ui.users.UserViewModel
 @Composable
 fun MainScreen(navController: NavHostController, userViewModel: UserViewModel) {
     val items = listOf(
+        BottomNavItem.Home,
         BottomNavItem.Users,
         BottomNavItem.Holes
     )
@@ -44,9 +46,12 @@ fun MainScreen(navController: NavHostController, userViewModel: UserViewModel) {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavItem.Users.route,
+            startDestination = BottomNavItem.Home.route,
             modifier = Modifier.padding(padding)
         ) {
+            composable(BottomNavItem.Home.route) {
+                HomeScreen()
+            }
             composable(BottomNavItem.Users.route) {
                 UserListScreen(navController, userViewModel)
             }

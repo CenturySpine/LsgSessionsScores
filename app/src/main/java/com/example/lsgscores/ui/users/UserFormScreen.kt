@@ -103,10 +103,8 @@ fun UserFormScreen(
         }
     }
 
-
-
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Add User") }) }
+        topBar = { TopAppBar(title = { Text("Add a street golf player") }) }
     ) { padding ->
         Column(
             modifier = Modifier
