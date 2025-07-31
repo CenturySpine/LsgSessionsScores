@@ -1,0 +1,62 @@
+// ui/MainScreen.kt
+
+package com.example.lsgscores.ui
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.example.lsgscores.ui.users.UserListScreen
+import com.example.lsgscores.ui.holes.HoleListScreen
+import com.example.lsgscores.ui.users.UserFormScreen
+import com.example.lsgscores.ui.users.UserViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(navController: NavHostController, userViewModel: UserViewModel) {
+    val items = listOf(
+        BottomNavItem.Users,
+        BottomNavItem.Holes
+    )
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                items.forEach { item ->
+                    NavigationBarItem(
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) },
+                        selected = navController.currentDestination?.route == item.route,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = BottomNavItem.Users.route,
+            modifier = Modifier.padding(padding)
+        ) {
+            composable(BottomNavItem.Users.route) {
+                UserListScreen(navController, userViewModel)
+            }
+            composable("add_user") {
+                UserFormScreen(navController, userViewModel)
+            }
+
+            composable(BottomNavItem.Holes.route) {
+                HoleListScreen()
+            }
+        }
+    }
+}

@@ -2,27 +2,21 @@ package com.example.lsgscores.ui.users
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.lsgscores.data.User
 import com.example.lsgscores.data.UserDatabase
 import com.example.lsgscores.data.UserRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class UserViewModel(application: Application) : AndroidViewModel(application) {
+class UserViewModel(
     private val repository: UserRepository
+) : ViewModel() {
 
-    val users: Flow<List<User>>
 
-    init {
-        val db = UserDatabase.getDatabase(application)
-        repository = UserRepository(db.userDao())
-        users = repository.getAllUsers() // users = le Flow exposé par le repo
-    }
-
+    val users: Flow<List<User>> = repository.getAllUsers() // users = le Flow exposé par le repo
 
 
     fun addUser(name: String, photoUri: String?, onUserAdded: () -> Unit) {
@@ -52,11 +46,11 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
 
 }
 
-class UserViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+class UserViewModelFactory(private val repository: UserRepository) : ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return UserViewModel(application) as T
+            return UserViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
