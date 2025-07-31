@@ -34,7 +34,7 @@ fun UserListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Liste des utilisateurs") })
+            TopAppBar(title = { Text("Players list") })
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { navController.navigate("add_user") }) {

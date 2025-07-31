@@ -11,9 +11,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
@@ -21,6 +23,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
+import com.example.lsgscores.R
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -114,13 +117,44 @@ fun UserFormScreen(
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically){
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.weight(1f)
             )
 
+            // Button to take photo
+            IconButton(                onClick = {
+                if (hasCameraPermission) {
+                    takePictureLauncher.launch(null)
+                } else {
+                    pendingCameraAction = true
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                }
+            }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                    contentDescription = "Take picture"
+                )
+            }
+
+
+            // Button to pick photo from gallery
+            IconButton(                                onClick = {
+                pickImageLauncher.launch("image/*")
+            }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                    contentDescription = "Pick from gallery"
+                )
+            }
+            }
             Spacer(Modifier.height(16.dp))
 
             // Show cropped photo if available
@@ -132,32 +166,6 @@ fun UserFormScreen(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
-
-            // Button to take photo
-            Button(
-                onClick = {
-                    if (hasCameraPermission) {
-                        takePictureLauncher.launch(null)
-                    } else {
-                        pendingCameraAction = true
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
-                }
-            ) {
-                Text("Take Photo")
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            // Button to pick photo from gallery
-            Button(
-                onClick = {
-                    pickImageLauncher.launch("image/*")
-                }
-            ) {
-                Text("Choose Photo")
-            }
 
             Spacer(Modifier.height(16.dp))
 
