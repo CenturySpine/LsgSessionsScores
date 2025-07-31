@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.lsgscores.data.User
 import com.example.lsgscores.data.UserDatabase
 import com.example.lsgscores.data.UserRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,28 +15,41 @@ import kotlinx.coroutines.launch
 class UserViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: UserRepository
 
-    private val _users = MutableStateFlow<List<User>>(emptyList())
-    val users: StateFlow<List<User>> = _users
+    val users: Flow<List<User>>
 
     init {
         val db = UserDatabase.getDatabase(application)
         repository = UserRepository(db.userDao())
-        loadUsers()
+        users = repository.getAllUsers() // users = le Flow exposé par le repo
     }
 
-    fun loadUsers() {
-        viewModelScope.launch {
-            _users.value = repository.getAllUsers()
-        }
-    }
+
 
     fun addUser(name: String, photoUri: String?, onUserAdded: () -> Unit) {
         viewModelScope.launch {
             repository.insertUser(User(name = name, photoUri = photoUri))
-            loadUsers()
             onUserAdded()
         }
     }
+
+    fun deleteUser(user: User) {
+        viewModelScope.launch {
+            // Delete the photo file if the path is not null or empty
+            user.photoUri?.let { photoPath ->
+                try {
+                    val file = java.io.File(photoPath)
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                } catch (e: Exception) {
+                    // Log or handle error if needed
+                }
+            }
+            repository.deleteUser(user)
+        }
+    }
+
+
 }
 
 class UserViewModelFactory(private val application: Application) : ViewModelProvider.Factory {

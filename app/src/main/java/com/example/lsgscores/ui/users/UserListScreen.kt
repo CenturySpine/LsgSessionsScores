@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.lsgscores.data.User
@@ -24,7 +25,12 @@ fun UserListScreen(
     navController: NavController,
     userViewModel: UserViewModel
 ) {
-    val users by userViewModel.users.collectAsStateWithLifecycle()
+    val users by userViewModel.users.collectAsStateWithLifecycle(
+        lifecycle = LocalLifecycleOwner.current.lifecycle,
+        initialValue = emptyList()
+    )
+    var userToDelete by remember { mutableStateOf<User?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -67,10 +73,39 @@ fun UserListScreen(
                         )
                     }
                     Spacer(Modifier.width(16.dp))
+
                     Text(text = user.name, style = MaterialTheme.typography.titleMedium)
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(onClick = {
+                        userToDelete = user
+                        showDialog = true
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_delete_forever_24),
+                            contentDescription = "Delete user"
+                        )
+                    }
                 }
                 HorizontalDivider()
             }
         }
+    }
+    if (showDialog && userToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Confirm Deletion") },
+            text = { Text("Are you sure you want to delete ${userToDelete!!.name}?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    userViewModel.deleteUser(userToDelete!!)
+                    showDialog = false
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }
