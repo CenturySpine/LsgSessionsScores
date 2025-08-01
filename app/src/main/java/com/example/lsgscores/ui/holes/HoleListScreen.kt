@@ -2,11 +2,14 @@
 
 package com.example.lsgscores.ui.holes
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -27,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -35,6 +39,7 @@ import androidx.navigation.NavController
 import com.example.lsgscores.R
 import com.example.lsgscores.data.Hole
 import com.example.lsgscores.viewmodel.HoleViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,8 +74,44 @@ fun HoleListScreen(
                         .padding(8.dp)
                 ) {
 
-                        Text(text = holeItem.name, style = MaterialTheme.typography.titleMedium)
+                    Text(text = holeItem.name, style = MaterialTheme.typography.titleMedium)
 
+                    if (!holeItem.start.photoUri.isNullOrBlank() && File(holeItem.start.photoUri).exists()) {
+                        val bitmap = remember(holeItem.start.photoUri) {
+                            BitmapFactory.decodeFile(holeItem.start.photoUri)
+                        }
+                        bitmap?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = "User photo",
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_person_24),
+                            contentDescription = "Default user icon",
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    if (!holeItem.end.photoUri.isNullOrBlank() && File(holeItem.end.photoUri).exists()) {
+                        val bitmap = remember(holeItem.end.photoUri) {
+                            BitmapFactory.decodeFile(holeItem.end.photoUri)
+                        }
+                        bitmap?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = "User photo",
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_person_24),
+                            contentDescription = "Default user icon",
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.weight(1f))
 
                     IconButton(onClick = {
