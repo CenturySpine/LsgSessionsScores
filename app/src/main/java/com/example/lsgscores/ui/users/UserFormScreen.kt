@@ -23,6 +23,7 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.example.lsgscores.R
+import com.example.lsgscores.ui.common.PhotoPicker
 import com.example.lsgscores.viewmodel.UserViewModel
 import java.io.File
 import java.io.InputStream
@@ -43,14 +44,7 @@ fun UserFormScreen(
 
     // Camera permission state
     val context = LocalContext.current
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
+
     // Launcher for cropping image
     val cropImageLauncher = rememberLauncherForActivityResult(
         CropImageContract()
@@ -64,34 +58,6 @@ fun UserFormScreen(
         }
 
     }
-
-    // Launcher for taking a picture (returns a Bitmap)
-    val takePictureLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        bitmap?.let {
-            // Convert Bitmap to Uri for cropping
-            val imageUri = saveBitmapToCacheAndGetUri(context, it)
-            imageUri?.let { uri ->
-                cropImageLauncher.launch(
-                    CropImageContractOptions(uri, CropImageOptions())
-                )
-            }
-        }
-    }
-
-    // Launcher for CAMERA permission request
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        hasCameraPermission = granted
-        if (granted) {
-            // If permission is granted, trigger camera photo selection immediately
-            takePictureLauncher.launch(null)
-        }
-    }
-
-
 
     // Launcher for picking from gallery
     val pickImageLauncher = rememberLauncherForActivityResult(
@@ -124,19 +90,11 @@ fun UserFormScreen(
             )
 
             // Button to take photo
-            IconButton(                onClick = {
-                if (hasCameraPermission) {
-                    takePictureLauncher.launch(null)
-                } else {
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                }
-            }
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_camera_alt_24),
-                    contentDescription = "Take picture"
+                PhotoPicker(
+                    label = "Take target picture",
+                    iconResId = R.drawable.baseline_camera_alt_24,
+                    onPhotoPicked = { path -> photoPath = path }
                 )
-            }
 
 
             // Button to pick photo from gallery
