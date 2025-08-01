@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
+import com.example.lsgscores.R
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -29,9 +30,7 @@ import java.util.UUID
 @Composable
 fun PhotoPicker(
     modifier: Modifier = Modifier,
-    label: String,
-    iconResId: Int,
-    onPhotoPicked: (String?) -> Unit
+      onPhotoPicked: (String?) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -88,8 +87,8 @@ fun PhotoPicker(
         modifier = modifier
     ) {
         Icon(
-            painter = painterResource(id = iconResId),
-            contentDescription = label
+            painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+            contentDescription = "Take picture"
         )
     }
 }

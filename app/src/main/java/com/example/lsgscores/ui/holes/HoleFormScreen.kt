@@ -24,14 +24,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.lsgscores.R
 import com.example.lsgscores.data.Hole
 import com.example.lsgscores.data.HolePoint
-import com.example.lsgscores.ui.common.PhotoPicker
+import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import com.example.lsgscores.viewmodel.HoleViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +38,7 @@ fun HoleFormScreen(
     navController: NavHostController,
     holeViewModel: HoleViewModel
 ) {
-    val context = LocalContext.current
+
     var showNameError by remember { mutableStateOf(false) }
 
     var name by remember { mutableStateOf("") }
@@ -70,7 +68,7 @@ fun HoleFormScreen(
         ) {
             if (showNameError) {
                 Text(
-                    text = "Le nom du trou est obligatoire.",
+                    text = "Hole name is mandatory",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -85,7 +83,7 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-            // GeoZone
+
             OutlinedTextField(
                 value = geoZone,
                 onValueChange = { geoZone = it },
@@ -94,7 +92,7 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-            // Description (multilignes)
+
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
@@ -106,7 +104,7 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-            // Constraints (multilignes)
+
             OutlinedTextField(
                 value = constraints,
                 onValueChange = { constraints = it },
@@ -118,7 +116,7 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-            // Distance (numérique)
+
             OutlinedTextField(
                 value = distance,
                 onValueChange = { distance = it.filter { c -> c.isDigit() } },
@@ -128,7 +126,7 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-            // Par (numérique)
+
             OutlinedTextField(
                 value = par,
                 onValueChange = { par = it.filter { c -> c.isDigit() } },
@@ -157,10 +155,8 @@ fun HoleFormScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(12.dp))
-                    PhotoPicker(
-                        label = "Take start picture",
-                        iconResId = R.drawable.baseline_camera_alt_24,
-                        onPhotoPicked = { path -> startPhotoPath = path }
+                    CombinedPhotoPicker(
+                        onImagePicked = { path -> startPhotoPath = path }
                     )
                 }
 
@@ -178,10 +174,8 @@ fun HoleFormScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(12.dp))
-                    PhotoPicker(
-                        label = "Take target picture",
-                        iconResId = R.drawable.baseline_camera_alt_24,
-                        onPhotoPicked = { path -> endPhotoPath = path }
+                    CombinedPhotoPicker(
+                        onImagePicked = { path -> endPhotoPath = path }
                     )
                 }
             }
@@ -202,7 +196,7 @@ fun HoleFormScreen(
                             constraints = constraints.takeIf { it.isNotBlank() },
                             distance = distance.toIntOrNull(),
                             par = par.toIntOrNull()
-                                ?: 3, // Valeur par défaut, à ajuster selon tes besoins
+                                ?: 3, // default value
                             start = HolePoint(
                                 name = startName,
                                 photoUri = startPhotoPath

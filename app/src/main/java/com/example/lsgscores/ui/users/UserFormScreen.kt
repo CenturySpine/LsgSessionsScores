@@ -1,28 +1,43 @@
 package com.example.lsgscores.ui.users
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.example.lsgscores.R
+import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import com.example.lsgscores.ui.common.PhotoPicker
 import com.example.lsgscores.viewmodel.UserViewModel
 import java.io.File
@@ -42,33 +57,6 @@ fun UserFormScreen(
     var croppedPhotoUri by remember { mutableStateOf<Uri?>(null) }
     var photoPath by remember { mutableStateOf<String?>(null) }
 
-    // Camera permission state
-    val context = LocalContext.current
-
-    // Launcher for cropping image
-    val cropImageLauncher = rememberLauncherForActivityResult(
-        CropImageContract()
-    ) { result ->
-        if (result.isSuccessful) {
-            result.uriContent?.let { croppedUri ->
-                croppedPhotoUri = croppedUri
-                val savedPath = saveCroppedImageToInternalStorage(context, croppedUri)
-                photoPath = savedPath
-            }
-        }
-
-    }
-
-    // Launcher for picking from gallery
-    val pickImageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            cropImageLauncher.launch(
-                CropImageContractOptions(it, CropImageOptions())
-            )
-        }
-    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Add a street golf player") }) }
@@ -81,32 +69,18 @@ fun UserFormScreen(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically){
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                modifier = Modifier.weight(1f)
-            )
-
-            // Button to take photo
-                PhotoPicker(
-                    label = "Take target picture",
-                    iconResId = R.drawable.baseline_camera_alt_24,
-                    onPhotoPicked = { path -> photoPath = path }
-                )
-
-
-            // Button to pick photo from gallery
-            IconButton(                                onClick = {
-                pickImageLauncher.launch("image/*")
-            }
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
-                    contentDescription = "Pick from gallery"
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.weight(1f)
                 )
-            }
+
+                CombinedPhotoPicker(
+                    onImagePicked = { path -> photoPath = path }
+                )
             }
             Spacer(Modifier.height(16.dp))
 
