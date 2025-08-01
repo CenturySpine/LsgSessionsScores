@@ -1,11 +1,12 @@
-package com.example.lsgscores.data
+package com.example.lsgscores.data.hole
 
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HoleDao {
     @Query("SELECT * FROM holes")
-    fun getAll(): kotlinx.coroutines.flow.Flow<List<Hole>>
+    fun getAll(): Flow<List<Hole>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(hole: Hole): Long

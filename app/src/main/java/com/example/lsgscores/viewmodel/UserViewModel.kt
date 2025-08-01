@@ -3,8 +3,8 @@ package com.example.lsgscores.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.lsgscores.data.User
-import com.example.lsgscores.data.UserRepository
+import com.example.lsgscores.data.user.User
+import com.example.lsgscores.data.user.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.io.File

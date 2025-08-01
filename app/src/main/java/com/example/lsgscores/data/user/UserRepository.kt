@@ -1,4 +1,4 @@
-package com.example.lsgscores.data
+package com.example.lsgscores.data.user
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

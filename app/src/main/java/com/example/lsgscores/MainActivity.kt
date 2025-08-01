@@ -6,9 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.room.Room
 import androidx.navigation.compose.rememberNavController
-import com.example.lsgscores.data.UserRepository
+import com.example.lsgscores.data.user.UserRepository
 import com.example.lsgscores.data.AppDatabase
-import com.example.lsgscores.data.HoleRepository
+import com.example.lsgscores.data.hole.HoleRepository
 import com.example.lsgscores.ui.MainScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.UserViewModel

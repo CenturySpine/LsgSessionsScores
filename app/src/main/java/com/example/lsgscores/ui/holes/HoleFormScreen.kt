@@ -27,8 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.lsgscores.data.Hole
-import com.example.lsgscores.data.HolePoint
+import com.example.lsgscores.data.hole.Hole
+import com.example.lsgscores.data.hole.HolePoint
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import com.example.lsgscores.viewmodel.HoleViewModel
 

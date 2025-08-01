@@ -37,7 +37,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.lsgscores.R
-import com.example.lsgscores.data.Hole
+import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.viewmodel.HoleViewModel
 import java.io.File
 

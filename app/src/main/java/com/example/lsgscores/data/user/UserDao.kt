@@ -1,4 +1,4 @@
-package com.example.lsgscores.data
+package com.example.lsgscores.data.user
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

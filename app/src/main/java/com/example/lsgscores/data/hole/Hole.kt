@@ -1,4 +1,4 @@
-package com.example.lsgscores.data
+package com.example.lsgscores.data.hole
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

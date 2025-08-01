@@ -1,4 +1,4 @@
-package com.example.lsgscores.data
+package com.example.lsgscores.data.hole
 
 data class HolePoint(
     val name: String,

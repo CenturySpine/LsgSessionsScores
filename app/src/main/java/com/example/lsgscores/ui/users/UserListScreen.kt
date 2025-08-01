@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.lsgscores.data.User
+import com.example.lsgscores.data.user.User
 import java.io.File
 import com.example.lsgscores.R
 import com.example.lsgscores.viewmodel.UserViewModel

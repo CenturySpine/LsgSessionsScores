@@ -1,4 +1,4 @@
-package com.example.lsgscores.data
+package com.example.lsgscores.data.user
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
