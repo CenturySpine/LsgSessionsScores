@@ -9,15 +9,17 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.lsgscores.ui.holes.HoleFormScreen
 import com.example.lsgscores.ui.users.UserListScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
 import com.example.lsgscores.ui.home.HomeScreen
 import com.example.lsgscores.ui.users.UserFormScreen
-import com.example.lsgscores.ui.users.UserViewModel
+import com.example.lsgscores.viewmodel.HoleViewModel
+import com.example.lsgscores.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavHostController, userViewModel: UserViewModel) {
+fun MainScreen(navController: NavHostController, userViewModel: UserViewModel, holeViewModel: HoleViewModel) {
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Users,
@@ -60,7 +62,11 @@ fun MainScreen(navController: NavHostController, userViewModel: UserViewModel) {
             }
 
             composable(BottomNavItem.Holes.route) {
-                HoleListScreen()
+                HoleListScreen(navController,holeViewModel)
+            }
+
+            composable("add_hole") {
+                HoleFormScreen(navController, holeViewModel)
             }
         }
     }

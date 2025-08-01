@@ -1,22 +1,20 @@
-package com.example.lsgscores.ui.users
+package com.example.lsgscores.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.lsgscores.data.User
-import com.example.lsgscores.data.UserDatabase
 import com.example.lsgscores.data.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import java.io.File
 
 class UserViewModel(
     private val repository: UserRepository
 ) : ViewModel() {
 
 
-    val users: Flow<List<User>> = repository.getAllUsers() // users = le Flow exposé par le repo
+    val users: Flow<List<User>> = repository.getAllUsers()
 
 
     fun addUser(name: String, photoUri: String?, onUserAdded: () -> Unit) {
@@ -31,7 +29,7 @@ class UserViewModel(
             // Delete the photo file if the path is not null or empty
             user.photoUri?.let { photoPath ->
                 try {
-                    val file = java.io.File(photoPath)
+                    val file = File(photoPath)
                     if (file.exists()) {
                         file.delete()
                     }
@@ -47,7 +45,7 @@ class UserViewModel(
 }
 
 class UserViewModelFactory(private val repository: UserRepository) : ViewModelProvider.Factory {
-    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return UserViewModel(repository) as T

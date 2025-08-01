@@ -1,15 +1,17 @@
 package com.example.lsgscores
 
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.room.Room
 import androidx.navigation.compose.rememberNavController
-import com.example.lsgscores.data.AppDatabase
 import com.example.lsgscores.data.UserRepository
+import com.example.lsgscores.data.AppDatabase
+import com.example.lsgscores.data.HoleRepository
 import com.example.lsgscores.ui.MainScreen
-import com.example.lsgscores.ui.users.UserViewModel
+import com.example.lsgscores.viewmodel.HoleViewModel
+import com.example.lsgscores.viewmodel.UserViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,15 +24,18 @@ class MainActivity : ComponentActivity() {
         ).fallbackToDestructiveMigration()
             .build()
         val userRepository = UserRepository(db.userDao())
+        val holeRepository = HoleRepository(db.holeDao())
+
 
         setContent {
             val navController = rememberNavController()
 
             // Création du ViewModel à la main
             val userViewModel = UserViewModel(userRepository)
+            val holeViewModel = HoleViewModel(holeRepository)
 
 
-            MainScreen(navController, userViewModel)
+            MainScreen(navController, userViewModel,holeViewModel)
         }
     }
 }

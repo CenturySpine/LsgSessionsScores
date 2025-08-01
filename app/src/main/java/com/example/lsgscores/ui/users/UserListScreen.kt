@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import com.example.lsgscores.data.User
 import java.io.File
 import com.example.lsgscores.R
+import com.example.lsgscores.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,7 @@ fun UserListScreen(
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    // Photo miniature si elle existe, sinon une icône par défaut
+
                     if (!user.photoUri.isNullOrBlank() && File(user.photoUri).exists()) {
                         val bitmap = remember(user.photoUri) {
                             BitmapFactory.decodeFile(user.photoUri)
