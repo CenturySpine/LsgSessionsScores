@@ -13,15 +13,24 @@ import com.example.lsgscores.ui.holes.HoleFormScreen
 import com.example.lsgscores.ui.users.UserListScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
 import com.example.lsgscores.ui.home.HomeScreen
+import com.example.lsgscores.ui.sessions.SessionCreationScreen
+import com.example.lsgscores.ui.sessions.SessionTeamsScreen
 import com.example.lsgscores.ui.users.UserFormScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
+import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavHostController, userViewModel: UserViewModel, holeViewModel: HoleViewModel) {
+fun MainScreen(
+    navController: NavHostController,
+    userViewModel: UserViewModel,
+    holeViewModel: HoleViewModel,
+    sessionViewModel: SessionViewModel
+) {
     val items = listOf(
         BottomNavItem.Home,
+        BottomNavItem.NewSession,
         BottomNavItem.Users,
         BottomNavItem.Holes
     )
@@ -57,14 +66,19 @@ fun MainScreen(navController: NavHostController, userViewModel: UserViewModel, h
             composable(BottomNavItem.Users.route) {
                 UserListScreen(navController, userViewModel)
             }
+            composable(BottomNavItem.NewSession.route) {
+                // Only pass the sessionViewModel, SessionCreationScreen will handle its own logic
+                SessionCreationScreen(navController, sessionViewModel)
+            }
+            composable("new_session_teams") {
+                SessionTeamsScreen(navController, sessionViewModel)
+            }
             composable("add_user") {
                 UserFormScreen(navController, userViewModel)
             }
-
             composable(BottomNavItem.Holes.route) {
-                HoleListScreen(navController,holeViewModel)
+                HoleListScreen(navController, holeViewModel)
             }
-
             composable("add_hole") {
                 HoleFormScreen(navController, holeViewModel)
             }

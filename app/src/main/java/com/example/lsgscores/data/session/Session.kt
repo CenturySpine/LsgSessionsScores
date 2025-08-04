@@ -8,8 +8,9 @@ import java.time.LocalDateTime
 data class Team(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val player1Id: Int,
-    val player2Id: Int? = null // Null means solo team (individual session)
+    val sessionId: Int,               // FK vers Session
+    val player1Id: Int,               // FK User, obligatoire
+    val player2Id: Int? = null        // FK User, optionnel (solo ou équipe)
 )
 
 enum class SessionType {
@@ -23,9 +24,10 @@ data class Session(
     val id: Int = 0,
     val name: String,
     val dateTime: LocalDateTime,
-    val sessionType: SessionType,           // Individual or Team, see enum below
-    val scoringModeId: Int,                 // Foreign key to ScoringMode
-    val comment: String? = null,
-    val mediaUris: List<String> = emptyList() // List of photo/video URIs
-    // Teams and holes played will be handled by relationship tables (not embedded here)
+    val sessionType: SessionType,     // Individual or Team
+    val scoringModeId: Int,           // Foreign key to ScoringMode
+    val comment: String? = null
+    // PLUS DE mediaUris ICI !
+    // Les médias sont stockés dans la table Media, liés via sessionId.
+    // Les équipes sont gérées par l'entité Team avec sessionId en FK.
 )
