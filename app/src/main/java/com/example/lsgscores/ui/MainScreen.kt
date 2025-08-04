@@ -2,6 +2,7 @@
 
 package com.example.lsgscores.ui
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -20,7 +21,7 @@ import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.UserViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -71,7 +72,7 @@ fun MainScreen(
                 SessionCreationScreen(navController, sessionViewModel)
             }
             composable("new_session_teams") {
-                SessionTeamsScreen(navController, sessionViewModel)
+                SessionTeamsScreen(navController, sessionViewModel,userViewModel)
             }
             composable("add_user") {
                 UserFormScreen(navController, userViewModel)
