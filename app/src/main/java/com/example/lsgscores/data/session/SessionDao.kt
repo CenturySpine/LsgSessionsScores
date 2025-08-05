@@ -26,4 +26,10 @@ interface SessionDao {
 
     @Delete
     suspend fun delete(session: Session)
+
+    @Query("SELECT * FROM sessions WHERE isOngoing = 1 LIMIT 1")
+    suspend fun getOngoingSession(): Session?
+
+    @Query("UPDATE sessions SET isOngoing = 0 WHERE isOngoing = 1")
+    suspend fun clearOngoingSessions()
 }

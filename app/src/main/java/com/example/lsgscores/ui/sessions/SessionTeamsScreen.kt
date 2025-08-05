@@ -16,7 +16,8 @@ import com.example.lsgscores.data.user.User
 import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.UserViewModel
 import com.google.accompanist.flowlayout.FlowRow
-
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionTeamsScreen(
@@ -36,6 +37,9 @@ fun SessionTeamsScreen(
     var currentSelection by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     val maxSelectable = if (sessionDraft.sessionType == SessionType.INDIVIDUAL) 1 else 2
+
+    val context = LocalContext.current
+    val error by sessionViewModel.error.collectAsState()
 
     Scaffold(
         topBar = {
@@ -155,7 +159,16 @@ fun SessionTeamsScreen(
 
             Button(
                 onClick = {
-                    // TODO: Save teams and session, then navigate to the next step or go back
+                    sessionViewModel.startSessionWithTeams(
+                        teams = teams.map { team -> team.map { user -> user.id } },
+                        onSessionCreated = { sessionId ->
+                            // Par exemple, navigation vers l'écran de session en cours
+                            // navController.navigate("ongoing_session")
+                        },
+                        onSessionBlocked = {
+                            Toast.makeText(context, error ?: "A session is already ongoing.", Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 },
                 enabled = teams.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()

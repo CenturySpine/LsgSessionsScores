@@ -12,4 +12,8 @@ class SessionRepository(private val sessionDao: SessionDao) {
     suspend fun update(session: Session) = sessionDao.update(session)
 
     suspend fun delete(session: Session) = sessionDao.delete(session)
+
+    suspend fun getOngoingSession(): Session? = sessionDao.getOngoingSession()
+
+    suspend fun clearOngoingSessions() = sessionDao.clearOngoingSessions()
 }
