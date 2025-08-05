@@ -32,4 +32,7 @@ interface SessionDao {
 
     @Query("UPDATE sessions SET isOngoing = 0 WHERE isOngoing = 1")
     suspend fun clearOngoingSessions()
+
+    @Query("SELECT * FROM sessions WHERE isOngoing = 1 LIMIT 1")
+    fun getOngoingSessionFlow(): Flow<Session?>
 }

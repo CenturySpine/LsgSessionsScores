@@ -162,8 +162,9 @@ fun SessionTeamsScreen(
                     sessionViewModel.startSessionWithTeams(
                         teams = teams.map { team -> team.map { user -> user.id } },
                         onSessionCreated = { sessionId ->
-                            // Par exemple, navigation vers l'écran de session en cours
-                            // navController.navigate("ongoing_session")
+                            navController.navigate("ongoing_session") {
+                                launchSingleTop = true
+                            }
                         },
                         onSessionBlocked = {
                             Toast.makeText(context, error ?: "A session is already ongoing.", Toast.LENGTH_SHORT).show()

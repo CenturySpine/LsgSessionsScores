@@ -15,4 +15,11 @@ class TeamRepository(private val teamDao: TeamDao) {
     fun getTeamsForSession(sessionId: Int): Flow<List<Team>> = teamDao.getTeamsForSession(sessionId)
 
     suspend fun getById(id: Int): Team? = teamDao.getById(id)
+
+    /**
+     * Delete all teams for a given session.
+     */
+    suspend fun deleteTeamsForSession(sessionId: Long) {
+        teamDao.deleteTeamsForSession(sessionId)
+    }
 }

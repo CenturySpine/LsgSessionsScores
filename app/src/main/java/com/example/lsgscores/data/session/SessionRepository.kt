@@ -16,4 +16,6 @@ class SessionRepository(private val sessionDao: SessionDao) {
     suspend fun getOngoingSession(): Session? = sessionDao.getOngoingSession()
 
     suspend fun clearOngoingSessions() = sessionDao.clearOngoingSessions()
+
+    fun getOngoingSessionFlow(): Flow<Session?> = sessionDao.getOngoingSessionFlow()
 }

@@ -37,6 +37,10 @@ class SessionViewModel(
     val sessionDraft: StateFlow<SessionDraft> = _sessionDraft.asStateFlow()
     val error: StateFlow<String?> = _error
 
+    val ongoingSession: StateFlow<Session?> =
+        sessionRepository.getOngoingSessionFlow()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
     // List of scoring modes from repository (hardcoded list)
     val scoringModes: StateFlow<List<ScoringMode>> =
         scoringModeRepository.getAll()
@@ -72,6 +76,35 @@ class SessionViewModel(
             scoringModeId = draft.scoringModeId,
             comment = draft.comment
         )
+    }
+
+    /**
+     * Validate the ongoing session: just remove the ongoing flag.
+     */
+    fun validateOngoingSession(onValidated: () -> Unit = {}) {
+        viewModelScope.launch {
+            val ongoing = sessionRepository.getOngoingSession()
+            if (ongoing != null) {
+                val validated = ongoing.copy(isOngoing = false)
+                sessionRepository.update(validated)
+                onValidated()
+            }
+        }
+    }
+
+    /**
+     * Delete the ongoing session and all its teams and related data.
+     */
+    fun deleteOngoingSession(onDeleted: () -> Unit = {}) {
+        viewModelScope.launch {
+            val ongoing = sessionRepository.getOngoingSession()
+            if (ongoing != null) {
+                // Delete teams associated with this session (if cascade not handled by Room)
+                teamRepository.deleteTeamsForSession(ongoing.id)
+                sessionRepository.delete(ongoing)
+                onDeleted()
+            }
+        }
     }
 
     /**

@@ -22,4 +22,10 @@ interface TeamDao {
 
     @Query("SELECT * FROM teams WHERE id = :id")
     suspend fun getById(id: Int): Team?
+
+    /**
+     * Delete all teams for a given session.
+     */
+    @Query("DELETE FROM teams WHERE sessionId = :sessionId")
+    suspend fun deleteTeamsForSession(sessionId: Long)
 }
