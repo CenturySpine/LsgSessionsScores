@@ -10,8 +10,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.lsgscores.ui.holes.HoleFormScreen
 import com.example.lsgscores.ui.users.UserListScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
@@ -19,6 +21,7 @@ import com.example.lsgscores.ui.home.HomeScreen
 import com.example.lsgscores.ui.sessions.OngoingSessionScreen
 import com.example.lsgscores.ui.sessions.SessionCreationScreen
 import com.example.lsgscores.ui.sessions.SessionTeamsScreen
+import com.example.lsgscores.ui.users.UserDetailScreen
 import com.example.lsgscores.ui.users.UserFormScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
@@ -103,6 +106,20 @@ fun MainScreen(
             }
             composable("add_hole") {
                 HoleFormScreen(navController, holeViewModel)
+            }
+            // Add this composable for the user detail screen
+            composable(
+                route = "user_detail/{userId}",
+                arguments = listOf(navArgument("userId") { type = NavType.LongType })
+            ) {
+                val userId = it.arguments?.getLong("userId")
+                if (userId != null) {
+                    UserDetailScreen(
+                        navController = navController,
+                        userId = userId,
+                        userViewModel = userViewModel
+                    )
+                }
             }
         }
     }

@@ -2,6 +2,7 @@ package com.example.lsgscores.ui.users
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -53,6 +54,9 @@ fun UserListScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
+                        .clickable {
+                            navController.navigate("user_detail/${user.id}")
+                        }
                 ) {
 
                     if (!user.photoUri.isNullOrBlank() && File(user.photoUri).exists()) {
