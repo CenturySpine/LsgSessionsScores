@@ -31,6 +31,7 @@ fun UserListScreen(
         lifecycle = LocalLifecycleOwner.current.lifecycle,
         initialValue = emptyList()
     )
+    val sortedUsers = remember(users) { users.sortedBy { it.name } }
     var userToDelete by remember { mutableStateOf<User?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
@@ -48,7 +49,7 @@ fun UserListScreen(
             contentPadding = padding,
             modifier = Modifier.fillMaxSize()
         ) {
-            items(users) { user ->
+            items(sortedUsers) { user ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier

@@ -5,6 +5,7 @@ package com.example.lsgscores.ui.users
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -39,6 +41,36 @@ fun UserDetailScreen(
     var editedName by remember { mutableStateOf("") }
     var editedPhotoPath by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+
+    // For swipe navigation
+    // Sort users by id (or whatever ordering you want)
+    val sortedUsers = remember(users) { users.sortedBy { it.name } }
+    val currentIndex = sortedUsers.indexOfFirst { it.id == userId }
+    val hasPrev = sortedUsers.isNotEmpty()
+    val hasNext = sortedUsers.isNotEmpty()
+
+    // Detect swipe gesture only in read-only mode
+    val swipeModifier = if (!isEditing && sortedUsers.size > 1 && currentIndex != -1) {
+        Modifier.pointerInput(currentIndex, sortedUsers.size, isEditing) {
+            detectHorizontalDragGestures { _, dragAmount ->
+                if (dragAmount > 40) { // Swipe right (previous)
+                    val prevIndex = if (currentIndex == 0) sortedUsers.lastIndex else currentIndex - 1
+                    navController.navigate("user_detail/${sortedUsers[prevIndex].id}") {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                    }
+                } else if (dragAmount < -40) { // Swipe left (next)
+                    val nextIndex = if (currentIndex == sortedUsers.lastIndex) 0 else currentIndex + 1
+                    navController.navigate("user_detail/${sortedUsers[nextIndex].id}") {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
+    } else {
+        Modifier
+    }
 
     Scaffold(
         topBar = {
@@ -158,10 +190,11 @@ fun UserDetailScreen(
                     }
                 }
             }
-            // READ-ONLY MODE
+            // READ-ONLY MODE + swipe
             else {
                 Column(
                     Modifier
+                        .then(swipeModifier) // Enable swipe only in read-only
                         .padding(padding)
                         .padding(24.dp)
                         .fillMaxWidth(),
