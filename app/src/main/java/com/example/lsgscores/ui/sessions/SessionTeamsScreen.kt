@@ -12,9 +12,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.lsgscores.data.session.SessionType
-import com.example.lsgscores.data.user.User
+import com.example.lsgscores.data.player.Player
 import com.example.lsgscores.viewmodel.SessionViewModel
-import com.example.lsgscores.viewmodel.UserViewModel
+import com.example.lsgscores.viewmodel.PlayerViewModel
 import com.google.accompanist.flowlayout.FlowRow
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
@@ -23,17 +23,17 @@ import androidx.compose.ui.platform.LocalContext
 fun SessionTeamsScreen(
     navController: NavController,
     sessionViewModel: SessionViewModel,
-    userViewModel: UserViewModel
+    playerViewModel: PlayerViewModel
 ) {
     val sessionDraft by sessionViewModel.sessionDraft.collectAsState()
-    val allUsers by userViewModel.users.collectAsState(initial = emptyList<User>())
+    val allPlayers by playerViewModel.players.collectAsState(initial = emptyList<Player>())
 
-    // State to track already selected users (so you don't add them in multiple teams)
-    var alreadySelectedUserIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    // State to track already selected players (so you don't add them in multiple teams)
+    var alreadySelectedPlayerIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     // State for the teams being created
-    var teams by remember { mutableStateOf<List<List<User>>>(emptyList()) }
+    var teams by remember { mutableStateOf<List<List<Player>>>(emptyList()) }
 
-    // State for currently selected users for the next team
+    // State for currently selected players for the next team
     var currentSelection by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     val maxSelectable = if (sessionDraft.sessionType == SessionType.INDIVIDUAL) 1 else 2
@@ -71,34 +71,34 @@ fun SessionTeamsScreen(
                 crossAxisSpacing  = 8.dp,
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
-                allUsers.forEach { user ->
+                allPlayers.forEach { player ->
                     val isSelectable =
-                        (currentSelection.size < maxSelectable || currentSelection.contains(user.id)) &&
-                                !alreadySelectedUserIds.contains(user.id)
+                        (currentSelection.size < maxSelectable || currentSelection.contains(player.id)) &&
+                                !alreadySelectedPlayerIds.contains(player.id)
 
                     AssistChip(
                         onClick = {
                             if (!isSelectable) return@AssistChip
-                            currentSelection = if (currentSelection.contains(user.id)) {
-                                currentSelection - user.id
+                            currentSelection = if (currentSelection.contains(player.id)) {
+                                currentSelection - player.id
                             } else {
-                                currentSelection + user.id
+                                currentSelection + player.id
                             }
                         },
-                        label = { Text(user.name) },
+                        label = { Text(player.name) },
                         leadingIcon = {
-                            if (user.photoUri != null) {
+                            if (player.photoUri != null) {
                                 AsyncImage(
-                                    model = user.photoUri,
-                                    contentDescription = user.name,
+                                    model = player.photoUri,
+                                    contentDescription = player.name,
                                     modifier = Modifier.size(24.dp)
                                 )
                             } else {
-                                Text(user.name.first().toString())
+                                Text(player.name.first().toString())
                             }
                         },
                         enabled = isSelectable,
-                        colors = if (currentSelection.contains(user.id)) {
+                        colors = if (currentSelection.contains(player.id)) {
                             AssistChipDefaults.assistChipColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 labelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -113,10 +113,10 @@ fun SessionTeamsScreen(
             Button(
                 onClick = {
                     // Add the new team and reset selection
-                    val selectedUsers = allUsers.filter { currentSelection.contains(it.id) }
-                    if (selectedUsers.isNotEmpty()) {
-                        teams = teams + listOf(selectedUsers)
-                        alreadySelectedUserIds = alreadySelectedUserIds + currentSelection
+                    val selectedPlayers = allPlayers.filter { currentSelection.contains(it.id) }
+                    if (selectedPlayers.isNotEmpty()) {
+                        teams = teams + listOf(selectedPlayers)
+                        alreadySelectedPlayerIds = alreadySelectedPlayerIds + currentSelection
                         currentSelection = emptySet()
                     }
                 },
@@ -132,19 +132,19 @@ fun SessionTeamsScreen(
                     teams.forEachIndexed { index, team ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Team ${index + 1}:")
-                            team.forEach { user ->
+                            team.forEach { player ->
                                 AssistChip(
                                     onClick = {},
-                                    label = { Text(user.name) },
+                                    label = { Text(player.name) },
                                     leadingIcon = {
-                                        if (user.photoUri != null) {
+                                        if (player.photoUri != null) {
                                             AsyncImage(
-                                                model = user.photoUri,
-                                                contentDescription = user.name,
+                                                model = player.photoUri,
+                                                contentDescription = player.name,
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         } else {
-                                            Text(user.name.first().toString())
+                                            Text(player.name.first().toString())
                                         }
                                     },
                                     enabled = false
@@ -160,7 +160,7 @@ fun SessionTeamsScreen(
             Button(
                 onClick = {
                     sessionViewModel.startSessionWithTeams(
-                        teams = teams.map { team -> team.map { user -> user.id } },
+                        teams = teams.map { team -> team.map { player -> player.id } },
                         onSessionCreated = { sessionId ->
                             navController.navigate("ongoing_session") {
                                 launchSingleTop = true

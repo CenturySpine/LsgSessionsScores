@@ -46,6 +46,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.room.runtime)
+    implementation(libs.material3)
     kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.core.ktx)
@@ -69,4 +70,5 @@ dependencies {
     implementation(libs.android.image.cropper)
     implementation(libs.coil.compose)
     implementation(libs.accompanist.flowlayout)
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 }

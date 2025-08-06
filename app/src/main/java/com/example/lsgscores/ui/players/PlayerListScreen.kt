@@ -1,4 +1,4 @@
-package com.example.lsgscores.ui.users
+package com.example.lsgscores.ui.players
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -16,23 +16,23 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.lsgscores.data.user.User
+import com.example.lsgscores.data.player.Player
 import java.io.File
 import com.example.lsgscores.R
-import com.example.lsgscores.viewmodel.UserViewModel
+import com.example.lsgscores.viewmodel.PlayerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserListScreen(
+fun PlayerListScreen(
     navController: NavController,
-    userViewModel: UserViewModel
+    playerViewModel: PlayerViewModel
 ) {
-    val users by userViewModel.users.collectAsStateWithLifecycle(
+    val users by playerViewModel.players.collectAsStateWithLifecycle(
         lifecycle = LocalLifecycleOwner.current.lifecycle,
         initialValue = emptyList()
     )
-    val sortedUsers = remember(users) { users.sortedBy { it.name } }
-    var userToDelete by remember { mutableStateOf<User?>(null) }
+    val sortedPlayers = remember(users) { users.sortedBy { it.name } }
+    var playerToDelete by remember { mutableStateOf<Player?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -49,20 +49,20 @@ fun UserListScreen(
             contentPadding = padding,
             modifier = Modifier.fillMaxSize()
         ) {
-            items(sortedUsers) { user ->
+            items(sortedPlayers) { player ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
                         .clickable {
-                            navController.navigate("user_detail/${user.id}")
+                            navController.navigate("user_detail/${player.id}")
                         }
                 ) {
 
-                    if (!user.photoUri.isNullOrBlank() && File(user.photoUri).exists()) {
-                        val bitmap = remember(user.photoUri) {
-                            BitmapFactory.decodeFile(user.photoUri)
+                    if (!player.photoUri.isNullOrBlank() && File(player.photoUri).exists()) {
+                        val bitmap = remember(player.photoUri) {
+                            BitmapFactory.decodeFile(player.photoUri)
                         }
                         bitmap?.let {
                             Image(
@@ -74,23 +74,23 @@ fun UserListScreen(
                     } else {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_person_24),
-                            contentDescription = "Default user icon",
+                            contentDescription = "Default player icon",
                             modifier = Modifier.size(48.dp)
                         )
                     }
                     Spacer(Modifier.width(16.dp))
 
-                    Text(text = user.name, style = MaterialTheme.typography.titleMedium)
+                    Text(text = player.name, style = MaterialTheme.typography.titleMedium)
 
                     Spacer(modifier = Modifier.weight(1f))
 
                     IconButton(onClick = {
-                        userToDelete = user
+                        playerToDelete = player
                         showDialog = true
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_delete_forever_24),
-                            contentDescription = "Delete user"
+                            contentDescription = "Delete player"
                         )
                     }
                 }
@@ -98,14 +98,14 @@ fun UserListScreen(
             }
         }
     }
-    if (showDialog && userToDelete != null) {
+    if (showDialog && playerToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("Confirm Deletion") },
-            text = { Text("Are you sure you want to delete ${userToDelete!!.name}?") },
+            text = { Text("Are you sure you want to delete ${playerToDelete!!.name}?") },
             confirmButton = {
                 TextButton(onClick = {
-                    userViewModel.deleteUser(userToDelete!!)
+                    playerViewModel.deletePlayer(playerToDelete!!)
                     showDialog = false
                 }) { Text("Delete") }
             },

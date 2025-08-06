@@ -1,6 +1,6 @@
-// ui/users/UserDetailScreen.kt
+// ui/users/PlayerDetailScreen.kt
 
-package com.example.lsgscores.ui.users
+package com.example.lsgscores.ui.players
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -19,20 +19,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lsgscores.R
-import com.example.lsgscores.viewmodel.UserViewModel
-import com.example.lsgscores.data.user.User
+import com.example.lsgscores.viewmodel.PlayerViewModel
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import kotlinx.coroutines.launch
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserDetailScreen(
+fun PlayerDetailScreen(
     navController: NavController,
     userId: Long,
-    userViewModel: UserViewModel
+    playerViewModel: PlayerViewModel
 ) {
-    val users by userViewModel.users.collectAsState(initial = emptyList())
+    val users by playerViewModel.players.collectAsState(initial = emptyList())
     val user = users.find { it.id == userId }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -165,7 +164,7 @@ fun UserDetailScreen(
                         Button(
                             onClick = {
                                 scope.launch {
-                                    userViewModel.updateUser(
+                                    playerViewModel.updatePlayer(
                                         user.copy(
                                             name = editedName.trim(),
                                             photoUri = editedPhotoPath ?: user.photoUri
@@ -262,7 +261,7 @@ fun UserDetailScreen(
             text = { Text("Are you sure you want to delete this player?") },
             confirmButton = {
                 TextButton(onClick = {
-                    userViewModel.deleteUser(user)
+                    playerViewModel.deletePlayer(user)
                     showDeleteDialog = false
                     navController.popBackStack()
                 }) { Text("Delete") }

@@ -1,4 +1,4 @@
-package com.example.lsgscores.ui.users
+package com.example.lsgscores.ui.players
 
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -30,13 +30,13 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.lsgscores.R
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
-import com.example.lsgscores.viewmodel.UserViewModel
+import com.example.lsgscores.viewmodel.PlayerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserFormScreen(
+fun PlayerFormScreen(
     navController: NavController,
-    userViewModel: UserViewModel
+    playerViewModel: PlayerViewModel
 ) {
     var name by remember { mutableStateOf("") }
 
@@ -85,7 +85,7 @@ fun UserFormScreen(
             croppedPhotoUri?.let {
                 Image(
                     painter = rememberAsyncImagePainter(it),
-                    contentDescription = "User photo",
+                    contentDescription = "Player photo",
                     modifier = Modifier.size(128.dp)
                 )
             }
@@ -96,7 +96,7 @@ fun UserFormScreen(
             Button(
                 onClick = {
                     if (name.isNotBlank()) {
-                        userViewModel.addUser(
+                        playerViewModel.addPlayer(
                             name = name,
                             photoUri = photoPath
                         ) {

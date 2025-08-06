@@ -1,10 +1,10 @@
-package com.example.lsgscores.data.user
+package com.example.lsgscores.data.player
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "users")
-data class User(
+@Entity(tableName = "players")
+data class Player(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val photoUri: String? = null  // <-- new property

@@ -13,11 +13,11 @@ import com.example.lsgscores.data.media.MediaRepository
 import com.example.lsgscores.data.scoring.ScoringModeRepository
 import com.example.lsgscores.data.session.SessionRepository
 import com.example.lsgscores.data.session.TeamRepository
-import com.example.lsgscores.data.user.UserRepository
+import com.example.lsgscores.data.player.PlayerRepository
 import com.example.lsgscores.ui.MainScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
-import com.example.lsgscores.viewmodel.UserViewModel
+import com.example.lsgscores.viewmodel.PlayerViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
             AppDatabase::class.java, "streetgolf-db"
         ).fallbackToDestructiveMigration().build()
 
-        val userRepository = UserRepository(db.userDao())
+        val playerRepository = PlayerRepository(db.userDao())
         val holeRepository = HoleRepository(db.holeDao())
         val sessionRepository = SessionRepository(db.sessionDao())
         val teamRepository = TeamRepository(db.teamDao())
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
 
-            val userViewModel = UserViewModel(userRepository)
+            val playerViewModel = PlayerViewModel(playerRepository)
             val holeViewModel = HoleViewModel(holeRepository)
             val sessionViewModel = SessionViewModel(
                 sessionRepository = sessionRepository,
@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
 
             MainScreen(
                 navController = navController,
-                userViewModel = userViewModel,
+                playerViewModel = playerViewModel,
                 holeViewModel = holeViewModel,
                 sessionViewModel = sessionViewModel
             )

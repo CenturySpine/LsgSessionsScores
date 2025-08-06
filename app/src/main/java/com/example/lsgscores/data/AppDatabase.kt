@@ -12,16 +12,16 @@ import com.example.lsgscores.data.scoring.ScoringModeDao
 import com.example.lsgscores.data.session.Session
 import com.example.lsgscores.data.session.Team
 import com.example.lsgscores.data.session.SessionDao
-import com.example.lsgscores.data.user.User
-import com.example.lsgscores.data.user.UserDao
+import com.example.lsgscores.data.player.Player
+import com.example.lsgscores.data.player.PlayerDao
 import com.example.lsgscores.data.media.Media
 import com.example.lsgscores.data.media.MediaDao
 import com.example.lsgscores.data.session.TeamDao
 
-@Database(entities = [User::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class], version = 1)
+@Database(entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class], version = 1)
 @TypeConverters(DateTimeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun userDao(): UserDao
+    abstract fun userDao(): PlayerDao
     abstract fun holeDao(): HoleDao
 
     abstract fun sessionDao(): SessionDao

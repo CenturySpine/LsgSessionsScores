@@ -3,35 +3,35 @@ package com.example.lsgscores.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.lsgscores.data.user.User
-import com.example.lsgscores.data.user.UserRepository
+import com.example.lsgscores.data.player.Player
+import com.example.lsgscores.data.player.PlayerRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.io.File
 
-class UserViewModel(
-    private val repository: UserRepository
+class PlayerViewModel(
+    private val repository: PlayerRepository
 ) : ViewModel() {
 
 
-    val users: Flow<List<User>> = repository.getAllUsers()
+    val players: Flow<List<Player>> = repository.getAllPlayers()
 
 
-    fun addUser(name: String, photoUri: String?, onUserAdded: () -> Unit) {
+    fun addPlayer(name: String, photoUri: String?, onPlayerAdded: () -> Unit) {
         viewModelScope.launch {
-            repository.insertUser(User(name = name, photoUri = photoUri))
-            onUserAdded()
+            repository.insertPlayer(Player(name = name, photoUri = photoUri))
+            onPlayerAdded()
         }
     }
-    fun updateUser(user: User) {
+    fun updatePlayer(player: Player) {
         viewModelScope.launch {
-            repository.updateUser(user)
+            repository.updatePlayer(player)
         }
     }
-    fun deleteUser(user: User) {
+    fun deletePlayer(player: Player) {
         viewModelScope.launch {
             // Delete the photo file if the path is not null or empty
-            user.photoUri?.let { photoPath ->
+            player.photoUri?.let { photoPath ->
                 try {
                     val file = File(photoPath)
                     if (file.exists()) {
@@ -41,18 +41,18 @@ class UserViewModel(
                     // Log or handle error if needed
                 }
             }
-            repository.deleteUser(user)
+            repository.deletePlayer(player)
         }
     }
 
 
 }
 
-class UserViewModelFactory(private val repository: UserRepository) : ViewModelProvider.Factory {
+class playerViewModelFactory(private val repository: PlayerRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(PlayerViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return UserViewModel(repository) as T
+            return PlayerViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

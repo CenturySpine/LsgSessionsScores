@@ -15,23 +15,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.lsgscores.ui.holes.HoleFormScreen
-import com.example.lsgscores.ui.users.UserListScreen
+import com.example.lsgscores.ui.players.PlayerListScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
 import com.example.lsgscores.ui.home.HomeScreen
 import com.example.lsgscores.ui.sessions.OngoingSessionScreen
 import com.example.lsgscores.ui.sessions.SessionCreationScreen
 import com.example.lsgscores.ui.sessions.SessionTeamsScreen
-import com.example.lsgscores.ui.users.UserDetailScreen
-import com.example.lsgscores.ui.users.UserFormScreen
+import com.example.lsgscores.ui.players.PlayerDetailScreen
+import com.example.lsgscores.ui.players.PlayerFormScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
-import com.example.lsgscores.viewmodel.UserViewModel
+import com.example.lsgscores.viewmodel.PlayerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    userViewModel: UserViewModel,
+    playerViewModel: PlayerViewModel,
     holeViewModel: HoleViewModel,
     sessionViewModel: SessionViewModel
 ) {
@@ -86,20 +86,20 @@ fun MainScreen(
                 HomeScreen()
             }
             composable(BottomNavItem.Users.route) {
-                UserListScreen(navController, userViewModel)
+                PlayerListScreen(navController, playerViewModel)
             }
             composable(BottomNavItem.NewSession.route) {
                 // Only pass the sessionViewModel, SessionCreationScreen will handle its own logic
                 SessionCreationScreen(navController, sessionViewModel)
             }
             composable("new_session_teams") {
-                SessionTeamsScreen(navController, sessionViewModel, userViewModel)
+                SessionTeamsScreen(navController, sessionViewModel, playerViewModel)
             }
             composable(BottomNavItem.OngoingSession.route) {
                 OngoingSessionScreen(navController, sessionViewModel)
             }
             composable("add_user") {
-                UserFormScreen(navController, userViewModel)
+                PlayerFormScreen(navController, playerViewModel)
             }
             composable(BottomNavItem.Holes.route) {
                 HoleListScreen(navController, holeViewModel)
@@ -114,10 +114,10 @@ fun MainScreen(
             ) {
                 val userId = it.arguments?.getLong("userId")
                 if (userId != null) {
-                    UserDetailScreen(
+                    PlayerDetailScreen(
                         navController = navController,
                         userId = userId,
-                        userViewModel = userViewModel
+                        playerViewModel = playerViewModel
                     )
                 }
             }
