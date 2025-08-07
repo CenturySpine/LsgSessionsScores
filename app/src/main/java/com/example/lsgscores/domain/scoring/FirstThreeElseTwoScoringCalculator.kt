@@ -1,7 +1,7 @@
 package com.example.lsgscores.domain.scoring
 
 class FirstThreeElseTwoScoringCalculator : ScoringCalculator {
-    override fun calculateScores(strokes: Map<String, Int>): Map<String, Int> {
+    override fun calculateScores(strokes: Map<Long, Int>): Map<Long, Int> {
         if (strokes.isEmpty()) return emptyMap()
         val minScore = strokes.values.minOrNull()!!
         val leaders = strokes.filterValues { it == minScore }

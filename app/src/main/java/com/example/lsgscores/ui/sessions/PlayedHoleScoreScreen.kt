@@ -19,7 +19,8 @@ fun PlayedHoleScoreScreen(
     playedHoleId: Long
 ) {
     // Load teams for the current session/played hole
-    val teams by sessionViewModel.getTeamsForPlayedHole(playedHoleId).collectAsState(initial = emptyList())
+    val teams by sessionViewModel.getTeamsForPlayedHole(playedHoleId)
+        .collectAsState(initial = emptyList())
     // If you want, you can also retrieve the hole and its name for context
     val teamsWithPlayers by sessionViewModel
         .getTeamsWithPlayersForPlayedHole(playedHoleId)
@@ -27,6 +28,14 @@ fun PlayedHoleScoreScreen(
 
     // State for strokes entered by user, one field per team
     val strokesByTeam = remember { mutableStateMapOf<Long, String>() }
+
+    // Convert current strokes input into a map for the calculator
+    val strokesMap = teamsWithPlayers.associate { teamWithPlayers ->
+        teamWithPlayers.team.id to (strokesByTeam[teamWithPlayers.team.id]?.toIntOrNull() ?: 0)
+    }
+
+// Calcul live des scores
+    val calculatedScores = sessionViewModel.computeScoresForCurrentScoringMode(strokesMap)
 
     Column(
         modifier = Modifier
@@ -39,17 +48,26 @@ fun PlayedHoleScoreScreen(
         Spacer(Modifier.height(8.dp))
 
         teamsWithPlayers.forEach { teamWithPlayers ->
-            val playerNames = listOfNotNull(teamWithPlayers.player1?.name, teamWithPlayers.player2?.name)
-                .joinToString(" & ")
+            val playerNames =
+                listOfNotNull(teamWithPlayers.player1?.name, teamWithPlayers.player2?.name)
+                    .joinToString(" & ")
+
+            val strokesValue = strokesByTeam[teamWithPlayers.team.id] ?: ""
+            val liveScore = calculatedScores[teamWithPlayers.team.id]
 
             OutlinedTextField(
-                value = strokesByTeam[teamWithPlayers.team.id] ?: "",
+                value = strokesValue,
                 onValueChange = { newValue ->
                     strokesByTeam[teamWithPlayers.team.id] = newValue.filter { it.isDigit() }
                 },
                 label = { Text(playerNames) },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                trailingIcon = {
+                    if (liveScore != null) {
+                        Text("Score: $liveScore")
+                    }
+                }
             )
             Spacer(Modifier.height(8.dp))
         }

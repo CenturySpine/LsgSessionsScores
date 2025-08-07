@@ -19,6 +19,8 @@ import com.example.lsgscores.data.session.SessionType
 import com.example.lsgscores.data.session.Team
 import com.example.lsgscores.data.session.TeamRepository
 import com.example.lsgscores.data.session.TeamWithPlayers
+import com.example.lsgscores.domain.scoring.ScoringCalculator
+import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -40,6 +42,20 @@ class SessionViewModel(
     private val playedHoleScoreRepository: PlayedHoleScoreRepository
 ) : ViewModel() {
 
+    var scoringModeId: Int? = null
+        private set
+
+    val ongoingSession: StateFlow<Session?> =
+        sessionRepository.getOngoingSessionFlow()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    init {
+        viewModelScope.launch {
+            ongoingSession.filterNotNull().collect { session ->
+                scoringModeId = session.scoringModeId
+            }
+        }
+    }
+
     private val _error = MutableStateFlow<String?>(null)
 
     // State for current session being created
@@ -49,9 +65,7 @@ class SessionViewModel(
     val holeGameModes: StateFlow<List<HoleGameMode>> =
         holeGameModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val ongoingSession: StateFlow<Session?> =
-        sessionRepository.getOngoingSessionFlow()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
 
     // List of scoring modes from repository (hardcoded list)
     val scoringModes: StateFlow<List<ScoringMode>> =
@@ -152,7 +166,7 @@ class SessionViewModel(
                 isOngoing = true
             )
             val sessionId = sessionRepository.insert(session)
-
+            scoringModeId = draft.scoringModeId
             // Insert teams for this session
             teams.forEach { playerIds ->
                 val player1Id = playerIds.getOrNull(0)
@@ -171,6 +185,7 @@ class SessionViewModel(
             onSessionCreated(sessionId)
         }
     }
+
     fun getTeamsForPlayedHole(playedHoleId: Long): Flow<List<Team>> {
         return playedHoleRepository.getPlayedHoleById(playedHoleId)
             .flatMapLatest { playedHole ->
@@ -181,6 +196,7 @@ class SessionViewModel(
                 }
             }
     }
+
     fun savePlayedHoleScore(playedHoleId: Long, teamId: Long, strokes: Int) {
         viewModelScope.launch {
             val score = PlayedHoleScore(
@@ -191,6 +207,7 @@ class SessionViewModel(
             playedHoleScoreRepository.insertPlayedHoleScore(score)
         }
     }
+
     /**
      * Adds a played hole to the ongoing session.
      * The new hole is added at the end of the session (next position).
@@ -223,6 +240,13 @@ class SessionViewModel(
                     flowOf(emptyList())
                 }
             }
+    }
+
+    fun computeScoresForCurrentScoringMode(strokesByTeam: Map<Long, Int>): Map<Long, Int> {
+        // Vérifie que scoringModeId est bien défini
+        val scoringId = scoringModeId ?: return emptyMap()
+        val calculator: ScoringCalculator = ScoringCalculatorFactory.getCalculatorById(scoringId)
+        return calculator.calculateScores(strokesByTeam)
     }
 
 }
