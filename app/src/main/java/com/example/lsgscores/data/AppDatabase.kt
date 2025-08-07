@@ -16,9 +16,13 @@ import com.example.lsgscores.data.player.Player
 import com.example.lsgscores.data.player.PlayerDao
 import com.example.lsgscores.data.media.Media
 import com.example.lsgscores.data.media.MediaDao
+import com.example.lsgscores.data.session.PlayedHole
+import com.example.lsgscores.data.session.PlayedHoleScore
+import com.example.lsgscores.data.session.PlayedHoleDao
+import com.example.lsgscores.data.session.PlayedHoleScoreDao
 import com.example.lsgscores.data.session.TeamDao
 
-@Database(entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class], version = 1)
+@Database(entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class], version = 1)
 @TypeConverters(DateTimeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): PlayerDao
@@ -31,6 +35,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
 
     abstract fun teamDao(): TeamDao
+
+    abstract fun playedHoleDao(): PlayedHoleDao
+
+    abstract fun playedHoleScoreDao(): PlayedHoleScoreDao
 
     companion object {
         @Volatile

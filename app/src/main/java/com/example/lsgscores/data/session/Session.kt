@@ -1,7 +1,10 @@
 package com.example.lsgscores.data.session
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Relation
+import com.example.lsgscores.data.player.Player
 import java.time.LocalDateTime
 
 @Entity(tableName = "teams")
@@ -28,4 +31,18 @@ data class Session(
     val scoringModeId: Int,           // Foreign key to ScoringMode
     val comment: String? = null,
     val isOngoing: Boolean = false // true if this session is the ongoing one
+)
+
+data class TeamWithPlayers(
+    @Embedded val team: Team,
+    @Relation(
+        parentColumn = "player1Id",
+        entityColumn = "id"
+    )
+    val player1: Player?,
+    @Relation(
+        parentColumn = "player2Id",
+        entityColumn = "id"
+    )
+    val player2: Player?
 )

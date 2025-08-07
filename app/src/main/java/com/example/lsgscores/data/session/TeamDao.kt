@@ -18,14 +18,18 @@ interface TeamDao {
     suspend fun delete(team: Team)
 
     @Query("SELECT * FROM teams WHERE sessionId = :sessionId")
-    fun getTeamsForSession(sessionId: Int): Flow<List<Team>>
+    fun getTeamsForSession(sessionId: Long): Flow<List<Team>>
 
     @Query("SELECT * FROM teams WHERE id = :id")
-    suspend fun getById(id: Int): Team?
+    suspend fun getById(id: Long): Team?
 
     /**
      * Delete all teams for a given session.
      */
     @Query("DELETE FROM teams WHERE sessionId = :sessionId")
     suspend fun deleteTeamsForSession(sessionId: Long)
+
+    @Transaction
+    @Query("SELECT * FROM teams WHERE sessionId = :sessionId")
+    fun getTeamsWithPlayersForSession(sessionId: Long): Flow<List<TeamWithPlayers>>
 }

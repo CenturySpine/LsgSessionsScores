@@ -9,11 +9,14 @@ import androidx.room.Room
 import androidx.navigation.compose.rememberNavController
 import com.example.lsgscores.data.AppDatabase
 import com.example.lsgscores.data.hole.HoleRepository
+import com.example.lsgscores.data.holemode.HoleGameModeRepository
 import com.example.lsgscores.data.media.MediaRepository
 import com.example.lsgscores.data.scoring.ScoringModeRepository
 import com.example.lsgscores.data.session.SessionRepository
 import com.example.lsgscores.data.session.TeamRepository
 import com.example.lsgscores.data.player.PlayerRepository
+import com.example.lsgscores.data.session.PlayedHoleRepository
+import com.example.lsgscores.data.session.PlayedHoleScoreRepository
 import com.example.lsgscores.ui.MainScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
@@ -34,6 +37,9 @@ class MainActivity : ComponentActivity() {
         val teamRepository = TeamRepository(db.teamDao())
         val mediaRepository = MediaRepository(db.mediaDao())
         val scoringModeRepository = ScoringModeRepository() // hardcoded
+        val playedHoleRepository = PlayedHoleRepository(db.playedHoleDao())
+        val holeGameModeRepository = HoleGameModeRepository()
+        val playedHoleScoreRepository = PlayedHoleScoreRepository(db.playedHoleScoreDao())
 
         setContent {
             val navController = rememberNavController()
@@ -44,7 +50,10 @@ class MainActivity : ComponentActivity() {
                 sessionRepository = sessionRepository,
                 teamRepository = teamRepository,
                 mediaRepository = mediaRepository,
-                scoringModeRepository = scoringModeRepository
+                scoringModeRepository = scoringModeRepository,
+                playedHoleRepository = playedHoleRepository,
+                holeGameModeRepository = holeGameModeRepository,
+                playedHoleScoreRepository = playedHoleScoreRepository
             )
 
             MainScreen(

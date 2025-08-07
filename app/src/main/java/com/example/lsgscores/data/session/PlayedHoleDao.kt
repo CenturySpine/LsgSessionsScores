@@ -1,0 +1,17 @@
+package com.example.lsgscores.data.session
+
+import androidx.room.*
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface PlayedHoleDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(playedHole: PlayedHole): Long
+
+    @Query("SELECT * FROM played_holes WHERE sessionId = :sessionId ORDER BY position ASC")
+    fun getPlayedHolesForSession(sessionId: Long): Flow<List<PlayedHole>>
+
+    // PlayedHoleDao.kt
+    @Query("SELECT * FROM played_holes WHERE id = :playedHoleId")
+    fun getById(playedHoleId: Long): Flow<PlayedHole?>
+}

@@ -23,6 +23,7 @@ import com.example.lsgscores.ui.sessions.SessionCreationScreen
 import com.example.lsgscores.ui.sessions.SessionTeamsScreen
 import com.example.lsgscores.ui.players.PlayerDetailScreen
 import com.example.lsgscores.ui.players.PlayerFormScreen
+import com.example.lsgscores.ui.sessions.PlayedHoleScoreScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
@@ -96,7 +97,7 @@ fun MainScreen(
                 SessionTeamsScreen(navController, sessionViewModel, playerViewModel)
             }
             composable(BottomNavItem.OngoingSession.route) {
-                OngoingSessionScreen(navController, sessionViewModel)
+                OngoingSessionScreen(navController, sessionViewModel, holeViewModel)
             }
             composable("add_user") {
                 PlayerFormScreen(navController, playerViewModel)
@@ -121,6 +122,19 @@ fun MainScreen(
                     )
                 }
             }
+            composable(
+                route = "played_hole_score/{playedHoleId}",
+                arguments = listOf(navArgument("playedHoleId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val playedHoleId = backStackEntry.arguments?.getLong("playedHoleId") ?: 0L
+                PlayedHoleScoreScreen(
+                    navController = navController,
+                    sessionViewModel = sessionViewModel,
+                    playedHoleId = playedHoleId
+                )
+            }
+
+
         }
     }
 }

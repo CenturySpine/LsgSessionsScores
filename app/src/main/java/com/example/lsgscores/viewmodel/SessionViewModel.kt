@@ -4,14 +4,21 @@ package com.example.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lsgscores.data.holemode.HoleGameMode
+import com.example.lsgscores.data.holemode.HoleGameModeRepository
 import com.example.lsgscores.data.media.MediaRepository
 import com.example.lsgscores.data.scoring.ScoringMode
 import com.example.lsgscores.data.scoring.ScoringModeRepository
+import com.example.lsgscores.data.session.PlayedHole
+import com.example.lsgscores.data.session.PlayedHoleRepository
+import com.example.lsgscores.data.session.PlayedHoleScore
+import com.example.lsgscores.data.session.PlayedHoleScoreRepository
 import com.example.lsgscores.data.session.Session
 import com.example.lsgscores.data.session.SessionRepository
 import com.example.lsgscores.data.session.SessionType
 import com.example.lsgscores.data.session.Team
 import com.example.lsgscores.data.session.TeamRepository
+import com.example.lsgscores.data.session.TeamWithPlayers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -27,7 +34,10 @@ class SessionViewModel(
     private val sessionRepository: SessionRepository,
     private val teamRepository: TeamRepository,
     private val mediaRepository: MediaRepository,
-    private val scoringModeRepository: ScoringModeRepository
+    private val scoringModeRepository: ScoringModeRepository,
+    private val playedHoleRepository: PlayedHoleRepository,
+    private val holeGameModeRepository: HoleGameModeRepository,
+    private val playedHoleScoreRepository: PlayedHoleScoreRepository
 ) : ViewModel() {
 
     private val _error = MutableStateFlow<String?>(null)
@@ -36,7 +46,9 @@ class SessionViewModel(
     private val _sessionDraft = MutableStateFlow(SessionDraft())
     val sessionDraft: StateFlow<SessionDraft> = _sessionDraft.asStateFlow()
     val error: StateFlow<String?> = _error
-
+    val holeGameModes: StateFlow<List<HoleGameMode>> =
+        holeGameModeRepository.getAll()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val ongoingSession: StateFlow<Session?> =
         sessionRepository.getOngoingSessionFlow()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
@@ -159,6 +171,58 @@ class SessionViewModel(
             onSessionCreated(sessionId)
         }
     }
+    fun getTeamsForPlayedHole(playedHoleId: Long): Flow<List<Team>> {
+        return playedHoleRepository.getPlayedHoleById(playedHoleId)
+            .flatMapLatest { playedHole ->
+                if (playedHole != null) {
+                    teamRepository.getTeamsForSession(playedHole.sessionId)
+                } else {
+                    flowOf(emptyList())
+                }
+            }
+    }
+    fun savePlayedHoleScore(playedHoleId: Long, teamId: Long, strokes: Int) {
+        viewModelScope.launch {
+            val score = PlayedHoleScore(
+                playedHoleId = playedHoleId,
+                teamId = teamId,
+                strokes = strokes
+            )
+            playedHoleScoreRepository.insertPlayedHoleScore(score)
+        }
+    }
+    /**
+     * Adds a played hole to the ongoing session.
+     * The new hole is added at the end of the session (next position).
+     */
+    fun addPlayedHole(holeId: Long, gameModeId: Int, onPlayedHoleCreated: (Long) -> Unit) {
+        viewModelScope.launch {
+            val session = ongoingSession.value
+            if (session != null) {
+                val playedHoles = playedHoleRepository.getPlayedHolesForSession(session.id)
+                    .firstOrNull() ?: emptyList()
+                val nextPosition = playedHoles.size + 1
+                val playedHole = PlayedHole(
+                    sessionId = session.id,
+                    holeId = holeId,
+                    gameModeId = gameModeId,
+                    position = nextPosition
+                )
+                val playedHoleId = playedHoleRepository.insertPlayedHole(playedHole)
+                onPlayedHoleCreated(playedHoleId)
+            }
+        }
+    }
 
-    // (Later, add functions to create session/teams/medias in the database after full flow)
+    fun getTeamsWithPlayersForPlayedHole(playedHoleId: Long): Flow<List<TeamWithPlayers>> {
+        return playedHoleRepository.getPlayedHoleById(playedHoleId)
+            .flatMapLatest { playedHole ->
+                if (playedHole != null) {
+                    teamRepository.getTeamsWithPlayersForSession(playedHole.sessionId)
+                } else {
+                    flowOf(emptyList())
+                }
+            }
+    }
+
 }
