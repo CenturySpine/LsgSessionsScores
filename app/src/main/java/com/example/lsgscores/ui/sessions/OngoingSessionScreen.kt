@@ -3,6 +3,7 @@ package com.example.lsgscores.ui.sessions
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -141,6 +142,32 @@ fun OngoingSessionScreen(
             )
         }
 
-        // ... (rest of your UI)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            // Sticky bottom bar with action buttons
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp, start = 24.dp, end = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Button(
+                    onClick = { /* TODO: Cancel session */ },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+                Spacer(modifier = Modifier.width(24.dp))
+                Button(
+                    onClick = { /* TODO: Validate session */ },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Validate")
+                }
+            }
+        }
     }
 }
