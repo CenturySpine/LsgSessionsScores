@@ -1,17 +1,39 @@
 package com.example.lsgscores.ui.sessions
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.lsgscores.viewmodel.SessionViewModel
+import com.example.lsgscores.ui.BottomNavItem
 import com.example.lsgscores.viewmodel.HoleViewModel
-import com.example.lsgscores.data.hole.Hole
-import com.example.lsgscores.data.holemode.HoleGameModeRepository
-import com.example.lsgscores.data.holemode.HoleGameMode
+import com.example.lsgscores.viewmodel.SessionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,10 +44,11 @@ fun OngoingSessionScreen(
 
 ) {
     var showHolePicker by remember { mutableStateOf(false) }
-
+    val ongoingSession = sessionViewModel.ongoingSession.collectAsState(initial = null).value
     val holes by holeViewModel.holes.collectAsState(initial = emptyList())
     val gameModes by sessionViewModel.holeGameModes.collectAsState()
     var selectedGameModeId by remember { mutableStateOf<Int?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -63,7 +86,9 @@ fun OngoingSessionScreen(
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("Hole") },
-                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth()
                             )
                             ExposedDropdownMenu(
                                 expanded = expanded,
@@ -88,7 +113,7 @@ fun OngoingSessionScreen(
                         Spacer(Modifier.height(8.dp))
                         gameModes.forEach { mode ->
                             Row(
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 RadioButton(
@@ -127,7 +152,8 @@ fun OngoingSessionScreen(
                                         selectedHoleId = null
                                         selectedGameModeId = null
                                     }
-                                )                            }
+                                )
+                            }
                         },
                         enabled = selectedHoleId != null && selectedGameModeId != null
                     ) {
@@ -142,11 +168,7 @@ fun OngoingSessionScreen(
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            // Sticky bottom bar with action buttons
+        Box(modifier = Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -155,14 +177,15 @@ fun OngoingSessionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(
-                    onClick = { /* TODO: Cancel session */ },
-                    modifier = Modifier.weight(1f)
+                    onClick = { showDeleteConfirm = true },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text("Cancel")
                 }
                 Spacer(modifier = Modifier.width(24.dp))
                 Button(
-                    onClick = { /* TODO: Validate session */ },
+                    onClick = { /* TODO: Validate later */ },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Validate")
@@ -170,4 +193,34 @@ fun OngoingSessionScreen(
             }
         }
     }
-}
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete session") },
+            text = {
+                Text(
+                    "This will permanently delete the session and all its related data:\n" +
+                            "• Teams\n• Played holes\n• Scores\n\nThis action cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        ongoingSession?.let { session ->
+                            sessionViewModel.deleteSessionAndAllData(session) {
+                                navController.navigate(BottomNavItem.Home.route) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                        showDeleteConfirm = false
+                    }
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }}

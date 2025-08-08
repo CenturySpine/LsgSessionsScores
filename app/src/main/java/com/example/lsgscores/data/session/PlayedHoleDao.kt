@@ -14,4 +14,10 @@ interface PlayedHoleDao {
     // PlayedHoleDao.kt
     @Query("SELECT * FROM played_holes WHERE id = :playedHoleId")
     fun getById(playedHoleId: Long): Flow<PlayedHole?>
+
+    @Query("DELETE FROM played_holes WHERE sessionId = :sessionId")
+    suspend fun deletePlayedHolesBySession(sessionId: Long)
+
+    @Query("SELECT id FROM played_holes WHERE sessionId = :sessionId")
+    suspend fun getPlayedHoleIdsForSession(sessionId: Long): List<Long>
 }

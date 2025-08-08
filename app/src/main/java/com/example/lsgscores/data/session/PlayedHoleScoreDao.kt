@@ -13,4 +13,7 @@ interface PlayedHoleScoreDao {
 
     @Query("SELECT * FROM played_hole_scores WHERE playedHoleId = :playedHoleId")
     fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>>
+
+    @Query("DELETE FROM played_hole_scores WHERE playedHoleId IN (:playedHoleIds)")
+    suspend fun deleteScoresForPlayedHoles(playedHoleIds: List<Long>)
 }

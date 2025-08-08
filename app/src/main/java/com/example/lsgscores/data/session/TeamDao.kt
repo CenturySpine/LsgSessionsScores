@@ -32,4 +32,7 @@ interface TeamDao {
     @Transaction
     @Query("SELECT * FROM teams WHERE sessionId = :sessionId")
     fun getTeamsWithPlayersForSession(sessionId: Long): Flow<List<TeamWithPlayers>>
+
+    @Query("DELETE FROM teams WHERE sessionId = :sessionId")
+    suspend fun deleteTeamsBySession(sessionId: Long)
 }

@@ -33,13 +33,18 @@ class MainActivity : ComponentActivity() {
 
         val playerRepository = PlayerRepository(db.userDao())
         val holeRepository = HoleRepository(db.holeDao())
-        val sessionRepository = SessionRepository(db.sessionDao())
+
         val teamRepository = TeamRepository(db.teamDao())
         val mediaRepository = MediaRepository(db.mediaDao())
         val scoringModeRepository = ScoringModeRepository() // hardcoded
         val playedHoleRepository = PlayedHoleRepository(db.playedHoleDao())
         val holeGameModeRepository = HoleGameModeRepository()
         val playedHoleScoreRepository = PlayedHoleScoreRepository(db.playedHoleScoreDao())
+        val sessionRepository = SessionRepository(
+            db.sessionDao(),
+            db.teamDao(),
+            db.playedHoleDao(),
+            db.playedHoleScoreDao())
 
         setContent {
             val navController = rememberNavController()

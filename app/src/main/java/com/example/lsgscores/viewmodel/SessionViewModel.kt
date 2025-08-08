@@ -249,4 +249,11 @@ class SessionViewModel(
         return calculator.calculateScores(strokesByTeam)
     }
 
+    fun deleteSessionAndAllData(session: Session, onSessionDeleted: () -> Unit = {}) {
+        viewModelScope.launch {
+            sessionRepository.deleteSessionCascade(session)
+            onSessionDeleted()
+        }
+    }
+
 }
