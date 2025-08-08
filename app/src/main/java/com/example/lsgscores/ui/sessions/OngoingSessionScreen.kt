@@ -1,5 +1,5 @@
 package com.example.lsgscores.ui.sessions
-
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,7 +87,7 @@ fun OngoingSessionScreen(
                                 readOnly = true,
                                 label = { Text("Hole") },
                                 modifier = Modifier
-                                    .menuAnchor()
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                                     .fillMaxWidth()
                             )
                             ExposedDropdownMenu(
