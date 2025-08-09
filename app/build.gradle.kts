@@ -1,9 +1,9 @@
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "2.0.0-1.0.24"
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -47,7 +47,7 @@ android {
 dependencies {
 
     implementation(libs.material3)
-        ksp(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.core.ktx)
@@ -73,4 +73,7 @@ dependencies {
     implementation(libs.accompanist.flowlayout)
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("androidx.compose:compose-bom:2024.05.00")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 }

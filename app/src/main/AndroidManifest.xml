@@ -6,6 +6,7 @@
         android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
     <application
+        android:name=".LsgScoresApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
