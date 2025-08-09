@@ -22,6 +22,7 @@ hiltNavigationCompose = "1.2.0"
 kotlin = "2.0.10"
 ksp = "2.0.10-1.0.24"
 hilt = "2.51.1"
+foundation = "1.8.3"
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanistFlowlayout" }
@@ -54,6 +55,7 @@ materialdesignicons = { module = "io.github.devssrsouza.compose-icons:materialde
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -1,7 +1,6 @@
 package com.example.lsgscores.ui.sessions
 
-import android.graphics.drawable.Icon
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
@@ -26,6 +27,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -66,289 +68,301 @@ fun OngoingSessionScreen(
     val currentScoringMode by sessionViewModel.currentScoringModeInfo.collectAsState()
     var showScoringModeInfo by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+// Remplacer le contenu de la fonction OngoingSessionScreen à partir de la ligne avec Column(
+// jusqu'à la fin de la fonction (avant les AlertDialog)
+
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        ongoingSession?.let { session ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Session du ${
-                            session.dateTime.format(
-                                DateTimeFormatter.ofPattern(
-                                    "dd MMMM yyyy",
-                                    Locale.FRENCH
-                                )
-                            )
-                        }",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Carte du mode de scoring
-            currentScoringMode?.let { scoringMode ->
+        // Scrollable content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp)
+                .padding(bottom = 88.dp), // Space for sticky buttons
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            ongoingSession?.let { session ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = scoringMode.name,
-                            style = MaterialTheme.typography.titleSmall.copy(fontStyle = FontStyle.Italic),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.weight(1f)
+                            text = "Session du ${
+                                session.dateTime.format(
+                                    DateTimeFormatter.ofPattern(
+                                        "dd MMMM yyyy",
+                                        Locale.FRENCH
+                                    )
+                                )
+                            }",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                        IconButton(
-                            onClick = { showScoringModeInfo = true },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "Scoring mode info",
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            // Team standings table (only show if we have data)
-            if (teamStandings.isNotEmpty()) {
-                StandingsTable(standings = teamStandings)
-            }
 
-            // Section des trous joués
-            if (playedHoles.isEmpty()) {
-                Text(
-                    text = "No holes have been played yet. Press the button below to add one.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-            } else {
-                Text(
-                    text = "Holes played:",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                playedHoles.forEach { playedHole ->
+                // Carte du mode de scoring
+                currentScoringMode?.let { scoringMode ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Hole: ${playedHole.holeName} (${playedHole.gameModeName})",
-                                style = MaterialTheme.typography.titleSmall
+                                text = scoringMode.name,
+                                style = MaterialTheme.typography.titleSmall.copy(fontStyle = FontStyle.Italic),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.weight(1f)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = playedHole.teamResults.joinToString(", ") {
-                                    "${it.teamName}: ${it.strokes} - ${it.calculatedScore}"
-                                },
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            IconButton(
+                                onClick = { showScoringModeInfo = true },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Scoring mode info",
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            Button(
-                onClick = { showHolePicker = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Add or associate a hole")
-            }
+                Spacer(modifier = Modifier.height(16.dp))
 
-            if (showHolePicker) {
-                var selectedHoleId by remember { mutableStateOf<Long?>(null) }
-                var expanded by remember { mutableStateOf(false) }
+                // Team standings table (only show if we have data)
+                if (teamStandings.isNotEmpty()) {
+                    StandingsTable(standings = teamStandings)
+                }
 
-                AlertDialog(
-                    onDismissRequest = { showHolePicker = false },
-                    title = { Text("Select or create a hole") },
-                    text = {
-                        Column {
-                            // Hole selection dropdown
-                            Text("Select a hole")
-                            Spacer(Modifier.height(8.dp))
-                            ExposedDropdownMenuBox(
-                                expanded = expanded,
-                                onExpandedChange = { expanded = !expanded }
+                // Section des trous joués
+                if (playedHoles.isEmpty()) {
+                    Text(
+                        text = "No holes have been played yet. Press the button below to add one.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Holes played:",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    playedHoles.forEach { playedHole ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
                             ) {
-                                OutlinedTextField(
-                                    value = holes.find { it.id == selectedHoleId }?.name ?: "",
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Hole") },
-                                    modifier = Modifier
-                                        .menuAnchor(
-                                            MenuAnchorType.PrimaryNotEditable,
-                                            enabled = true
-                                        )
-                                        .fillMaxWidth()
+                                Text(
+                                    text = "Hole: ${playedHole.holeName} (${playedHole.gameModeName})",
+                                    style = MaterialTheme.typography.titleSmall
                                 )
-                                ExposedDropdownMenu(
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = playedHole.teamResults.joinToString(", ") {
+                                        "${it.teamName}: ${it.strokes} - ${it.calculatedScore}"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = { showHolePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Add or associate a hole")
+                }
+
+                if (showHolePicker) {
+                    var selectedHoleId by remember { mutableStateOf<Long?>(null) }
+                    var expanded by remember { mutableStateOf(false) }
+
+                    AlertDialog(
+                        onDismissRequest = { showHolePicker = false },
+                        title = { Text("Select or create a hole") },
+                        text = {
+                            Column {
+                                // Hole selection dropdown
+                                Text("Select a hole")
+                                Spacer(Modifier.height(8.dp))
+                                ExposedDropdownMenuBox(
                                     expanded = expanded,
-                                    onDismissRequest = { expanded = false }
+                                    onExpandedChange = { expanded = !expanded }
                                 ) {
-                                    holes.forEach { hole ->
-                                        DropdownMenuItem(
-                                            text = { Text(hole.name) },
-                                            onClick = {
-                                                selectedHoleId = hole.id
-                                                expanded = false
+                                    OutlinedTextField(
+                                        value = holes.find { it.id == selectedHoleId }?.name ?: "",
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text("Hole") },
+                                        modifier = Modifier
+                                            .menuAnchor(
+                                                MenuAnchorType.PrimaryNotEditable,
+                                                enabled = true
+                                            )
+                                            .fillMaxWidth()
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }
+                                    ) {
+                                        holes.forEach { hole ->
+                                            DropdownMenuItem(
+                                                text = { Text(hole.name) },
+                                                onClick = {
+                                                    selectedHoleId = hole.id
+                                                    expanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(Modifier.height(16.dp))
+
+                                // Mode selection
+                                Text("Select game mode")
+                                Spacer(Modifier.height(8.dp))
+                                gameModes.forEach { mode ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        RadioButton(
+                                            selected = selectedGameModeId == mode.id,
+                                            onClick = { selectedGameModeId = mode.id }
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(mode.name)
+                                    }
+                                }
+
+                                Spacer(Modifier.height(16.dp))
+                                // Option to create a new hole
+                                Button(
+                                    onClick = {
+                                        showHolePicker = false
+                                        navController.navigate("add_hole")
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Create a new hole")
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    if (selectedHoleId != null && selectedGameModeId != null) {
+                                        sessionViewModel.addPlayedHole(
+                                            holeId = selectedHoleId!!,
+                                            gameModeId = selectedGameModeId!!,
+                                            onPlayedHoleCreated = { playedHoleId ->
+                                                // Navigate to the score entry screen for the new played hole
+                                                navController.navigate("played_hole_score/$playedHoleId")
+                                                showHolePicker = false
+                                                selectedHoleId = null
+                                                selectedGameModeId = null
                                             }
                                         )
                                     }
-                                }
-                            }
-
-                            Spacer(Modifier.height(16.dp))
-
-                            // Mode selection
-                            Text("Select game mode")
-                            Spacer(Modifier.height(8.dp))
-                            gameModes.forEach { mode ->
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    RadioButton(
-                                        selected = selectedGameModeId == mode.id,
-                                        onClick = { selectedGameModeId = mode.id }
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(mode.name)
-                                }
-                            }
-
-                            Spacer(Modifier.height(16.dp))
-                            // Option to create a new hole
-                            Button(
-                                onClick = {
-                                    showHolePicker = false
-                                    navController.navigate("add_hole")
                                 },
-                                modifier = Modifier.fillMaxWidth()
+                                enabled = selectedHoleId != null && selectedGameModeId != null
                             ) {
-                                Text("Create a new hole")
+                                Text("Add to session")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showHolePicker = false }) {
+                                Text("Cancel")
                             }
                         }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                if (selectedHoleId != null && selectedGameModeId != null) {
-                                    sessionViewModel.addPlayedHole(
-                                        holeId = selectedHoleId!!,
-                                        gameModeId = selectedGameModeId!!,
-                                        onPlayedHoleCreated = { playedHoleId ->
-                                            // Navigate to the score entry screen for the new played hole
-                                            navController.navigate("played_hole_score/$playedHoleId")
-                                            showHolePicker = false
-                                            selectedHoleId = null
-                                            selectedGameModeId = null
-                                        }
-                                    )
-                                }
-                            },
-                            enabled = selectedHoleId != null && selectedGameModeId != null
-                        ) {
-                            Text("Add to session")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showHolePicker = false }) {
-                            Text("Cancel")
-                        }
-                    }
-                )
-            }
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp, start = 24.dp, end = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Button(
-                        onClick = { showDeleteConfirm = true },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(24.dp))
-                    Button(
-                        onClick = { /* TODO: Validate later */ },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Validate")
-                    }
+                    )
                 }
             }
         }
 
-        if (showDeleteConfirm) {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirm = false },
-                title = { Text("Delete session") },
-                text = {
-                    Text(
-                        "This will permanently delete the session and all its related data:\n" +
-                                "• Teams\n• Played holes\n• Scores\n\nThis action cannot be undone."
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            ongoingSession?.let { session ->
-                                sessionViewModel.deleteSessionAndAllData(session) {
-                                    navController.navigate(BottomNavItem.Home.route) {
-                                        popUpTo(0) { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                }
-                            }
-                            showDeleteConfirm = false
-                        }
-                    ) { Text("Delete") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
-                }
-            )
+        // Sticky buttons at bottom
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Button(
+                onClick = { showDeleteConfirm = true },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Cancel")
+            }
+            Spacer(modifier = Modifier.width(24.dp))
+            Button(
+                onClick = { /* TODO: Validate later */ },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Validate")
+            }
         }
     }
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete session") },
+            text = {
+                Text(
+                    "This will permanently delete the session and all its related data:\n" +
+                            "• Teams\n• Played holes\n• Scores\n\nThis action cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        ongoingSession?.let { session ->
+                            sessionViewModel.deleteSessionAndAllData(session) {
+                                navController.navigate(BottomNavItem.Home.route) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                        showDeleteConfirm = false
+                    }
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }
+
 
     if (showScoringModeInfo) {
         currentScoringMode?.let { scoringMode ->
