@@ -1,7 +1,6 @@
 package com.example.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.lsgscores.data.player.Player
 import com.example.lsgscores.data.player.PlayerRepository

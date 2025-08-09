@@ -52,9 +52,9 @@ class SessionViewModel @Inject constructor(
     private val teamRepository: TeamRepository,
     private val holeRepository: HoleRepository,
     private val mediaRepository: MediaRepository,
-    private val scoringModeRepository: ScoringModeRepository,
+    scoringModeRepository: ScoringModeRepository,
     private val playedHoleRepository: PlayedHoleRepository,
-    private val holeGameModeRepository: HoleGameModeRepository,
+    holeGameModeRepository: HoleGameModeRepository,
     private val playedHoleScoreRepository: PlayedHoleScoreRepository
 ) : ViewModel() {
 

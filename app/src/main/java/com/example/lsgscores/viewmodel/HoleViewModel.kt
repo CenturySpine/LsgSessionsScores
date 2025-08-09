@@ -1,7 +1,6 @@
 package com.example.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.hole.HoleRepository
