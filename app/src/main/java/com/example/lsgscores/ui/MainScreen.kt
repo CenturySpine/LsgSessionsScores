@@ -47,6 +47,7 @@ import com.example.lsgscores.ui.players.PlayerListScreen
 import com.example.lsgscores.ui.sessions.OngoingSessionScreen
 import com.example.lsgscores.ui.sessions.PlayedHoleScoreScreen
 import com.example.lsgscores.ui.sessions.SessionCreationScreen
+import com.example.lsgscores.ui.sessions.SessionHistoryScreen
 import com.example.lsgscores.ui.sessions.SessionTeamsScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
@@ -204,14 +205,7 @@ fun MainScreen(
                     HoleListScreen(navController, holeViewModel)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
-                    // TODO: Create SessionHistoryScreen
-                    // For now, show a placeholder
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Sessions History - Coming soon")
-                    }
+                    SessionHistoryScreen(navController, sessionViewModel)
                 }
 
                 // Other routes (unchanged)

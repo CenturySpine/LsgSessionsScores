@@ -46,6 +46,7 @@ data class TeamResult(
     val strokes: Int,
     val calculatedScore: Int
 )
+
 data class SessionDraft(
     val dateTime: LocalDateTime = LocalDateTime.now(),
     val sessionType: SessionType = SessionType.INDIVIDUAL,
@@ -71,6 +72,7 @@ class SessionViewModel @Inject constructor(
     val ongoingSession: StateFlow<Session?> =
         sessionRepository.getOngoingSessionFlow()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
     init {
         viewModelScope.launch {
             ongoingSession.filterNotNull().collect { session ->
@@ -107,20 +109,24 @@ class SessionViewModel @Inject constructor(
                                         playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id),
                                         teamRepository.getTeamsWithPlayersForSession(session.id)
                                     ) { hole, gameMode, scores, teamsWithPlayers -> // MODIFIÉ
-                                        val strokesByTeam = scores.associate { it.teamId to it.strokes }
-                                        val calculatedScores = computeScoresForCurrentScoringMode(strokesByTeam)
+                                        val strokesByTeam =
+                                            scores.associate { it.teamId to it.strokes }
+                                        val calculatedScores =
+                                            computeScoresForCurrentScoringMode(strokesByTeam)
 
-                                        val teamResults = teamsWithPlayers.mapNotNull { teamWithPlayers ->
-                                            val strokes = strokesByTeam[teamWithPlayers.team.id]
-                                            val calculatedScore = calculatedScores[teamWithPlayers.team.id]
-                                            if (strokes != null && calculatedScore != null) {
-                                                val teamName = listOfNotNull(
-                                                    teamWithPlayers.player1?.name,
-                                                    teamWithPlayers.player2?.name
-                                                ).joinToString(" & ")
-                                                TeamResult(teamName, strokes, calculatedScore)
-                                            } else null
-                                        }
+                                        val teamResults =
+                                            teamsWithPlayers.mapNotNull { teamWithPlayers ->
+                                                val strokes = strokesByTeam[teamWithPlayers.team.id]
+                                                val calculatedScore =
+                                                    calculatedScores[teamWithPlayers.team.id]
+                                                if (strokes != null && calculatedScore != null) {
+                                                    val teamName = listOfNotNull(
+                                                        teamWithPlayers.player1?.name,
+                                                        teamWithPlayers.player2?.name
+                                                    ).joinToString(" & ")
+                                                    TeamResult(teamName, strokes, calculatedScore)
+                                                } else null
+                                            }
 
                                         PlayedHoleDisplay(
                                             playedHoleId = playedHole.id,  // Add the played hole ID
@@ -128,7 +134,8 @@ class SessionViewModel @Inject constructor(
                                             position = playedHole.position,
                                             gameModeName = gameMode?.name ?: "Unknown Mode",
                                             teamResults = teamResults
-                                        )                                    }
+                                        )
+                                    }
                                 }
                             ) { it.toList().sortedBy { display -> display.position } }
                         }
@@ -153,7 +160,8 @@ class SessionViewModel @Inject constructor(
                 emptyList()
             } else {
                 // Aggregate totals by team
-                val teamTotals = mutableMapOf<String, Pair<Int, Int>>() // teamName to (totalStrokes, totalScore)
+                val teamTotals =
+                    mutableMapOf<String, Pair<Int, Int>>() // teamName to (totalStrokes, totalScore)
 
                 playedHoles.forEach { playedHole ->
                     playedHole.teamResults.forEach { teamResult ->
@@ -194,6 +202,15 @@ class SessionViewModel @Inject constructor(
         scoringModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Add this property to get all completed sessions
+    val completedSessions: StateFlow<List<Session>> =
+        sessionRepository.getAll()
+            .map { sessions ->
+                sessions.filter { !it.isOngoing }
+                    .sortedByDescending { it.dateTime }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Update session type (individual or team)
     fun setSessionType(type: SessionType) {
         _sessionDraft.update { it.copy(sessionType = type) }
@@ -226,14 +243,14 @@ class SessionViewModel @Inject constructor(
         )
     }
 
-    /**
-     * Validate the ongoing session: just remove the ongoing flag.
-     */
     fun validateOngoingSession(onValidated: () -> Unit = {}) {
         viewModelScope.launch {
             val ongoing = sessionRepository.getOngoingSession()
             if (ongoing != null) {
-                val validated = ongoing.copy(isOngoing = false)
+                val validated = ongoing.copy(
+                    isOngoing = false,
+                    endDateTime = LocalDateTime.now()  // Set end time
+                )
                 sessionRepository.update(validated)
                 onValidated()
             }

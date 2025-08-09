@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lsgscores.R
 import com.example.lsgscores.ui.BottomNavItem
+import com.example.lsgscores.ui.DrawerNavItem
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
 import java.time.format.DateTimeFormatter
@@ -72,6 +73,7 @@ fun OngoingSessionScreen(
     var showScoringModeInfo by remember { mutableStateOf(false) }
     var playedHoleToDelete by remember { mutableStateOf<Long?>(null) }
     var showDeletePlayedHoleConfirm by remember { mutableStateOf(false) }
+    var showValidateConfirm by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -376,12 +378,11 @@ fun OngoingSessionScreen(
             }
             Spacer(modifier = Modifier.width(24.dp))
             Button(
-                onClick = { /* TODO: Validate later */ },
+                onClick = { showValidateConfirm = true },
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Validate")
-            }
-        }
+            }        }
     }
     if (showDeleteConfirm) {
         AlertDialog(
@@ -467,6 +468,39 @@ fun OngoingSessionScreen(
                         playedHoleToDelete = null
                     }
                 ) { Text("Cancel") }
+            }
+        )
+    }
+    // Validate session confirmation dialog
+    if (showValidateConfirm) {
+        AlertDialog(
+            onDismissRequest = { showValidateConfirm = false },
+            title = { Text("Complete session") },
+            text = {
+                Text("This will mark the session as completed. You'll be able to view it in the sessions history.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sessionViewModel.validateOngoingSession {
+                            // Navigate to history after validation
+                            navController.navigate(DrawerNavItem.SessionHistory.route) {
+                                popUpTo(BottomNavItem.Home.route) {
+                                    inclusive = false
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                        showValidateConfirm = false
+                    }
+                ) {
+                    Text("Complete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showValidateConfirm = false }) {
+                    Text("Cancel")
+                }
             }
         )
     }

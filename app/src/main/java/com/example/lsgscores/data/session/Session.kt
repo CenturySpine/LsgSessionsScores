@@ -26,13 +26,13 @@ data class Session(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val dateTime: LocalDateTime,
-    val sessionType: SessionType,     // Individual or Team
-    val scoringModeId: Int,           // Foreign key to ScoringMode
+    val dateTime: LocalDateTime,        // This becomes startDateTime conceptually
+    val endDateTime: LocalDateTime? = null,  // New field - null while ongoing
+    val sessionType: SessionType,
+    val scoringModeId: Int,
     val comment: String? = null,
-    val isOngoing: Boolean = false // true if this session is the ongoing one
+    val isOngoing: Boolean = false
 )
-
 data class TeamWithPlayers(
     @Embedded val team: Team,
     @Relation(
