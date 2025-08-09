@@ -46,6 +46,10 @@ fun StandingsTable(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(40.dp)
                 )
+
+                // Spacer identique à celui dans StandingRow
+                Spacer(modifier = Modifier.width(12.dp))
+
                 Text(
                     text = "Team",
                     style = MaterialTheme.typography.labelMedium,
@@ -81,6 +85,7 @@ fun StandingsTable(
     }
 }
 
+// Dans StandingsTable.kt, remplacer la fonction StandingRow existante par :
 @Composable
 private fun StandingRow(
     standing: TeamStanding,
@@ -96,6 +101,9 @@ private fun StandingRow(
             position = standing.position,
             modifier = Modifier.width(40.dp)
         )
+
+        // Spacer entre position et nom d'équipe
+        Spacer(modifier = Modifier.width(12.dp))
 
         // Team name
         Text(
@@ -121,7 +129,6 @@ private fun StandingRow(
         )
     }
 }
-
 @Composable
 private fun PositionBadge(
     position: Int,
