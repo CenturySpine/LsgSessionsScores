@@ -383,4 +383,11 @@ class SessionViewModel @Inject constructor(
         }
     }
 
+    fun deletePlayedHole(playedHoleId: Long, onDeleted: () -> Unit = {}) {
+        viewModelScope.launch {
+            playedHoleRepository.deletePlayedHole(playedHoleId)
+            onDeleted()
+        }
+    }
+
 }

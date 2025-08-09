@@ -1,9 +1,12 @@
 package com.example.lsgscores.ui.sessions
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -34,18 +37,16 @@ fun PlayedHoleScoreScreen(
         teamWithPlayers.team.id to (strokesByTeam[teamWithPlayers.team.id]?.toIntOrNull() ?: 0)
     }
 
-// Calcul live des scores
     val calculatedScores = sessionViewModel.computeScoresForCurrentScoringMode(strokesMap)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("Enter the strokes for each team", style = MaterialTheme.typography.titleLarge)
-
-        Spacer(Modifier.height(8.dp))
 
         teamsWithPlayers.forEach { teamWithPlayers ->
             val playerNames =
@@ -53,44 +54,69 @@ fun PlayedHoleScoreScreen(
                     .joinToString(" & ")
 
             val strokesValue = strokesByTeam[teamWithPlayers.team.id] ?: ""
-            val liveScore = calculatedScores[teamWithPlayers.team.id]
+            val liveScore = calculatedScores[teamWithPlayers.team.id] ?: 0
 
-            OutlinedTextField(
-                value = strokesValue,
-                onValueChange = { newValue ->
-                    strokesByTeam[teamWithPlayers.team.id] = newValue.filter { it.isDigit() }
-                },
-                label = { Text(playerNames) },
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                trailingIcon = {
-                    if (liveScore != null) {
-                        Text("Score: $liveScore")
-                    }
-                }
-            )
-            Spacer(Modifier.height(8.dp))
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = strokesValue,
+                    onValueChange = { newValue ->
+                        strokesByTeam[teamWithPlayers.team.id] = newValue.filter { it.isDigit() }
+                    },
+                    label = { Text(playerNames) },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                AssistChip(
+                    onClick = { /* Read-only chip */ },
+                    label = { Text("$liveScore") },
+                    enabled = false,
+                    colors = AssistChipDefaults.assistChipColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                )
+            }
         }
 
-        Spacer(Modifier.weight(1f))
-
-        Button(
-            onClick = {
-                teamsWithPlayers.forEach { teamWithPlayers ->
-                    val strokes = strokesByTeam[teamWithPlayers.team.id]?.toIntOrNull()
-                    if (strokes != null) {
-                        sessionViewModel.savePlayedHoleScore(
-                            playedHoleId = playedHoleId,
-                            teamId = teamWithPlayers.team.id,
-                            strokes = strokes
-                        )
-                    }
-                }
-                navController.popBackStack() // Return to ongoing session screen
-            },
-            enabled = teams.all { strokesByTeam[it.id]?.isNotEmpty() == true }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Save scores")
+            OutlinedButton(
+                onClick = {
+                    sessionViewModel.deletePlayedHole(playedHoleId) {
+                        navController.popBackStack()
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Cancel")
+            }
+
+            Button(
+                onClick = {
+                    teamsWithPlayers.forEach { teamWithPlayers ->
+                        val strokes = strokesByTeam[teamWithPlayers.team.id]?.toIntOrNull()
+                        if (strokes != null) {
+                            sessionViewModel.savePlayedHoleScore(
+                                playedHoleId = playedHoleId,
+                                teamId = teamWithPlayers.team.id,
+                                strokes = strokes
+                            )
+                        }
+                    }
+                    navController.popBackStack()
+                },
+                enabled = teams.all { strokesByTeam[it.id]?.isNotEmpty() == true },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Save scores")
+            }
         }
     }
 }

@@ -20,4 +20,10 @@ interface PlayedHoleDao {
 
     @Query("SELECT id FROM played_holes WHERE sessionId = :sessionId")
     suspend fun getPlayedHoleIdsForSession(sessionId: Long): List<Long>
+
+    @Delete
+    suspend fun delete(playedHole: PlayedHole)
+
+    @Query("DELETE FROM played_holes WHERE id = :playedHoleId")
+    suspend fun deleteById(playedHoleId: Long)
 }

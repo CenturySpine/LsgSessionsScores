@@ -14,6 +14,10 @@ class PlayedHoleRepository(private val playedHoleDao: PlayedHoleDao) {
     fun getPlayedHoleById(playedHoleId: Long): Flow<PlayedHole?> {
         return playedHoleDao.getById(playedHoleId)
     }
+
+    suspend fun deletePlayedHole(playedHoleId: Long) {
+        playedHoleDao.deleteById(playedHoleId)
+    }
 }
 
 
