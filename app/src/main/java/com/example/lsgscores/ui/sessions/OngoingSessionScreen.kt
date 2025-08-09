@@ -52,6 +52,7 @@ fun OngoingSessionScreen(
     val playedHoles by sessionViewModel.playedHolesWithScores.collectAsState()
     var selectedGameModeId by remember { mutableStateOf<Int?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    val teamStandings by sessionViewModel.teamStandings.collectAsState()
 
     Column(
         modifier = Modifier
@@ -59,6 +60,11 @@ fun OngoingSessionScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Team standings table (only show if we have data)
+        if (teamStandings.isNotEmpty()) {
+            StandingsTable(standings = teamStandings)
+        }
+
         // Section des trous joués
         if (playedHoles.isEmpty()) {
             Text(

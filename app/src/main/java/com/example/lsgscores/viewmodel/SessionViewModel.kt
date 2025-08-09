@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
+import com.example.lsgscores.viewmodel.TeamStanding
+import kotlin.collections.forEach
 
 data class PlayedHoleDisplay(
     val holeName: String,
@@ -126,6 +128,48 @@ class SessionViewModel @Inject constructor(
                     }
             } else {
                 flowOf(emptyList())
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val teamStandings: StateFlow<List<TeamStanding>> =
+        playedHolesWithScores.map { playedHoles ->
+            if (playedHoles.isEmpty()) {
+                emptyList()
+            } else {
+                // Aggregate totals by team
+                val teamTotals = mutableMapOf<String, Pair<Int, Int>>() // teamName to (totalStrokes, totalScore)
+
+                playedHoles.forEach { playedHole ->
+                    playedHole.teamResults.forEach { teamResult ->
+                        val currentStrokes = teamTotals[teamResult.teamName]?.first ?: 0
+                        val currentScore = teamTotals[teamResult.teamName]?.second ?: 0
+                        teamTotals[teamResult.teamName] = Pair(
+                            currentStrokes + teamResult.strokes,
+                            currentScore + teamResult.calculatedScore
+                        )
+                    }
+                }
+
+                // Convert to list and sort according to scoring mode
+                val standings = teamTotals.map { (teamName, totals) ->
+                    TeamStanding(
+                        teamName = teamName,
+                        totalStrokes = totals.first,
+                        totalScore = totals.second,
+                        position = 0 // Will be set after sorting
+                    )
+                }
+
+                // Sort based on current scoring mode
+                val sortedStandings = when (scoringModeId) {
+                    1 -> standings.sortedBy { it.totalStrokes } // Classic mode: ascending by strokes
+                    else -> standings.sortedByDescending { it.totalScore } // Point modes: descending by score
+                }
+
+                // Assign positions
+                sortedStandings.mapIndexed { index, standing ->
+                    standing.copy(position = index + 1)
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
