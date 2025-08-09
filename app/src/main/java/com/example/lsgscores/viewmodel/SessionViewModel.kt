@@ -33,9 +33,9 @@ import kotlin.collections.forEach
 data class PlayedHoleDisplay(
     val holeName: String,
     val position: Int,
+    val gameModeName: String, // AJOUT : nom du mode de jeu
     val teamResults: List<TeamResult>
 )
-
 data class TeamResult(
     val teamName: String,
     val strokes: Int,
@@ -98,9 +98,10 @@ class SessionViewModel @Inject constructor(
                                         holeRepository.getAllHoles().map { holes ->
                                             holes.find { it.id == playedHole.holeId }
                                         },
+                                        holeGameModeRepository.getById(playedHole.gameModeId), // AJOUT
                                         playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id),
                                         teamRepository.getTeamsWithPlayersForSession(session.id)
-                                    ) { hole, scores, teamsWithPlayers ->
+                                    ) { hole, gameMode, scores, teamsWithPlayers -> // MODIFIÉ
                                         val strokesByTeam = scores.associate { it.teamId to it.strokes }
                                         val calculatedScores = computeScoresForCurrentScoringMode(strokesByTeam)
 
@@ -119,6 +120,7 @@ class SessionViewModel @Inject constructor(
                                         PlayedHoleDisplay(
                                             holeName = hole?.name ?: "Unknown Hole",
                                             position = playedHole.position,
+                                            gameModeName = gameMode?.name ?: "Unknown Mode", // AJOUT
                                             teamResults = teamResults
                                         )
                                     }
@@ -130,6 +132,15 @@ class SessionViewModel @Inject constructor(
                 flowOf(emptyList())
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val currentScoringModeInfo: StateFlow<ScoringMode?> =
+        ongoingSession.flatMapLatest { session ->
+            if (session != null) {
+                scoringModeRepository.getById(session.scoringModeId)
+            } else {
+                flowOf(null)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val teamStandings: StateFlow<List<TeamStanding>> =
         playedHolesWithScores.map { playedHoles ->
