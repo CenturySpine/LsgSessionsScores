@@ -22,9 +22,11 @@ import com.example.lsgscores.data.session.TeamRepository
 import com.example.lsgscores.data.session.TeamWithPlayers
 import com.example.lsgscores.domain.scoring.ScoringCalculator
 import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import javax.inject.Inject
 
 data class PlayedHoleDisplay(
     val holeName: String,
@@ -44,7 +46,8 @@ data class SessionDraft(
     val comment: String? = null
 )
 
-class SessionViewModel(
+@HiltViewModel
+class SessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val teamRepository: TeamRepository,
     private val holeRepository: HoleRepository,
