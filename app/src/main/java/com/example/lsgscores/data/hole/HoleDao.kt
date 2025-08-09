@@ -16,4 +16,7 @@ interface HoleDao {
 
     @Delete
     suspend fun delete(hole: Hole)
+
+    @Query("SELECT * FROM holes WHERE id = :id")
+    suspend fun getById(id: Long): Hole?
 }

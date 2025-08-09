@@ -4,6 +4,7 @@ package com.example.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lsgscores.data.hole.HoleRepository
 import com.example.lsgscores.data.holemode.HoleGameMode
 import com.example.lsgscores.data.holemode.HoleGameModeRepository
 import com.example.lsgscores.data.media.MediaRepository
@@ -25,6 +26,17 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
+data class PlayedHoleDisplay(
+    val holeName: String,
+    val position: Int,
+    val teamResults: List<TeamResult>
+)
+
+data class TeamResult(
+    val teamName: String,
+    val strokes: Int,
+    val calculatedScore: Int
+)
 data class SessionDraft(
     val dateTime: LocalDateTime = LocalDateTime.now(),
     val sessionType: SessionType = SessionType.INDIVIDUAL,
@@ -35,6 +47,7 @@ data class SessionDraft(
 class SessionViewModel(
     private val sessionRepository: SessionRepository,
     private val teamRepository: TeamRepository,
+    private val holeRepository: HoleRepository,
     private val mediaRepository: MediaRepository,
     private val scoringModeRepository: ScoringModeRepository,
     private val playedHoleRepository: PlayedHoleRepository,
@@ -66,6 +79,52 @@ class SessionViewModel(
         holeGameModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val playedHolesWithScores: StateFlow<List<PlayedHoleDisplay>> =
+        ongoingSession.flatMapLatest { session ->
+            if (session != null) {
+                playedHoleRepository.getPlayedHolesForSession(session.id)
+                    .flatMapLatest { playedHoles ->
+                        if (playedHoles.isEmpty()) {
+                            flowOf(emptyList())
+                        } else {
+                            combine(
+                                playedHoles.map { playedHole ->
+                                    combine(
+                                        holeRepository.getAllHoles().map { holes ->
+                                            holes.find { it.id == playedHole.holeId }
+                                        },
+                                        playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id),
+                                        teamRepository.getTeamsWithPlayersForSession(session.id)
+                                    ) { hole, scores, teamsWithPlayers ->
+                                        val strokesByTeam = scores.associate { it.teamId to it.strokes }
+                                        val calculatedScores = computeScoresForCurrentScoringMode(strokesByTeam)
+
+                                        val teamResults = teamsWithPlayers.mapNotNull { teamWithPlayers ->
+                                            val strokes = strokesByTeam[teamWithPlayers.team.id]
+                                            val calculatedScore = calculatedScores[teamWithPlayers.team.id]
+                                            if (strokes != null && calculatedScore != null) {
+                                                val teamName = listOfNotNull(
+                                                    teamWithPlayers.player1?.name,
+                                                    teamWithPlayers.player2?.name
+                                                ).joinToString(" & ")
+                                                TeamResult(teamName, strokes, calculatedScore)
+                                            } else null
+                                        }
+
+                                        PlayedHoleDisplay(
+                                            holeName = hole?.name ?: "Unknown Hole",
+                                            position = playedHole.position,
+                                            teamResults = teamResults
+                                        )
+                                    }
+                                }
+                            ) { it.toList().sortedBy { display -> display.position } }
+                        }
+                    }
+            } else {
+                flowOf(emptyList())
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // List of scoring modes from repository (hardcoded list)
     val scoringModes: StateFlow<List<ScoringMode>> =

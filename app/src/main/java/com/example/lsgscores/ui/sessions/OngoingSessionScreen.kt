@@ -1,4 +1,5 @@
 package com.example.lsgscores.ui.sessions
+
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -41,12 +44,12 @@ fun OngoingSessionScreen(
     navController: NavController,
     sessionViewModel: SessionViewModel,
     holeViewModel: HoleViewModel
-
 ) {
     var showHolePicker by remember { mutableStateOf(false) }
     val ongoingSession = sessionViewModel.ongoingSession.collectAsState(initial = null).value
     val holes by holeViewModel.holes.collectAsState(initial = emptyList())
     val gameModes by sessionViewModel.holeGameModes.collectAsState()
+    val playedHoles by sessionViewModel.playedHolesWithScores.collectAsState()
     var selectedGameModeId by remember { mutableStateOf<Int?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
@@ -54,9 +57,44 @@ fun OngoingSessionScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(32.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // ... (existing action buttons)
+        // Section des trous joués
+        if (playedHoles.isEmpty()) {
+            Text(
+                text = "No holes have been played yet. Press the button below to add one.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+        } else {
+            Text(
+                text = "Holes played:",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            playedHoles.forEach { playedHole ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = playedHole.holeName,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = playedHole.teamResults.joinToString(", ") {
+                                "${it.teamName}: ${it.strokes} - ${it.calculatedScore}"
+                            },
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        }
 
         Button(
             onClick = { showHolePicker = true },
@@ -223,4 +261,5 @@ fun OngoingSessionScreen(
                 TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
             }
         )
-    }}
+    }
+}

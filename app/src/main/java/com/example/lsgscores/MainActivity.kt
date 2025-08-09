@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
             val sessionViewModel = SessionViewModel(
                 sessionRepository = sessionRepository,
                 teamRepository = teamRepository,
+                holeRepository = holeRepository,
                 mediaRepository = mediaRepository,
                 scoringModeRepository = scoringModeRepository,
                 playedHoleRepository = playedHoleRepository,
