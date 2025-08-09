@@ -139,35 +139,81 @@ fun SessionTeamsScreen(
                 }
 
                 // List of teams created so far
+// List of teams created so far
                 if (teams.isNotEmpty()) {
                     Text("Teams created:", style = MaterialTheme.typography.titleSmall)
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         teams.forEachIndexed { index, team ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Team ${index + 1}:")
-                                team.forEach { player ->
-                                    AssistChip(
-                                        onClick = {},
-                                        label = { Text(player.name) },
-                                        leadingIcon = {
-                                            if (player.photoUri != null) {
-                                                AsyncImage(
-                                                    model = player.photoUri,
-                                                    contentDescription = player.name,
-                                                    modifier = Modifier.size(20.dp)
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Team label and players
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Team ${index + 1}:",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.width(70.dp)
+                                        )
+
+                                        team.forEach { player ->
+                                            AssistChip(
+                                                onClick = {},
+                                                label = { Text(player.name) },
+                                                leadingIcon = {
+                                                    if (player.photoUri != null) {
+                                                        AsyncImage(
+                                                            model = player.photoUri,
+                                                            contentDescription = player.name,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    } else {
+                                                        Text(player.name.first().toString())
+                                                    }
+                                                },
+                                                enabled = false,
+                                                colors = AssistChipDefaults.assistChipColors(
+                                                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                                    disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                                                 )
-                                            } else {
-                                                Text(player.name.first().toString())
-                                            }
+                                            )
+                                        }
+                                    }
+
+                                    // Delete button
+                                    IconButton(
+                                        onClick = {
+                                            // Remove team and make players available again
+                                            teams = teams.filterIndexed { i, _ -> i != index }
+                                            val playerIdsToRelease = team.map { it.id }.toSet()
+                                            alreadySelectedPlayerIds = alreadySelectedPlayerIds - playerIdsToRelease
                                         },
-                                        enabled = false
-                                    )
+                                        modifier = Modifier.size(40.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove team",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            }
+                }            }
 
             // Sticky button at bottom
             Box(
