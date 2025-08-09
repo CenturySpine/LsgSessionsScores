@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -40,6 +41,7 @@ import com.example.lsgscores.R
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.viewmodel.HoleViewModel
 import java.io.File
+import androidx.compose.material.icons.rounded.GolfCourse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,8 +91,8 @@ fun HoleListScreen(
                         }
                     } else {
                         Icon(
-                            painter = painterResource(id = R.drawable.baseline_person_24),
-                            contentDescription = "Default user icon",
+                            imageVector = Icons.Rounded.GolfCourse,
+                            contentDescription = "Default hole start icon",
                             modifier = Modifier.size(48.dp)
                         )
                     }
@@ -107,8 +109,8 @@ fun HoleListScreen(
                         }
                     } else {
                         Icon(
-                            painter = painterResource(id = R.drawable.baseline_person_24),
-                            contentDescription = "Default user icon",
+                            imageVector = Icons.Rounded.GolfCourse,
+                            contentDescription = "Default hole end icon",
                             modifier = Modifier.size(48.dp)
                         )
                     }

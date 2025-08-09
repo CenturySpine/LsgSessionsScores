@@ -68,9 +68,6 @@ fun OngoingSessionScreen(
     val currentScoringMode by sessionViewModel.currentScoringModeInfo.collectAsState()
     var showScoringModeInfo by remember { mutableStateOf(false) }
 
-// Remplacer le contenu de la fonction OngoingSessionScreen à partir de la ligne avec Column(
-// jusqu'à la fin de la fonction (avant les AlertDialog)
-
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -154,7 +151,12 @@ fun OngoingSessionScreen(
                 if (teamStandings.isNotEmpty()) {
                     StandingsTable(standings = teamStandings)
                 }
-
+                Button(
+                    onClick = { showHolePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Add or associate a hole")
+                }
                 // Section des trous joués
                 if (playedHoles.isEmpty()) {
                     Text(
@@ -192,12 +194,7 @@ fun OngoingSessionScreen(
                     }
                 }
 
-                Button(
-                    onClick = { showHolePicker = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Add or associate a hole")
-                }
+
 
                 if (showHolePicker) {
                     var selectedHoleId by remember { mutableStateOf<Long?>(null) }
@@ -248,7 +245,27 @@ fun OngoingSessionScreen(
                                 // Mode selection
                                 Text("Select game mode")
                                 Spacer(Modifier.height(8.dp))
-                                gameModes.forEach { mode ->
+
+// Filter game modes based on session type
+                                val filteredGameModes = when (session.sessionType) {
+                                    com.example.lsgscores.data.session.SessionType.INDIVIDUAL -> {
+                                        gameModes.filter { it.id == 1 } // Only Individual mode (id = 1)
+                                    }
+
+                                    com.example.lsgscores.data.session.SessionType.TEAM -> {
+                                        gameModes.filter { it.id != 1 } // All modes except Individual
+                                    }
+                                }
+
+// Auto-select default mode if none selected
+                                if (selectedGameModeId == null) {
+                                    selectedGameModeId = when (session.sessionType) {
+                                        com.example.lsgscores.data.session.SessionType.INDIVIDUAL -> 1 // Individual
+                                        com.example.lsgscores.data.session.SessionType.TEAM -> 2 // Scramble
+                                    }
+                                }
+
+                                filteredGameModes.forEach { mode ->
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.fillMaxWidth()
@@ -377,4 +394,5 @@ fun OngoingSessionScreen(
                 }
             )
         }
-    }}
+    }
+}

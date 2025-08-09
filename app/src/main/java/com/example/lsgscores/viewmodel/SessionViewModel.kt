@@ -23,12 +23,22 @@ import com.example.lsgscores.data.session.TeamWithPlayers
 import com.example.lsgscores.domain.scoring.ScoringCalculator
 import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
-import com.example.lsgscores.viewmodel.TeamStanding
-import kotlin.collections.forEach
 
 data class PlayedHoleDisplay(
     val holeName: String,
