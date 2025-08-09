@@ -2,7 +2,10 @@ package com.example.lsgscores.data.session
 
 import kotlinx.coroutines.flow.Flow
 
-class PlayedHoleRepository(private val playedHoleDao: PlayedHoleDao) {
+class PlayedHoleRepository(
+    private val playedHoleDao: PlayedHoleDao,
+    private val playedHoleScoreDao: PlayedHoleScoreDao
+) {
 
     fun getPlayedHolesForSession(sessionId: Long): Flow<List<PlayedHole>> {
         return playedHoleDao.getPlayedHolesForSession(sessionId)
@@ -16,6 +19,9 @@ class PlayedHoleRepository(private val playedHoleDao: PlayedHoleDao) {
     }
 
     suspend fun deletePlayedHole(playedHoleId: Long) {
+        // First delete all scores associated with this played hole
+        playedHoleScoreDao.deleteScoresForPlayedHoles(listOf(playedHoleId))
+        // Then delete the played hole itself
         playedHoleDao.deleteById(playedHoleId)
     }
 }

@@ -1,5 +1,6 @@
 package com.example.lsgscores.ui.sessions
 
+import com.example.lsgscores.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,6 +72,8 @@ fun OngoingSessionScreen(
     val teamStandings by sessionViewModel.teamStandings.collectAsState()
     val currentScoringMode by sessionViewModel.currentScoringModeInfo.collectAsState()
     var showScoringModeInfo by remember { mutableStateOf(false) }
+    var playedHoleToDelete by remember { mutableStateOf<Long?>(null) }
+    var showDeletePlayedHoleConfirm by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -178,24 +182,41 @@ fun OngoingSessionScreen(
                             modifier = Modifier.fillMaxWidth(),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Hole: ${playedHole.holeName} (${playedHole.gameModeName})",
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = playedHole.teamResults.joinToString(", ") {
-                                        "${it.teamName}: ${it.strokes} - ${it.calculatedScore}"
-                                    },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = "Hole: ${playedHole.holeName} (${playedHole.gameModeName})",
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = playedHole.teamResults.joinToString(", ") {
+                                            "${it.teamName}: ${it.strokes} - ${it.calculatedScore}"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        playedHoleToDelete = playedHole.playedHoleId
+                                        showDeletePlayedHoleConfirm = true
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_delete_forever_24),
+                                        contentDescription = "Delete played hole",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
                         }
-                    }
-                }
+                    }                }
 
 
 
@@ -409,5 +430,46 @@ fun OngoingSessionScreen(
                 }
             )
         }
+    }
+
+    // Delete played hole confirmation dialog
+    if (showDeletePlayedHoleConfirm && playedHoleToDelete != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeletePlayedHoleConfirm = false
+                playedHoleToDelete = null
+            },
+            title = { Text("Delete played hole") },
+            text = {
+                Text(
+                    "This will permanently delete this played hole and all its scores.\n\n" +
+                            "This action cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        playedHoleToDelete?.let { playedHoleId ->
+                            sessionViewModel.deletePlayedHole(playedHoleId)
+                        }
+                        showDeletePlayedHoleConfirm = false
+                        playedHoleToDelete = null
+                    }
+                ) {
+                    Text(
+                        "Delete",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeletePlayedHoleConfirm = false
+                        playedHoleToDelete = null
+                    }
+                ) { Text("Cancel") }
+            }
+        )
     }
 }

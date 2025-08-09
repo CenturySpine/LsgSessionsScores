@@ -52,8 +52,11 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun providePlayedHoleRepository(playedHoleDao: PlayedHoleDao): PlayedHoleRepository {
-        return PlayedHoleRepository(playedHoleDao)
+    fun providePlayedHoleRepository(
+        playedHoleDao: PlayedHoleDao,
+        playedHoleScoreDao: PlayedHoleScoreDao
+    ): PlayedHoleRepository {
+        return PlayedHoleRepository(playedHoleDao, playedHoleScoreDao)
     }
 
     @Provides

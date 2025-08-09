@@ -40,12 +40,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
-data class PlayedHoleDisplay(
-    val holeName: String,
-    val position: Int,
-    val gameModeName: String, // AJOUT : nom du mode de jeu
-    val teamResults: List<TeamResult>
-)
+
 data class TeamResult(
     val teamName: String,
     val strokes: Int,
@@ -128,12 +123,12 @@ class SessionViewModel @Inject constructor(
                                         }
 
                                         PlayedHoleDisplay(
+                                            playedHoleId = playedHole.id,  // Add the played hole ID
                                             holeName = hole?.name ?: "Unknown Hole",
                                             position = playedHole.position,
-                                            gameModeName = gameMode?.name ?: "Unknown Mode", // AJOUT
+                                            gameModeName = gameMode?.name ?: "Unknown Mode",
                                             teamResults = teamResults
-                                        )
-                                    }
+                                        )                                    }
                                 }
                             ) { it.toList().sortedBy { display -> display.position } }
                         }
