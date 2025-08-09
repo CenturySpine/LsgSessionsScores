@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -49,6 +50,8 @@ import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.text.isNotEmpty
+import kotlin.text.toIntOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -246,7 +249,7 @@ fun OngoingSessionScreen(
                                 Text("Select game mode")
                                 Spacer(Modifier.height(8.dp))
 
-// Filter game modes based on session type
+
                                 val filteredGameModes = when (session.sessionType) {
                                     com.example.lsgscores.data.session.SessionType.INDIVIDUAL -> {
                                         gameModes.filter { it.id == 1 } // Only Individual mode (id = 1)
@@ -257,7 +260,7 @@ fun OngoingSessionScreen(
                                     }
                                 }
 
-// Auto-select default mode if none selected
+
                                 if (selectedGameModeId == null) {
                                     selectedGameModeId = when (session.sessionType) {
                                         com.example.lsgscores.data.session.SessionType.INDIVIDUAL -> 1 // Individual
@@ -290,35 +293,47 @@ fun OngoingSessionScreen(
                                 ) {
                                     Text("Create a new hole")
                                 }
-                            }
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    if (selectedHoleId != null && selectedGameModeId != null) {
-                                        sessionViewModel.addPlayedHole(
-                                            holeId = selectedHoleId!!,
-                                            gameModeId = selectedGameModeId!!,
-                                            onPlayedHoleCreated = { playedHoleId ->
-                                                // Navigate to the score entry screen for the new played hole
-                                                navController.navigate("played_hole_score/$playedHoleId")
-                                                showHolePicker = false
-                                                selectedHoleId = null
-                                                selectedGameModeId = null
-                                            }
-                                        )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            showHolePicker = false
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Cancel")
                                     }
-                                },
-                                enabled = selectedHoleId != null && selectedGameModeId != null
-                            ) {
-                                Text("Add to session")
+
+                                    Button(
+                                        onClick = {
+                                            if (selectedHoleId != null && selectedGameModeId != null) {
+                                                sessionViewModel.addPlayedHole(
+                                                    holeId = selectedHoleId!!,
+                                                    gameModeId = selectedGameModeId!!,
+                                                    onPlayedHoleCreated = { playedHoleId ->
+                                                        // Navigate to the score entry screen for the new played hole
+                                                        navController.navigate("played_hole_score/$playedHoleId")
+                                                        showHolePicker = false
+                                                        selectedHoleId = null
+                                                        selectedGameModeId = null
+                                                    }
+                                                )
+                                            }
+                                        },
+                                        enabled = selectedHoleId != null && selectedGameModeId != null,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Add")
+                                    }
+                                }
+
                             }
                         },
-                        dismissButton = {
-                            TextButton(onClick = { showHolePicker = false }) {
-                                Text("Cancel")
-                            }
-                        }
+                        confirmButton = { },
+                        dismissButton = { }
                     )
                 }
             }
