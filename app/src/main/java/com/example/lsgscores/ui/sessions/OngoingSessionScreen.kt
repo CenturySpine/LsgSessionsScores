@@ -1,6 +1,5 @@
 package com.example.lsgscores.ui.sessions
 
-import com.example.lsgscores.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,13 +46,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.lsgscores.R
 import com.example.lsgscores.ui.BottomNavItem
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.text.isNotEmpty
-import kotlin.text.toIntOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

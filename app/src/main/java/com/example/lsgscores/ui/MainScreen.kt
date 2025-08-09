@@ -2,31 +2,56 @@
 
 package com.example.lsgscores.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.lsgscores.ui.holes.HoleFormScreen
-import com.example.lsgscores.ui.players.PlayerListScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
 import com.example.lsgscores.ui.home.HomeScreen
-import com.example.lsgscores.ui.sessions.OngoingSessionScreen
-import com.example.lsgscores.ui.sessions.SessionCreationScreen
-import com.example.lsgscores.ui.sessions.SessionTeamsScreen
 import com.example.lsgscores.ui.players.PlayerDetailScreen
 import com.example.lsgscores.ui.players.PlayerFormScreen
+import com.example.lsgscores.ui.players.PlayerListScreen
+import com.example.lsgscores.ui.sessions.OngoingSessionScreen
 import com.example.lsgscores.ui.sessions.PlayedHoleScoreScreen
+import com.example.lsgscores.ui.sessions.SessionCreationScreen
+import com.example.lsgscores.ui.sessions.SessionTeamsScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
-import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
+import com.example.lsgscores.viewmodel.SessionViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -36,105 +61,191 @@ fun MainScreen(
     holeViewModel: HoleViewModel,
     sessionViewModel: SessionViewModel
 ) {
-
     val ongoingSession by sessionViewModel.ongoingSession.collectAsState(initial = null)
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    val items = listOf(
+    // Bottom bar items (only 3 now)
+    val bottomItems = listOf(
         BottomNavItem.Home,
         BottomNavItem.NewSession,
-        BottomNavItem.OngoingSession,
-        BottomNavItem.Users,
-        BottomNavItem.Holes
+        BottomNavItem.OngoingSession
     )
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                items.forEach { item ->
-                    val isEnabled = when (item) {
-                        is BottomNavItem.NewSession -> ongoingSession == null
-                        is BottomNavItem.OngoingSession -> ongoingSession != null
-                        else -> true
-                    }
-                    NavigationBarItem(
+    // Drawer items
+    val drawerItems = listOf(
+        DrawerNavItem.Players,
+        DrawerNavItem.Holes,
+        DrawerNavItem.SessionHistory
+    )
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                // Drawer header
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "LSG Scores",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Drawer items
+                drawerItems.forEach { item ->
+                    NavigationDrawerItem(
                         icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) },
                         selected = navController.currentDestination?.route == item.route,
                         onClick = {
-                            if (isEnabled) {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
                                 }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                            scope.launch {
+                                drawerState.close()
                             }
                         },
-                        enabled = isEnabled
+                        modifier = Modifier.padding(horizontal = 12.dp)
                     )
                 }
             }
         }
-
-    ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavItem.Home.route,
-            modifier = Modifier.padding(padding)
-        ) {
-            composable(BottomNavItem.Home.route) {
-                HomeScreen()
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            when (navController.currentDestination?.route) {
+                                BottomNavItem.Home.route -> "LSG Scores"
+                                BottomNavItem.NewSession.route -> "New Session"
+                                BottomNavItem.OngoingSession.route -> "Ongoing Session"
+                                DrawerNavItem.Players.route -> "Players"
+                                DrawerNavItem.Holes.route -> "Holes"
+                                DrawerNavItem.SessionHistory.route -> "Sessions History"
+                                else -> "LSG Scores"
+                            }
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            scope.launch {
+                                drawerState.open()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Menu"
+                            )
+                        }
+                    }
+                )
+            },
+            bottomBar = {
+                NavigationBar {
+                    bottomItems.forEach { item ->
+                        val isEnabled = when (item) {
+                            is BottomNavItem.NewSession -> ongoingSession == null
+                            is BottomNavItem.OngoingSession -> ongoingSession != null
+                            else -> true
+                        }
+                        NavigationBarItem(
+                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            label = { Text(item.label) },
+                            selected = navController.currentDestination?.route == item.route,
+                            onClick = {
+                                if (isEnabled) {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            enabled = isEnabled
+                        )
+                    }
+                }
             }
-            composable(BottomNavItem.Users.route) {
-                PlayerListScreen(navController, playerViewModel)
-            }
-            composable(BottomNavItem.NewSession.route) {
-                // Only pass the sessionViewModel, SessionCreationScreen will handle its own logic
-                SessionCreationScreen(navController, sessionViewModel)
-            }
-            composable("new_session_teams") {
-                SessionTeamsScreen(navController, sessionViewModel, playerViewModel)
-            }
-            composable(BottomNavItem.OngoingSession.route) {
-                OngoingSessionScreen(navController, sessionViewModel, holeViewModel)
-            }
-            composable("add_user") {
-                PlayerFormScreen(navController, playerViewModel)
-            }
-            composable(BottomNavItem.Holes.route) {
-                HoleListScreen(navController, holeViewModel)
-            }
-            composable("add_hole") {
-                HoleFormScreen(navController, holeViewModel)
-            }
-            // Add this composable for the user detail screen
-            composable(
-                route = "user_detail/{userId}",
-                arguments = listOf(navArgument("userId") { type = NavType.LongType })
+        ) { padding ->
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavItem.Home.route,
+                modifier = Modifier.padding(padding)
             ) {
-                val userId = it.arguments?.getLong("userId")
-                if (userId != null) {
-                    PlayerDetailScreen(
+                // Existing routes...
+                composable(BottomNavItem.Home.route) {
+                    HomeScreen()
+                }
+                composable(BottomNavItem.NewSession.route) {
+                    SessionCreationScreen(navController, sessionViewModel)
+                }
+                composable("new_session_teams") {
+                    SessionTeamsScreen(navController, sessionViewModel, playerViewModel)
+                }
+                composable(BottomNavItem.OngoingSession.route) {
+                    OngoingSessionScreen(navController, sessionViewModel, holeViewModel)
+                }
+
+                // Drawer routes
+                composable(DrawerNavItem.Players.route) {
+                    PlayerListScreen(navController, playerViewModel)
+                }
+                composable(DrawerNavItem.Holes.route) {
+                    HoleListScreen(navController, holeViewModel)
+                }
+                composable(DrawerNavItem.SessionHistory.route) {
+                    // TODO: Create SessionHistoryScreen
+                    // For now, show a placeholder
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Sessions History - Coming soon")
+                    }
+                }
+
+                // Other routes (unchanged)
+                composable("add_user") {
+                    PlayerFormScreen(navController, playerViewModel)
+                }
+                composable("add_hole") {
+                    HoleFormScreen(navController, holeViewModel)
+                }
+                composable(
+                    route = "user_detail/{userId}",
+                    arguments = listOf(navArgument("userId") { type = NavType.LongType })
+                ) {
+                    val userId = it.arguments?.getLong("userId")
+                    if (userId != null) {
+                        PlayerDetailScreen(
+                            navController = navController,
+                            userId = userId,
+                            playerViewModel = playerViewModel
+                        )
+                    }
+                }
+                composable(
+                    route = "played_hole_score/{playedHoleId}",
+                    arguments = listOf(navArgument("playedHoleId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val playedHoleId = backStackEntry.arguments?.getLong("playedHoleId") ?: 0L
+                    PlayedHoleScoreScreen(
                         navController = navController,
-                        userId = userId,
-                        playerViewModel = playerViewModel
+                        sessionViewModel = sessionViewModel,
+                        playedHoleId = playedHoleId
                     )
                 }
             }
-            composable(
-                route = "played_hole_score/{playedHoleId}",
-                arguments = listOf(navArgument("playedHoleId") { type = NavType.LongType })
-            ) { backStackEntry ->
-                val playedHoleId = backStackEntry.arguments?.getLong("playedHoleId") ?: 0L
-                PlayedHoleScoreScreen(
-                    navController = navController,
-                    sessionViewModel = sessionViewModel,
-                    playedHoleId = playedHoleId
-                )
-            }
-
-
         }
     }
 }
