@@ -18,6 +18,12 @@ import com.example.lsgscores.viewmodel.PlayerViewModel
 import com.google.accompanist.flowlayout.FlowRow
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionTeamsScreen(
@@ -53,128 +59,143 @@ fun SessionTeamsScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(
-                "Select players to compose a team",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            // Chips selector
-            FlowRow(
-                mainAxisSpacing  = 8.dp,
-                crossAxisSpacing  = 8.dp,
-                modifier = Modifier.padding(vertical = 8.dp)
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp)
+                    .padding(bottom = 88.dp), // Space for sticky button
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                allPlayers.forEach { player ->
-                    val isSelectable =
-                        (currentSelection.size < maxSelectable || currentSelection.contains(player.id)) &&
-                                !alreadySelectedPlayerIds.contains(player.id)
+                Text(
+                    "Select players to compose a team",
+                    style = MaterialTheme.typography.titleMedium
+                )
 
-                    AssistChip(
-                        onClick = {
-                            if (!isSelectable) return@AssistChip
-                            currentSelection = if (currentSelection.contains(player.id)) {
-                                currentSelection - player.id
-                            } else {
-                                currentSelection + player.id
-                            }
-                        },
-                        label = { Text(player.name) },
-                        leadingIcon = {
-                            if (player.photoUri != null) {
-                                AsyncImage(
-                                    model = player.photoUri,
-                                    contentDescription = player.name,
-                                    modifier = Modifier.size(24.dp)
+                // Chips selector
+                FlowRow(
+                    mainAxisSpacing = 8.dp,
+                    crossAxisSpacing = 8.dp,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    allPlayers.forEach { player ->
+                        val isSelectable =
+                            (currentSelection.size < maxSelectable || currentSelection.contains(player.id)) &&
+                                    !alreadySelectedPlayerIds.contains(player.id)
+
+                        AssistChip(
+                            onClick = {
+                                if (!isSelectable) return@AssistChip
+                                currentSelection = if (currentSelection.contains(player.id)) {
+                                    currentSelection - player.id
+                                } else {
+                                    currentSelection + player.id
+                                }
+                            },
+                            label = { Text(player.name) },
+                            leadingIcon = {
+                                if (player.photoUri != null) {
+                                    AsyncImage(
+                                        model = player.photoUri,
+                                        contentDescription = player.name,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                } else {
+                                    Text(player.name.first().toString())
+                                }
+                            },
+                            enabled = isSelectable,
+                            colors = if (currentSelection.contains(player.id)) {
+                                AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             } else {
-                                Text(player.name.first().toString())
+                                AssistChipDefaults.assistChipColors()
                             }
-                        },
-                        enabled = isSelectable,
-                        colors = if (currentSelection.contains(player.id)) {
-                            AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        } else {
-                            AssistChipDefaults.assistChipColors()
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        // Add the new team and reset selection
+                        val selectedPlayers = allPlayers.filter { currentSelection.contains(it.id) }
+                        if (selectedPlayers.isNotEmpty()) {
+                            teams = teams + listOf(selectedPlayers)
+                            alreadySelectedPlayerIds = alreadySelectedPlayerIds + currentSelection
+                            currentSelection = emptySet()
                         }
-                    )
+                    },
+                    enabled = currentSelection.size in 1..maxSelectable
+                ) {
+                    Text("Add team")
+                }
+
+                // List of teams created so far
+                if (teams.isNotEmpty()) {
+                    Text("Teams created:", style = MaterialTheme.typography.titleSmall)
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        teams.forEachIndexed { index, team ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Team ${index + 1}:")
+                                team.forEach { player ->
+                                    AssistChip(
+                                        onClick = {},
+                                        label = { Text(player.name) },
+                                        leadingIcon = {
+                                            if (player.photoUri != null) {
+                                                AsyncImage(
+                                                    model = player.photoUri,
+                                                    contentDescription = player.name,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else {
+                                                Text(player.name.first().toString())
+                                            }
+                                        },
+                                        enabled = false
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            Button(
-                onClick = {
-                    // Add the new team and reset selection
-                    val selectedPlayers = allPlayers.filter { currentSelection.contains(it.id) }
-                    if (selectedPlayers.isNotEmpty()) {
-                        teams = teams + listOf(selectedPlayers)
-                        alreadySelectedPlayerIds = alreadySelectedPlayerIds + currentSelection
-                        currentSelection = emptySet()
-                    }
-                },
-                enabled = currentSelection.size in 1..maxSelectable
+            // Sticky button at bottom
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(24.dp)
             ) {
-                Text("Add team")
-            }
-
-            // List of teams created so far
-            if (teams.isNotEmpty()) {
-                Text("Teams created:", style = MaterialTheme.typography.titleSmall)
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    teams.forEachIndexed { index, team ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Team ${index + 1}:")
-                            team.forEach { player ->
-                                AssistChip(
-                                    onClick = {},
-                                    label = { Text(player.name) },
-                                    leadingIcon = {
-                                        if (player.photoUri != null) {
-                                            AsyncImage(
-                                                model = player.photoUri,
-                                                contentDescription = player.name,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        } else {
-                                            Text(player.name.first().toString())
-                                        }
-                                    },
-                                    enabled = false
-                                )
+                Button(
+                    onClick = {
+                        sessionViewModel.startSessionWithTeams(
+                            teams = teams.map { team -> team.map { player -> player.id } },
+                            onSessionCreated = { sessionId ->
+                                navController.navigate("ongoing_session") {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onSessionBlocked = {
+                                Toast.makeText(context, error ?: "A session is already ongoing.", Toast.LENGTH_SHORT).show()
                             }
-                        }
-                    }
+                        )
+                    },
+                    enabled = teams.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Start session")
                 }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = {
-                    sessionViewModel.startSessionWithTeams(
-                        teams = teams.map { team -> team.map { player -> player.id } },
-                        onSessionCreated = { sessionId ->
-                            navController.navigate("ongoing_session") {
-                                launchSingleTop = true
-                            }
-                        },
-                        onSessionBlocked = {
-                            Toast.makeText(context, error ?: "A session is already ongoing.", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                },
-                enabled = teams.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Start session")
             }
         }
     }
