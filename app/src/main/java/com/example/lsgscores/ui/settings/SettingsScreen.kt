@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -31,25 +33,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.lsgscores.R
 import com.example.lsgscores.ui.theme.availableThemes
+import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    themeViewModel: ThemeViewModel
+    themeViewModel: ThemeViewModel,
+    languageViewModel: LanguageViewModel
 ) {
     val selectedThemeId by themeViewModel.selectedThemeId.collectAsState()
+    val selectedLanguage by languageViewModel.selectedLanguage.collectAsState()
+    val availableLanguages = languageViewModel.getAvailableLanguages()
+
     LaunchedEffect(selectedThemeId) {
         println("DEBUG: Theme changed to: $selectedThemeId")
     }
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") }
+                title = { Text(stringResource(R.string.settings_title)) }
             )
         }
     ) { paddingValues ->
@@ -63,12 +72,12 @@ fun SettingsScreen(
         ) {
             // Theme section
             Text(
-                text = "Appearance",
+                text = stringResource(R.string.settings_section_appearance),
                 style = MaterialTheme.typography.titleLarge
             )
 
             Text(
-                text = "Theme",
+                text = stringResource(R.string.settings_label_theme),
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -79,6 +88,78 @@ fun SettingsScreen(
                     onThemeSelected = { themeViewModel.setTheme(theme.id) }
                 )
             }
+// Language section (ajoutez après la section thème)
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = stringResource(R.string.settings_label_language),
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            availableLanguages.forEach { language ->
+                LanguageSelectionCard(
+                    language = language,
+                    isSelected = selectedLanguage == language.code,
+                    onLanguageSelected = { languageViewModel.setLanguage(language.code) }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+        }
+    }
+}
+@Composable
+private fun LanguageSelectionCard(
+    language: com.example.lsgscores.viewmodel.LanguageOption,
+    isSelected: Boolean,
+    onLanguageSelected: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onLanguageSelected() }
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                        RoundedCornerShape(12.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Flag emoji
+                Text(
+                    text = language.flagEmoji,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+
+                Text(
+                    text = language.displayName,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+
+            RadioButton(
+                selected = isSelected,
+                onClick = onLanguageSelected
+            )
         }
     }
 }

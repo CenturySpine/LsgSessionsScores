@@ -50,6 +50,7 @@ import com.example.lsgscores.ui.sessions.SessionHistoryScreen
 import com.example.lsgscores.ui.sessions.SessionTeamsScreen
 import com.example.lsgscores.ui.settings.SettingsScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
+import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
@@ -91,6 +92,7 @@ fun MainScreen(
     playerViewModel: PlayerViewModel,
     holeViewModel: HoleViewModel,
     sessionViewModel: SessionViewModel,
+    languageViewModel: LanguageViewModel,
     themeViewModel: ThemeViewModel = hiltViewModel()
 ) {
     val ongoingSession by sessionViewModel.ongoingSession.collectAsState(initial = null)
@@ -331,7 +333,7 @@ fun MainScreen(
                     )
                 }
                 composable(DrawerNavItem.Settings.route) {
-                    SettingsScreen(navController, themeViewModel)
+                    SettingsScreen(navController, themeViewModel, languageViewModel)
                 }
             }
         }
