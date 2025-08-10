@@ -53,13 +53,15 @@ fun PlayerDetailScreen(
         Modifier.pointerInput(currentIndex, sortedUsers.size, isEditing) {
             detectHorizontalDragGestures { _, dragAmount ->
                 if (dragAmount > 40) { // Swipe right (previous)
-                    val prevIndex = if (currentIndex == 0) sortedUsers.lastIndex else currentIndex - 1
+                    val prevIndex =
+                        if (currentIndex == 0) sortedUsers.lastIndex else currentIndex - 1
                     navController.navigate("user_detail/${sortedUsers[prevIndex].id}") {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true
                     }
                 } else if (dragAmount < -40) { // Swipe left (next)
-                    val nextIndex = if (currentIndex == sortedUsers.lastIndex) 0 else currentIndex + 1
+                    val nextIndex =
+                        if (currentIndex == sortedUsers.lastIndex) 0 else currentIndex + 1
                     navController.navigate("user_detail/${sortedUsers[nextIndex].id}") {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true
@@ -72,19 +74,6 @@ fun PlayerDetailScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Player details") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.baseline_close_24),
-                            contentDescription = "Close"
-                        )
-                    }
-                }
-            )
-        }
     ) { padding ->
         if (user == null) {
             Box(
@@ -124,7 +113,10 @@ fun PlayerDetailScreen(
                                     contentDescription = "User photo",
                                     modifier = Modifier
                                         .size(400.dp)
-                                        .background(MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium)
+                                        .background(
+                                            MaterialTheme.colorScheme.surface,
+                                            shape = MaterialTheme.shapes.medium
+                                        )
                                 )
                             }
                         } else {
@@ -193,13 +185,23 @@ fun PlayerDetailScreen(
             else {
                 Column(
                     Modifier
-                        .then(swipeModifier) // Enable swipe only in read-only
+                        .then(swipeModifier)
                         .padding(padding)
-                        .padding(24.dp)
+                        .padding(horizontal = 24.dp, vertical = 8.dp)  // Moins d'espace vertical
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val photoExists = !user.photoUri.isNullOrBlank() && File(user.photoUri!!).exists()
+                )  {
+                    // Player name above the photo
+                    Text(
+                        text = user.name,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+
+                    Spacer(Modifier.height(32.dp))
+
+                    // Photo below the name
+                    val photoExists =
+                        !user.photoUri.isNullOrBlank() && File(user.photoUri!!).exists()
                     if (photoExists) {
                         val bitmap = remember(user.photoUri) {
                             BitmapFactory.decodeFile(user.photoUri)
@@ -210,7 +212,10 @@ fun PlayerDetailScreen(
                                 contentDescription = "User photo",
                                 modifier = Modifier
                                     .size(400.dp)
-                                    .background(MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium)
+                                    .background(
+                                        MaterialTheme.colorScheme.surface,
+                                        shape = MaterialTheme.shapes.medium
+                                    )
                             )
                         }
                     } else {
@@ -223,14 +228,13 @@ fun PlayerDetailScreen(
 
                     Spacer(Modifier.height(32.dp))
 
-                    Text(
-                        text = user.name,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    Spacer(Modifier.height(32.dp))
-
+                    // Three buttons: Cancel, Edit, Delete
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        OutlinedButton(
+                            onClick = { navController.popBackStack() }
+                        ) {
+                            Text("Back")
+                        }
                         Button(
                             onClick = {
                                 // Activate edit mode, initialize values

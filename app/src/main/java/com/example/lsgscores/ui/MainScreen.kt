@@ -203,8 +203,7 @@ fun MainScreen(
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
                         val currentRoute = navBackStackEntry?.destination?.route
 
-                        Text(
-                            when (currentRoute) {
+                        Text(when (currentRoute) {
                                 BottomNavItem.Home.route -> "LSG Scores"
                                 BottomNavItem.NewSession.route -> "New Session"
                                 BottomNavItem.OngoingSession.route -> "Ongoing Session"
@@ -215,9 +214,9 @@ fun MainScreen(
                                 "add_user" -> "Add Player"
                                 "add_hole" -> "Add Hole"
                                 "new_session_teams" -> "Select Teams"
+                                "user_detail/{userId}" -> "Player Details"  // AJOUTER CETTE LIGNE
                                 else -> "LSG Scores"
-                            }
-                        )
+                            })
                     },
                     navigationIcon = {
                         IconButton(onClick = {
