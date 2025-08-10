@@ -12,7 +12,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lsgscores.viewmodel.SessionViewModel
-
+import com.example.lsgscores.ui.common.NumberInputField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,16 +61,15 @@ fun PlayedHoleScoreScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedTextField(
+                NumberInputField(
                     value = strokesValue,
                     onValueChange = { newValue ->
-                        strokesByTeam[teamWithPlayers.team.id] = newValue.filter { it.isDigit() }
+                        strokesByTeam[teamWithPlayers.team.id] = newValue
                     },
-                    label = { Text(playerNames) },
+                    label = playerNames,
                     modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    minValue = 0
                 )
-
                 AssistChip(
                     onClick = { /* Read-only chip */ },
                     label = { Text("$liveScore") },
