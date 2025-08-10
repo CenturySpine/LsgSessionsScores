@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -41,12 +42,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.lsgscores.R
 import com.example.lsgscores.ui.BottomNavItem
 import com.example.lsgscores.ui.DrawerNavItem
 import com.example.lsgscores.viewmodel.HoleViewModel
@@ -209,7 +208,7 @@ fun OngoingSessionScreen(
                                     }
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = R.drawable.baseline_delete_forever_24),
+                                        imageVector = Icons.Default.Close,
                                         contentDescription = "Delete played hole",
                                         tint = MaterialTheme.colorScheme.error
                                     )
