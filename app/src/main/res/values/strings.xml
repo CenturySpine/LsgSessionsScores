@@ -1,3 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App name -->
     <string name="app_name">LsgScores</string>
+
+    <!-- HomeScreen -->
+    <string name="home_welcome_text">Welcome to LSG scores !</string>
+
+    <!-- MainScreen - Navigation -->
+    <string name="main_app_title">LSG Scores</string>
+    <string name="main_drawer_header">LSG Scores</string>
+    <string name="main_topbar_title_home">LSG Scores</string>
+    <string name="main_topbar_title_new_session">New Session</string>
+    <string name="main_topbar_title_ongoing_session">Ongoing Session</string>
+    <string name="main_topbar_title_players">Players</string>
+    <string name="main_topbar_title_holes">Holes</string>
+    <string name="main_topbar_title_session_history">Sessions History</string>
+    <string name="main_topbar_title_settings">Settings</string>
+    <string name="main_topbar_title_add_player">Add Player</string>
+    <string name="main_topbar_title_add_hole">Add Hole</string>
+    <string name="main_topbar_title_select_teams">Select Teams</string>
+    <string name="main_topbar_title_player_details">Player Details</string>
+    <string name="main_menu_icon_description">Menu</string>
+
+    <!-- Bottom Navigation -->
+    <string name="bottom_nav_home">Home</string>
+    <string name="bottom_nav_new">New session</string>
+    <string name="bottom_nav_ongoing">Ongoing session</string>
+
+    <!-- Drawer Navigation -->
+    <string name="drawer_nav_players">Players</string>
+    <string name="drawer_nav_holes">Holes</string>
+    <string name="drawer_nav_session_history">Sessions History</string>
+    <string name="drawer_nav_settings">Settings</string>
+
+    <!-- PlayerListScreen -->
+    <string name="player_list_fab_add">+</string>
+    <string name="player_list_photo_description">User photo</string>
+    <string name="player_list_default_icon_description">Default player icon</string>
+    <string name="player_list_delete_icon_description">Delete player</string>
+    <string name="player_list_dialog_title">Confirm Deletion</string>
+    <string name="player_list_dialog_message">Are you sure you want to delete %s?</string>
+    <string name="player_list_dialog_button_delete">Delete</string>
+    <string name="player_list_dialog_button_cancel">Cancel</string>
+
+    <!-- PlayerFormScreen -->
+    <string name="player_form_label_name">Name</string>
+    <string name="player_form_button_cancel">Cancel</string>
+    <string name="player_form_button_save">Save</string>
+    <string name="player_form_photo_description">Player photo</string>
+
+    <!-- PlayerDetailScreen -->
+    <string name="player_detail_not_found">Player not found</string>
+    <string name="player_detail_photo_description">User photo</string>
+    <string name="player_detail_default_icon_description">Default user icon</string>
+    <string name="player_detail_label_name">Name</string>
+    <string name="player_detail_button_save">Save</string>
+    <string name="player_detail_button_cancel">Cancel</string>
+    <string name="player_detail_button_back">Back</string>
+    <string name="player_detail_button_edit">Edit</string>
+    <string name="player_detail_button_delete">Delete</string>
+    <string name="player_detail_dialog_title">Delete player</string>
+    <string name="player_detail_dialog_message">Are you sure you want to delete this player?</string>
+    <string name="player_detail_dialog_button_delete">Delete</string>
+    <string name="player_detail_dialog_button_cancel">Cancel</string>
+
+    <!-- HoleListScreen -->
+    <string name="hole_list_fab_add">+</string>
+    <string name="hole_list_photo_description">User photo</string>
+    <string name="hole_list_default_start_icon_description">Default hole start icon</string>
+    <string name="hole_list_default_end_icon_description">Default hole end icon</string>
+    <string name="hole_list_delete_icon_description">Delete hole</string>
+    <string name="hole_list_dialog_title">Confirm Deletion</string>
+    <string name="hole_list_dialog_message">Are you sure you want to delete %s?</string>
+    <string name="hole_list_dialog_button_delete">Delete</string>
+    <string name="hole_list_dialog_button_cancel">Cancel</string>
+
+    <!-- HoleFormScreen -->
+    <string name="hole_form_error_name_required">Hole name is mandatory</string>
+    <string name="hole_form_label_name">Hole name</string>
+    <string name="hole_form_label_area">Area</string>
+    <string name="hole_form_label_description">Description</string>
+    <string name="hole_form_label_constraints">Constraints</string>
+    <string name="hole_form_label_distance">Distance (m)</string>
+    <string name="hole_form_label_par">Par</string>
+    <string name="hole_form_section_start">Start</string>
+    <string name="hole_form_label_start_name">Start name</string>
+    <string name="hole_form_section_target">Target</string>
+    <string name="hole_form_label_target_name">Target name</string>
+    <string name="hole_form_button_cancel">Cancel</string>
+    <string name="hole_form_button_save">Save</string>
+
+    <!-- SessionCreationScreen -->
+    <string name="session_creation_label_date">Date</string>
+    <string name="session_creation_label_session_type">Session type</string>
+    <string name="session_creation_type_individual">Individual</string>
+    <string name="session_creation_type_team">Team</string>
+    <string name="session_creation_label_scoring_mode">Scoring mode</string>
+    <string name="session_creation_scoring_choose">Choose</string>
+    <string name="session_creation_button_cancel">Cancel</string>
+    <string name="session_creation_button_next">Next</string>
+
+    <!-- SessionTeamsScreen -->
+    <string name="session_teams_instruction">Select players to compose a team</string>
+    <string name="session_teams_button_add_team">Add team</string>
+    <string name="session_teams_label_teams_created">Teams created:</string>
+    <string name="session_teams_label_team_prefix">Team %d:</string>
+    <string name="session_teams_remove_team_description">Remove team</string>
+    <string name="session_teams_button_cancel">Cancel</string>
+    <string name="session_teams_button_start">Start session</string>
+    <string name="session_teams_error_ongoing">A session is already ongoing.</string>
+
+    <!-- OngoingSessionScreen -->
+    <string name="ongoing_session_date_format">%s session</string>
+    <string name="ongoing_session_scoring_info_icon_description">Scoring mode info</string>
+    <string name="ongoing_session_button_add_hole">Add or associate a hole</string>
+    <string name="ongoing_session_no_holes_message">No holes have been played yet. Press the button below to add one.</string>
+    <string name="ongoing_session_label_holes_played">Holes played:</string>
+    <string name="ongoing_session_hole_prefix">Hole:</string>
+    <string name="ongoing_session_delete_hole_icon_description">Delete played hole</string>
+    <string name="ongoing_session_button_cancel">Cancel</string>
+    <string name="ongoing_session_button_validate">Validate</string>
+
+    <!-- OngoingSessionScreen - Hole Picker Dialog -->
+    <string name="ongoing_session_picker_title">Select or create a hole</string>
+    <string name="ongoing_session_picker_label_select_hole">Select a hole</string>
+    <string name="ongoing_session_picker_label_hole">Hole</string>
+    <string name="ongoing_session_picker_label_game_mode">Select game mode</string>
+    <string name="ongoing_session_picker_button_create_hole">Create a new hole</string>
+    <string name="ongoing_session_picker_button_cancel">Cancel</string>
+    <string name="ongoing_session_picker_button_add">Add</string>
+
+    <!-- OngoingSessionScreen - Delete Session Dialog -->
+    <string name="ongoing_session_delete_dialog_title">Delete session</string>
+    <string name="ongoing_session_delete_dialog_message">This will permanently delete the session and all its related data:\n• Teams\n• Played holes\n• Scores\n\nThis action cannot be undone.</string>
+    <string name="ongoing_session_delete_dialog_button_delete">Delete</string>
+    <string name="ongoing_session_delete_dialog_button_cancel">Cancel</string>
+
+    <!-- OngoingSessionScreen - Delete Played Hole Dialog -->
+    <string name="ongoing_session_delete_hole_dialog_title">Delete played hole</string>
+    <string name="ongoing_session_delete_hole_dialog_message">This will permanently delete this played hole and all its scores.\n\nThis action cannot be undone.</string>
+    <string name="ongoing_session_delete_hole_dialog_button_delete">Delete</string>
+    <string name="ongoing_session_delete_hole_dialog_button_cancel">Cancel</string>
+
+    <!-- OngoingSessionScreen - Validate Session Dialog -->
+    <string name="ongoing_session_validate_dialog_title">Complete session</string>
+    <string name="ongoing_session_validate_dialog_message">This will mark the session as completed. You\'ll be able to view it in the sessions history.</string>
+    <string name="ongoing_session_validate_dialog_button_complete">Complete</string>
+    <string name="ongoing_session_validate_dialog_button_cancel">Cancel</string>
+
+    <!-- PlayedHoleScoreScreen -->
+    <string name="played_hole_score_title">Enter the strokes for each team</string>
+    <string name="played_hole_score_button_cancel">Cancel</string>
+    <string name="played_hole_score_button_save">Save scores</string>
+
+    <!-- StandingsTable -->
+    <string name="standings_table_title">Current Standings</string>
+    <string name="standings_table_header_pos">Pos</string>
+    <string name="standings_table_header_team">Team</string>
+    <string name="standings_table_header_strokes">Strokes</string>
+    <string name="standings_table_header_score">Score</string>
+
+    <!-- SessionHistoryScreen -->
+    <string name="session_history_empty_title">No completed sessions yet</string>
+    <string name="session_history_empty_message">Your completed sessions will appear here</string>
+    <string name="session_history_time_prefix">at</string>
+    <string name="session_history_duration_prefix">Duration:</string>
+    <string name="session_history_duration_hours">%dh</string>
+    <string name="session_history_duration_minutes">%dmin</string>
+    <string name="session_history_duration_hours_minutes">%dh %dmin</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_label_theme">Theme</string>
+    <string name="settings_label_language">Language</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_french">Français</string>
+
+    <!-- NumberInputField -->
+    <string name="number_input_decrease_description">Decrease</string>
+    <string name="number_input_increase_description">Increase</string>
+
+    <!-- Photo Pickers -->
+    <string name="photo_picker_camera_description">Take picture</string>
+    <string name="photo_picker_gallery_description">Pick from gallery</string>
+
+    <!-- Common Terms (used in multiple places but kept separate as requested) -->
+    <!-- These are duplicated intentionally as per requirement -->
 </resources>
