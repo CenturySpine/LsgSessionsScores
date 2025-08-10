@@ -28,6 +28,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,6 +38,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.example.lsgscores.R
 import com.example.lsgscores.ui.holes.HoleFormScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
 import com.example.lsgscores.ui.home.HomeScreen
@@ -206,17 +208,17 @@ fun MainScreen(
                         val currentRoute = navBackStackEntry?.destination?.route
 
                         Text(when (currentRoute) {
-                                BottomNavItem.Home.route -> "LSG Scores"
-                                BottomNavItem.NewSession.route -> "New Session"
-                                BottomNavItem.OngoingSession.route -> "Ongoing Session"
-                                DrawerNavItem.Players.route -> "Players"
-                                DrawerNavItem.Holes.route -> "Holes"
-                                DrawerNavItem.SessionHistory.route -> "Sessions History"
-                                DrawerNavItem.Settings.route -> "Settings"
-                                "add_user" -> "Add Player"
-                                "add_hole" -> "Add Hole"
-                                "new_session_teams" -> "Select Teams"
-                                "user_detail/{userId}" -> "Player Details"  // AJOUTER CETTE LIGNE
+                                BottomNavItem.Home.route -> stringResource(R.string.main_app_title)
+                                BottomNavItem.NewSession.route -> stringResource(R.string.main_topbar_title_new_session)
+                                BottomNavItem.OngoingSession.route -> stringResource(R.string.main_topbar_title_ongoing_session)
+                                DrawerNavItem.Players.route -> stringResource(R.string.main_topbar_title_players)
+                                DrawerNavItem.Holes.route -> stringResource(R.string.main_topbar_title_holes)
+                                DrawerNavItem.SessionHistory.route -> stringResource(R.string.main_topbar_title_session_history)
+                                DrawerNavItem.Settings.route -> stringResource(R.string.main_topbar_title_settings)
+                                "add_user" -> stringResource(R.string.main_topbar_title_add_player)
+                                "add_hole" -> stringResource(R.string.main_topbar_title_add_hole)
+                                "new_session_teams" -> stringResource(R.string.main_topbar_title_select_teams)
+                                "user_detail/{userId}" -> stringResource(R.string.main_topbar_title_player_details)  // AJOUTER CETTE LIGNE
                                 else -> "LSG Scores"
                             })
                     },

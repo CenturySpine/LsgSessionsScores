@@ -10,5 +10,5 @@ sealed class BottomNavItem(val route: String, val label: String, val icon: Image
     object Home : BottomNavItem("home", "Home", Icons.Filled.Home)
     object NewSession : BottomNavItem("new_session", "New", Icons.Outlined.PlayArrow)
     object OngoingSession : BottomNavItem("ongoing_session", "Ongoing", Icons.Rounded.CalendarToday)
-    // Removed Users and Holes - moved to drawer
+
 }

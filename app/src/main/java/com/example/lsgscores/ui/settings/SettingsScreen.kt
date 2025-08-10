@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -51,6 +52,7 @@ fun SettingsScreen(
     val selectedThemeId by themeViewModel.selectedThemeId.collectAsState()
     val selectedLanguage by languageViewModel.selectedLanguage.collectAsState()
     val availableLanguages = languageViewModel.getAvailableLanguages()
+    val context = LocalContext.current
 
     LaunchedEffect(selectedThemeId) {
         println("DEBUG: Theme changed to: $selectedThemeId")
@@ -102,11 +104,14 @@ fun SettingsScreen(
                 LanguageSelectionCard(
                     language = language,
                     isSelected = selectedLanguage == language.code,
-                    onLanguageSelected = { languageViewModel.setLanguage(language.code) }
+                    onLanguageSelected = {
+                        languageViewModel.setLanguage(language.code)
+                        // Recreate activity to apply language change
+                        (context as android.app.Activity).recreate()
+                    }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
-
         }
     }
 }

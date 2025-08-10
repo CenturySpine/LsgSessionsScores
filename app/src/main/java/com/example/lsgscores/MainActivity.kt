@@ -28,15 +28,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val languageViewModel: LanguageViewModel = hiltViewModel()
-            val selectedLanguage by languageViewModel.selectedLanguage.collectAsState()
 
-            // Apply language when it changes
-            LaunchedEffect(selectedLanguage) {
-                if (selectedLanguage != AppPreferences.LANGUAGE_SYSTEM) {
-                    // Language will be applied through attachBaseContext for non-system languages
-                    recreate()
-                }
-            }
+            // Remove the problematic LaunchedEffect that was causing infinite recreation
 
             LsgScoresTheme(themeViewModel = themeViewModel) {
                 val navController = rememberNavController()
@@ -51,11 +44,13 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     override fun attachBaseContext(newBase: Context?) {
         if (newBase != null) {
             // Apply saved language preference
             val appPreferences = com.example.lsgscores.data.preferences.AppPreferences(newBase)
-            val contextWithLanguage = LanguageManager.applyLanguage(newBase, appPreferences.selectedLanguage)
+            val contextWithLanguage =
+                LanguageManager.applyLanguage(newBase, appPreferences.selectedLanguage)
             super.attachBaseContext(contextWithLanguage)
         } else {
             super.attachBaseContext(newBase)
