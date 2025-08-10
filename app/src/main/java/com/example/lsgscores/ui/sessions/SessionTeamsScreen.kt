@@ -47,18 +47,7 @@ fun SessionTeamsScreen(
     val context = LocalContext.current
     val error by sessionViewModel.error.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Select Teams") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Cancel")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
+    Scaffold { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -86,7 +75,9 @@ fun SessionTeamsScreen(
                 ) {
                     allPlayers.forEach { player ->
                         val isSelectable =
-                            (currentSelection.size < maxSelectable || currentSelection.contains(player.id)) &&
+                            (currentSelection.size < maxSelectable || currentSelection.contains(
+                                player.id
+                            )) &&
                                     !alreadySelectedPlayerIds.contains(player.id)
 
                         AssistChip(
@@ -139,7 +130,6 @@ fun SessionTeamsScreen(
                 }
 
                 // List of teams created so far
-// List of teams created so far
                 if (teams.isNotEmpty()) {
                     Text("Teams created:", style = MaterialTheme.typography.titleSmall)
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -186,7 +176,9 @@ fun SessionTeamsScreen(
                                                 },
                                                 enabled = false,
                                                 colors = AssistChipDefaults.assistChipColors(
-                                                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                                                        alpha = 0.5f
+                                                    ),
                                                     disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                                                 )
                                             )
@@ -199,7 +191,8 @@ fun SessionTeamsScreen(
                                             // Remove team and make players available again
                                             teams = teams.filterIndexed { i, _ -> i != index }
                                             val playerIdsToRelease = team.map { it.id }.toSet()
-                                            alreadySelectedPlayerIds = alreadySelectedPlayerIds - playerIdsToRelease
+                                            alreadySelectedPlayerIds =
+                                                alreadySelectedPlayerIds - playerIdsToRelease
                                         },
                                         modifier = Modifier.size(40.dp)
                                     ) {
@@ -213,16 +206,25 @@ fun SessionTeamsScreen(
                             }
                         }
                     }
-                }            }
+                }
+            }
 
-            // Sticky button at bottom
-            Box(
+            // Sticky buttons at bottom
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(24.dp)
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                OutlinedButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+
                 Button(
                     onClick = {
                         sessionViewModel.startSessionWithTeams(
@@ -233,12 +235,16 @@ fun SessionTeamsScreen(
                                 }
                             },
                             onSessionBlocked = {
-                                Toast.makeText(context, error ?: "A session is already ongoing.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    error ?: "A session is already ongoing.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         )
                     },
                     enabled = teams.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("Start session")
                 }

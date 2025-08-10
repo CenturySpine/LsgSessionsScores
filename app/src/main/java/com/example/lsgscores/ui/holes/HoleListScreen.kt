@@ -57,7 +57,6 @@ fun HoleListScreen(
     var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Holes") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = { navController.navigate("add_hole") }) {
                 Text("+")

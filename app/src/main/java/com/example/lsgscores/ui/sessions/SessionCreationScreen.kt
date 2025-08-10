@@ -29,18 +29,7 @@ fun SessionCreationScreen(
     // For the dropdown scoring mode
     var scoringDropdownExpanded by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Create Session") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Cancel")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
+    Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -48,10 +37,9 @@ fun SessionCreationScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text("Create a new session", style = MaterialTheme.typography.titleLarge)
-
             // Date (non-editable)
-            val formattedDate = sessionDraft.dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            val formattedDate =
+                sessionDraft.dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
             OutlinedTextField(
                 value = formattedDate,
                 onValueChange = {},
@@ -83,7 +71,8 @@ fun SessionCreationScreen(
                 OutlinedButton(
                     onClick = { scoringDropdownExpanded = true }
                 ) {
-                    val modeName = scoringModes.find { it.id == sessionDraft.scoringModeId }?.name ?: "Choose"
+                    val modeName =
+                        scoringModes.find { it.id == sessionDraft.scoringModeId }?.name ?: "Choose"
                     Text(modeName)
                 }
                 DropdownMenu(
@@ -104,14 +93,26 @@ fun SessionCreationScreen(
 
             Spacer(Modifier.weight(1f))
 
-            // Next button to go to teams selection
-            Button(
-                onClick = {
-                    navController.navigate("new_session_teams")
-                },
-                modifier = Modifier.fillMaxWidth()
+            // Buttons row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Next")
+                OutlinedButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+
+                Button(
+                    onClick = {
+                        navController.navigate("new_session_teams")
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Next")
+                }
             }
         }
     }

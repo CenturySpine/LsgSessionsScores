@@ -19,7 +19,7 @@ fun HomeScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFB3E5FC))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -32,9 +32,9 @@ fun HomeScreen() {
                 modifier = Modifier
                     .width(200.dp)
                     .height(300.dp)
-                    .border(width = 1.dp, color = Color(0xFF000000))
+                    .border(width = 1.dp, color = MaterialTheme.colorScheme.outline)
 
-                    .background(Color(0xFFFFFFFF))
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Box(
                     modifier = Modifier.padding(8.dp)

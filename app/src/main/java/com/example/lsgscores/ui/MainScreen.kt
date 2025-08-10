@@ -33,10 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.lsgscores.ui.holes.HoleFormScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
@@ -49,9 +51,11 @@ import com.example.lsgscores.ui.sessions.PlayedHoleScoreScreen
 import com.example.lsgscores.ui.sessions.SessionCreationScreen
 import com.example.lsgscores.ui.sessions.SessionHistoryScreen
 import com.example.lsgscores.ui.sessions.SessionTeamsScreen
+import com.example.lsgscores.ui.settings.SettingsScreen
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
+import com.example.lsgscores.viewmodel.ThemeViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -60,7 +64,8 @@ fun MainScreen(
     navController: NavHostController,
     playerViewModel: PlayerViewModel,
     holeViewModel: HoleViewModel,
-    sessionViewModel: SessionViewModel
+    sessionViewModel: SessionViewModel,
+    themeViewModel: ThemeViewModel = hiltViewModel()
 ) {
     val ongoingSession by sessionViewModel.ongoingSession.collectAsState(initial = null)
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -74,10 +79,15 @@ fun MainScreen(
     )
 
     // Drawer items
-    val drawerItems = listOf(
+
+    val drawerMainItems = listOf(
         DrawerNavItem.Players,
         DrawerNavItem.Holes,
         DrawerNavItem.SessionHistory
+    )
+
+    val drawerSystemItems = listOf(
+        DrawerNavItem.Settings
     )
 
     ModalNavigationDrawer(
@@ -96,7 +106,35 @@ fun MainScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Drawer items
-                drawerItems.forEach { item ->
+// Drawer main items
+                drawerMainItems.forEach { item ->
+                    NavigationDrawerItem(
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) },
+                        selected = navController.currentDestination?.route == item.route,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                            scope.launch {
+                                drawerState.close()
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                }
+
+// Separator
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+// Drawer system items
+                drawerSystemItems.forEach { item ->
                     NavigationDrawerItem(
                         icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) },
@@ -123,14 +161,21 @@ fun MainScreen(
             topBar = {
                 TopAppBar(
                     title = {
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentRoute = navBackStackEntry?.destination?.route
+
                         Text(
-                            when (navController.currentDestination?.route) {
+                            when (currentRoute) {
                                 BottomNavItem.Home.route -> "LSG Scores"
                                 BottomNavItem.NewSession.route -> "New Session"
                                 BottomNavItem.OngoingSession.route -> "Ongoing Session"
                                 DrawerNavItem.Players.route -> "Players"
                                 DrawerNavItem.Holes.route -> "Holes"
                                 DrawerNavItem.SessionHistory.route -> "Sessions History"
+                                DrawerNavItem.Settings.route -> "Settings"
+                                "add_user" -> "Add Player"
+                                "add_hole" -> "Add Hole"
+                                "new_session_teams" -> "Select Teams"
                                 else -> "LSG Scores"
                             }
                         )
@@ -238,6 +283,9 @@ fun MainScreen(
                         sessionViewModel = sessionViewModel,
                         playedHoleId = playedHoleId
                     )
+                }
+                composable(DrawerNavItem.Settings.route) {
+                    SettingsScreen(navController, themeViewModel)
                 }
             }
         }

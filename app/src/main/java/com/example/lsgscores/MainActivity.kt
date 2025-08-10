@@ -6,9 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.lsgscores.ui.MainScreen
+import com.example.lsgscores.ui.theme.LsgScoresTheme
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
+import com.example.lsgscores.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -17,14 +19,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val navController = rememberNavController()
+            val themeViewModel: ThemeViewModel = hiltViewModel()
 
-            MainScreen(
-                navController = navController,
-                playerViewModel = hiltViewModel<PlayerViewModel>(),
-                holeViewModel = hiltViewModel<HoleViewModel>(),
-                sessionViewModel = hiltViewModel<SessionViewModel>()
-            )
+            LsgScoresTheme(themeViewModel = themeViewModel) {
+                val navController = rememberNavController()
+
+                MainScreen(
+                    navController = navController,
+                    playerViewModel = hiltViewModel<PlayerViewModel>(),
+                    holeViewModel = hiltViewModel<HoleViewModel>(),
+                    sessionViewModel = hiltViewModel<SessionViewModel>()
+                )
+            }
         }
     }
 }

@@ -25,9 +25,7 @@ fun SessionHistoryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Sessions History") }
-            )
+
         }
     ) { paddingValues ->
         if (completedSessions.isEmpty()) {

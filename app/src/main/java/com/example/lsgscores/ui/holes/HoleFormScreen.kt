@@ -16,6 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -60,19 +61,7 @@ fun HoleFormScreen(
 
     var endPhotoPath by remember { mutableStateOf<String?>(null) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Add a hole") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.baseline_close_24), // ou baseline_arrow_back_24
-                            contentDescription = "Cancel"
-                        )
-                    }
-                }) }
-    ) { padding ->
+    Scaffold { padding ->
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -88,6 +77,7 @@ fun HoleFormScreen(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
+
             // Name
             OutlinedTextField(
                 value = name,
@@ -97,7 +87,6 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-
             OutlinedTextField(
                 value = geoZone,
                 onValueChange = { geoZone = it },
@@ -105,7 +94,6 @@ fun HoleFormScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(12.dp))
-
 
             OutlinedTextField(
                 value = description,
@@ -118,7 +106,6 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-
             OutlinedTextField(
                 value = constraints,
                 onValueChange = { constraints = it },
@@ -130,7 +117,6 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-
             OutlinedTextField(
                 value = distance,
                 onValueChange = { distance = it.filter { c -> c.isDigit() } },
@@ -139,7 +125,6 @@ fun HoleFormScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Spacer(Modifier.height(12.dp))
-
 
             OutlinedTextField(
                 value = par,
@@ -157,8 +142,7 @@ fun HoleFormScreen(
             ) {
                 // Starting Point (Left)
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("Start", style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(8.dp))
@@ -176,8 +160,7 @@ fun HoleFormScreen(
 
                 // Ending Point (Right)
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("Target", style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(8.dp))
@@ -196,41 +179,48 @@ fun HoleFormScreen(
 
             Spacer(Modifier.height(32.dp))
 
-
-            Button(
-                onClick = {
-                    if (name.isBlank()) {
-                        showNameError = true
-                    } else {
-                        showNameError = false
-                        val hole = Hole(
-                            name = name,
-                            geoZone = geoZone,
-                            description = description.takeIf { it.isNotBlank() },
-                            constraints = constraints.takeIf { it.isNotBlank() },
-                            distance = distance.toIntOrNull(),
-                            par = par.toIntOrNull()
-                                ?: 3, // default value
-                            start = HolePoint(
-                                name = startName,
-                                photoUri = startPhotoPath
-
-                            ),
-                            end = HolePoint(
-                                name = endName,
-                                photoUri = endPhotoPath
-
-                            )
-                        )
-                        holeViewModel.addHole(hole)
-                        navController.popBackStack()
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Save")
+                OutlinedButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+
+                Button(
+                    onClick = {
+                        if (name.isBlank()) {
+                            showNameError = true
+                        } else {
+                            showNameError = false
+                            val hole = Hole(
+                                name = name,
+                                geoZone = geoZone,
+                                description = description.takeIf { it.isNotBlank() },
+                                constraints = constraints.takeIf { it.isNotBlank() },
+                                distance = distance.toIntOrNull(),
+                                par = par.toIntOrNull() ?: 3,
+                                start = HolePoint(
+                                    name = startName,
+                                    photoUri = startPhotoPath
+                                ),
+                                end = HolePoint(
+                                    name = endName,
+                                    photoUri = endPhotoPath
+                                )
+                            )
+                            holeViewModel.addHole(hole)
+                            navController.popBackStack()
+                        }
+                    },
+                    enabled = name.isNotBlank(),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Save")
+                }
             }
         }
     }
