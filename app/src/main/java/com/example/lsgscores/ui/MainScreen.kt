@@ -58,12 +58,6 @@ import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
 import kotlinx.coroutines.launch
 
-enum class NavigationContext {
-    BOTTOM_BAR,
-    DRAWER,
-    OTHER
-}
-
 @Composable
 private fun getCurrentNavigationContext(currentRoute: String?): NavigationContext {
     return when {

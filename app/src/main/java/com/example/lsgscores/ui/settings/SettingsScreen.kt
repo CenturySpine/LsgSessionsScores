@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lsgscores.R
 import com.example.lsgscores.ui.theme.availableThemes
+import com.example.lsgscores.viewmodel.LanguageOption
 import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
 
@@ -117,7 +118,7 @@ fun SettingsScreen(
 }
 @Composable
 private fun LanguageSelectionCard(
-    language: com.example.lsgscores.viewmodel.LanguageOption,
+    language: LanguageOption,
     isSelected: Boolean,
     onLanguageSelected: () -> Unit
 ) {

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.lsgscores.data.session.SessionType
 import com.example.lsgscores.ui.BottomNavItem
 import com.example.lsgscores.ui.DrawerNavItem
 import com.example.lsgscores.viewmodel.HoleViewModel
@@ -271,11 +272,11 @@ fun OngoingSessionScreen(
 
 
                                 val filteredGameModes = when (session.sessionType) {
-                                    com.example.lsgscores.data.session.SessionType.INDIVIDUAL -> {
+                                    SessionType.INDIVIDUAL -> {
                                         gameModes.filter { it.id == 1 } // Only Individual mode (id = 1)
                                     }
 
-                                    com.example.lsgscores.data.session.SessionType.TEAM -> {
+                                    SessionType.TEAM -> {
                                         gameModes.filter { it.id != 1 } // All modes except Individual
                                     }
                                 }
@@ -283,8 +284,8 @@ fun OngoingSessionScreen(
 
                                 if (selectedGameModeId == null) {
                                     selectedGameModeId = when (session.sessionType) {
-                                        com.example.lsgscores.data.session.SessionType.INDIVIDUAL -> 1 // Individual
-                                        com.example.lsgscores.data.session.SessionType.TEAM -> 2 // Scramble
+                                        SessionType.INDIVIDUAL -> 1 // Individual
+                                        SessionType.TEAM -> 2 // Scramble
                                     }
                                 }
 

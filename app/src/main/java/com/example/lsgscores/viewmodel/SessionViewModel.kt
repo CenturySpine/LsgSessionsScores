@@ -41,19 +41,6 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 
 
-data class TeamResult(
-    val teamName: String,
-    val strokes: Int,
-    val calculatedScore: Int
-)
-
-data class SessionDraft(
-    val dateTime: LocalDateTime = LocalDateTime.now(),
-    val sessionType: SessionType = SessionType.INDIVIDUAL,
-    val scoringModeId: Int = 1,
-    val comment: String? = null
-)
-
 @HiltViewModel
 class SessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,

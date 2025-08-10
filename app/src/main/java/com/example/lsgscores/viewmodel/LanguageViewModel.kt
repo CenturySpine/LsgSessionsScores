@@ -1,7 +1,6 @@
 package com.example.lsgscores.viewmodel
 
 import android.content.Context
-import android.content.res.Configuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lsgscores.R
@@ -12,14 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Locale
 import javax.inject.Inject
-
-data class LanguageOption(
-    val code: String,
-    val displayName: String,
-    val flagEmoji: String
-)
 
 @HiltViewModel
 class LanguageViewModel @Inject constructor(
