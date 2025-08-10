@@ -1,36 +1,37 @@
 package com.example.lsgscores.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.GolfCourse
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.lsgscores.R
 
 sealed class DrawerNavItem(
     val route: String,
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector
 ) {
     object Players : DrawerNavItem(
         "user_list",
-        "Players",
+        R.string.drawer_nav_players,
         Icons.Filled.Person
     )
     object Holes : DrawerNavItem(
         "hole_list",
-        "Holes",
+        R.string.drawer_nav_holes,
         Icons.Rounded.GolfCourse
     )
     object SessionHistory : DrawerNavItem(
         "session_history",
-        "Sessions History",
+        R.string.drawer_nav_session_history,
         Icons.Filled.History
     )
-
     object Settings : DrawerNavItem(
         "settings",
-        "Settings",
+        R.string.drawer_nav_settings,
         Icons.Filled.Settings
     )
 }

@@ -150,8 +150,8 @@ fun MainScreen(
                             )
 
                     NavigationDrawerItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
+                        icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                        label = { Text(stringResource(item.labelRes)) },
                         selected = isSelected,
                         onClick = {
                             navController.navigate(item.route) {
@@ -179,8 +179,8 @@ fun MainScreen(
                             currentRoute == item.route
 
                     NavigationDrawerItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
+                        icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                        label = { Text(stringResource(item.labelRes)) },
                         selected = isSelected,
                         onClick = {
                             navController.navigate(item.route) {
@@ -253,8 +253,8 @@ fun MainScreen(
                                 currentRoute == item.route
 
                         NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
+                            icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                            label = { Text(stringResource(item.labelRes)) },
                             selected = isSelected,
                             onClick = {
                                 if (isEnabled) {
