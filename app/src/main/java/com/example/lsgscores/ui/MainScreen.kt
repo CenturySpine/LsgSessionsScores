@@ -55,6 +55,35 @@ import com.example.lsgscores.viewmodel.SessionViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
 import kotlinx.coroutines.launch
 
+enum class NavigationContext {
+    BOTTOM_BAR,
+    DRAWER,
+    OTHER
+}
+
+@Composable
+private fun getCurrentNavigationContext(currentRoute: String?): NavigationContext {
+    return when {
+        // Bottom bar routes (including dynamic routes)
+        currentRoute == BottomNavItem.Home.route ||
+                currentRoute == BottomNavItem.NewSession.route ||
+                currentRoute == BottomNavItem.OngoingSession.route ||
+                currentRoute?.startsWith("played_hole_score/") == true -> NavigationContext.BOTTOM_BAR
+
+        // Drawer routes (including dynamic routes)
+        currentRoute == DrawerNavItem.Players.route ||
+                currentRoute == DrawerNavItem.Holes.route ||
+                currentRoute == DrawerNavItem.SessionHistory.route ||
+                currentRoute == DrawerNavItem.Settings.route ||
+                currentRoute?.startsWith("user_detail/") == true ||
+                currentRoute == "add_user" ||
+                currentRoute == "add_hole" -> NavigationContext.DRAWER
+
+        // Other routes
+        else -> NavigationContext.OTHER
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MainScreen(
@@ -91,6 +120,11 @@ fun MainScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
+
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+                val navigationContext = getCurrentNavigationContext(currentRoute)
+
                 // Drawer header
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -102,13 +136,19 @@ fun MainScreen(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Drawer items
-// Drawer main items
                 drawerMainItems.forEach { item ->
+                    val isSelected = navigationContext == NavigationContext.DRAWER && (
+                            currentRoute == item.route ||
+                                    // Handle dynamic routes for drawer items
+                                    (item == DrawerNavItem.Players && currentRoute?.startsWith("user_detail/") == true) ||
+                                    (item == DrawerNavItem.Players && currentRoute == "add_user") ||
+                                    (item == DrawerNavItem.Holes && currentRoute == "add_hole")
+                            )
+
                     NavigationDrawerItem(
                         icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) },
-                        selected = navController.currentDestination?.route == item.route,
+                        selected = isSelected,
                         onClick = {
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -124,7 +164,6 @@ fun MainScreen(
                         modifier = Modifier.padding(horizontal = 12.dp)
                     )
                 }
-
 // Separator
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -132,10 +171,13 @@ fun MainScreen(
 
 // Drawer system items
                 drawerSystemItems.forEach { item ->
+                    val isSelected = navigationContext == NavigationContext.DRAWER &&
+                            currentRoute == item.route
+
                     NavigationDrawerItem(
                         icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) },
-                        selected = navController.currentDestination?.route == item.route,
+                        selected = isSelected,
                         onClick = {
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -193,16 +235,24 @@ fun MainScreen(
             },
             bottomBar = {
                 NavigationBar {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    val navigationContext = getCurrentNavigationContext(currentRoute)
+
                     bottomItems.forEach { item ->
                         val isEnabled = when (item) {
                             is BottomNavItem.NewSession -> ongoingSession == null
                             is BottomNavItem.OngoingSession -> ongoingSession != null
                             else -> true
                         }
+
+                        val isSelected = navigationContext == NavigationContext.BOTTOM_BAR &&
+                                currentRoute == item.route
+
                         NavigationBarItem(
                             icon = { Icon(item.icon, contentDescription = item.label) },
                             label = { Text(item.label) },
-                            selected = navController.currentDestination?.route == item.route,
+                            selected = isSelected,
                             onClick = {
                                 if (isEnabled) {
                                     navController.navigate(item.route) {
