@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,6 +44,11 @@ import com.example.lsgscores.ui.theme.availableThemes
 import com.example.lsgscores.viewmodel.LanguageOption
 import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,38 +91,55 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            availableThemes.forEach { theme ->
-                ThemePreviewCard(
-                    theme = theme,
-                    isSelected = selectedThemeId == theme.id,
-                    onThemeSelected = { themeViewModel.setTheme(theme.id) }
-                )
+// Theme section with grid layout
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 2
+            ) {
+                availableThemes.forEach { theme ->
+                    CompactThemePreviewCard(
+                        theme = theme,
+                        isSelected = selectedThemeId == theme.id,
+                        onThemeSelected = { themeViewModel.setTheme(theme.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
-// Language section (ajoutez après la section thème)
-            Spacer(modifier = Modifier.height(32.dp))
+            // Language section (ajoutez après la section thème)
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = stringResource(R.string.settings_label_language),
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            availableLanguages.forEach { language ->
-                LanguageSelectionCard(
-                    language = language,
-                    isSelected = selectedLanguage == language.code,
-                    onLanguageSelected = {
-                        languageViewModel.setLanguage(language.code)
-                        // Recreate activity to apply language change
-                        (context as android.app.Activity).recreate()
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+// Language section with grid layout
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = 2
+            ) {
+                availableLanguages.forEach { language ->
+                    CompactLanguageSelectionCard(
+                        language = language,
+                        isSelected = selectedLanguage == language.code,
+                        onLanguageSelected = {
+                            languageViewModel.setLanguage(language.code)
+                            (context as android.app.Activity).recreate()
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
 }
+
 @Composable
 private fun LanguageSelectionCard(
     language: LanguageOption,
@@ -222,6 +246,119 @@ private fun ThemePreviewCard(
             RadioButton(
                 selected = isSelected,
                 onClick = onThemeSelected
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactThemePreviewCard(
+    theme: com.example.lsgscores.ui.theme.AppTheme,
+    isSelected: Boolean,
+    onThemeSelected: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clickable { onThemeSelected() }
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                        RoundedCornerShape(12.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Color preview circles
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                ColorCircle(color = theme.lightColors.primary, modifier = Modifier.size(16.dp))
+                ColorCircle(color = theme.lightColors.secondary, modifier = Modifier.size(16.dp))
+                ColorCircle(color = theme.lightColors.tertiary, modifier = Modifier.size(16.dp))
+            }
+
+            Text(
+                text = theme.name,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            RadioButton(
+                selected = isSelected,
+                onClick = onThemeSelected,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactLanguageSelectionCard(
+    language: LanguageOption,
+    isSelected: Boolean,
+    onLanguageSelected: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clickable { onLanguageSelected() }
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                        RoundedCornerShape(12.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Flag emoji
+            Text(
+                text = language.flagEmoji,
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            Text(
+                text = language.displayName,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            RadioButton(
+                selected = isSelected,
+                onClick = onLanguageSelected,
+                modifier = Modifier.size(20.dp)
             )
         }
     }
