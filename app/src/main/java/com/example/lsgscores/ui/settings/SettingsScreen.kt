@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,23 +36,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.lsgscores.R
 import com.example.lsgscores.ui.theme.availableThemes
 import com.example.lsgscores.viewmodel.LanguageOption
 import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    navController: NavController,
     themeViewModel: ThemeViewModel,
     languageViewModel: LanguageViewModel
 ) {
@@ -136,117 +130,6 @@ fun SettingsScreen(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun LanguageSelectionCard(
-    language: LanguageOption,
-    isSelected: Boolean,
-    onLanguageSelected: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onLanguageSelected() }
-            .then(
-                if (isSelected) {
-                    Modifier.border(
-                        2.dp,
-                        MaterialTheme.colorScheme.primary,
-                        RoundedCornerShape(12.dp)
-                    )
-                } else {
-                    Modifier
-                }
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Flag emoji
-                Text(
-                    text = language.flagEmoji,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
-                Text(
-                    text = language.displayName,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-
-            RadioButton(
-                selected = isSelected,
-                onClick = onLanguageSelected
-            )
-        }
-    }
-}
-
-@Composable
-private fun ThemePreviewCard(
-    theme: com.example.lsgscores.ui.theme.AppTheme,
-    isSelected: Boolean,
-    onThemeSelected: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onThemeSelected() }
-            .then(
-                if (isSelected) {
-                    Modifier.border(
-                        2.dp,
-                        MaterialTheme.colorScheme.primary,
-                        RoundedCornerShape(12.dp)
-                    )
-                } else {
-                    Modifier
-                }
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Color preview circles
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    ColorCircle(color = theme.lightColors.primary)
-                    ColorCircle(color = theme.lightColors.secondary)
-                    ColorCircle(color = theme.lightColors.tertiary)
-                }
-
-                Text(
-                    text = theme.name,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-
-            RadioButton(
-                selected = isSelected,
-                onClick = onThemeSelected
-            )
         }
     }
 }

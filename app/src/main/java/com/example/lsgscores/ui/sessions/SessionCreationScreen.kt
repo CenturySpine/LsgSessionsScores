@@ -71,7 +71,7 @@ fun SessionCreationScreen(
             // Session Type (Individual / Team)
             Text(stringResource(R.string.session_creation_label_session_type))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SessionType.values().forEach { type ->
+                SessionType.entries.forEach { type ->
                     OutlinedButton(
                         onClick = { sessionViewModel.setSessionType(type) },
                         border = BorderStroke(

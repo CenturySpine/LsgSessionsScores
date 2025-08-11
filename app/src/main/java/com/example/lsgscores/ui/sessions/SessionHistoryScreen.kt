@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.lsgscores.R
 import com.example.lsgscores.data.session.Session
 import com.example.lsgscores.viewmodel.SessionViewModel
@@ -21,7 +20,6 @@ import java.time.Duration
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionHistoryScreen(
-    navController: NavController,
     sessionViewModel: SessionViewModel
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsState()

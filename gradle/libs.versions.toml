@@ -4,6 +4,7 @@ activityComposeVersion = "1.9.0"
 agp = "8.12.0"
 androidImageCropper = "4.4.0"
 coilCompose = "2.7.0"
+composeBomVersion = "2024.05.00"
 coreKtxVersion = "1.13.1"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -12,25 +13,27 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
-lucideCompose = "1.0.0"
-materialdesignicons = "1.1.0"
+
+materialIconsExtended = "1.7.8"
 navigationCompose = "2.9.3"
 roomVersion = "2.6.1"
-firebasePerfKtx = "22.0.0"
+
 material3 = "1.3.2"
 hiltNavigationCompose = "1.2.0"
 kotlin = "2.0.10"
 ksp = "2.0.10-1.0.24"
 hilt = "2.51.1"
 foundation = "1.8.3"
-ui = "1.8.3"
+
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanistFlowlayout" }
 android-image-cropper = { module = "com.github.CanHub:Android-Image-Cropper", version.ref = "androidImageCropper" }
 androidx-activity-compose-v190 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
+androidx-compose-bom-v20240500 = { module = "androidx.compose:compose-bom", version.ref = "composeBomVersion" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-ktx-v1131 = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomVersion" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomVersion" }
@@ -49,15 +52,15 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-firebase-perf-ktx = { group = "com.google.firebase", name = "firebase-perf-ktx", version.ref = "firebasePerfKtx" }
-lucide-compose = { module = "dev.lucide:lucide-compose", version.ref = "lucideCompose" }
+
+
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
-materialdesignicons = { module = "io.github.devssrsouza.compose-icons:materialdesignicons", version.ref = "materialdesignicons" }
+
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

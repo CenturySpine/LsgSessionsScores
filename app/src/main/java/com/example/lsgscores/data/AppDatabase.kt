@@ -22,7 +22,10 @@ import com.example.lsgscores.data.session.PlayedHoleDao
 import com.example.lsgscores.data.session.PlayedHoleScoreDao
 import com.example.lsgscores.data.session.TeamDao
 
-@Database(entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class], version = 2)
+@Database(
+    entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class],
+    version = 2
+)
 @TypeConverters(DateTimeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): PlayerDao
@@ -44,14 +47,5 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "app_database"
-                ).build().also { INSTANCE = it }
-            }
-        }
     }
 }

@@ -4,15 +4,11 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.lsgscores.data.preferences.AppPreferences
 import com.example.lsgscores.ui.MainScreen
 import com.example.lsgscores.ui.theme.LsgScoresTheme
-import com.example.lsgscores.util.LanguageManager
+import com.example.lsgscores.utils.LanguageManager
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel

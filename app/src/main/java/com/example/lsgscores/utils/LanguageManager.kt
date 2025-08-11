@@ -1,4 +1,4 @@
-package com.example.lsgscores.util
+package com.example.lsgscores.utils
 
 import android.content.Context
 import android.content.res.Configuration
@@ -11,12 +11,7 @@ object LanguageManager {
     fun applyLanguage(context: Context, languageCode: String): Context {
         val locale = when (languageCode) {
             AppPreferences.LANGUAGE_SYSTEM -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    context.resources.configuration.locales[0]
-                } else {
-                    @Suppress("DEPRECATION")
-                    Locale.getDefault()
-                }
+                context.resources.configuration.locales[0]
             }
             AppPreferences.LANGUAGE_FRENCH -> Locale("fr")
             AppPreferences.LANGUAGE_ENGLISH -> Locale("en")

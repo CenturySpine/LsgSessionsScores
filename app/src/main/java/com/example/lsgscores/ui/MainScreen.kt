@@ -294,7 +294,7 @@ fun MainScreen(
                     HoleListScreen(navController, holeViewModel)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
-                    SessionHistoryScreen(navController, sessionViewModel)
+                    SessionHistoryScreen(sessionViewModel)
                 }
 
                 // Other routes (unchanged)
@@ -329,7 +329,7 @@ fun MainScreen(
                     )
                 }
                 composable(DrawerNavItem.Settings.route) {
-                    SettingsScreen(navController, themeViewModel, languageViewModel)
+                    SettingsScreen(themeViewModel, languageViewModel)
                 }
             }
         }
