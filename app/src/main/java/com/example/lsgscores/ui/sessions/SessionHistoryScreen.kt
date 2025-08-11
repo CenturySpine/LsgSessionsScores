@@ -7,14 +7,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.lsgscores.R
 import com.example.lsgscores.data.session.Session
 import com.example.lsgscores.viewmodel.SessionViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.time.Duration
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionHistoryScreen(
@@ -41,12 +44,12 @@ fun SessionHistoryScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "No completed sessions yet",
+                        text = stringResource(R.string.session_history_empty_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Your completed sessions will appear here",
+                        text = stringResource(R.string.session_history_empty_message),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -87,16 +90,26 @@ private fun SessionHistoryCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Date formatting in French
+            // Date formatting using localized format from resources
+            val currentLocale = Locale.getDefault()
+            val datePattern = stringResource(R.string.session_history_date_format_pattern)
+
             val formattedDate = session.dateTime.format(
-                DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH)
+                DateTimeFormatter.ofPattern(datePattern, currentLocale)
             )
             val formattedTime = session.dateTime.format(
-                DateTimeFormatter.ofPattern("HH:mm", Locale.FRENCH)
+                DateTimeFormatter.ofPattern("HH:mm", currentLocale)
             )
 
+            // Capitalize first letter appropriately for each language
+            val displayDate = if (currentLocale.language == "fr") {
+                formattedDate.replaceFirstChar { it.uppercase() }
+            } else {
+                formattedDate // English dates are already properly capitalized
+            }
+
             Text(
-                text = formattedDate.replaceFirstChar { it.uppercase() },
+                text = displayDate,
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -107,7 +120,7 @@ private fun SessionHistoryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "à $formattedTime",
+                    text = "${stringResource(R.string.session_history_time_prefix)} $formattedTime",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -119,18 +132,24 @@ private fun SessionHistoryCard(
                     val minutes = duration.toMinutes() % 60
 
                     val durationText = when {
-                        hours > 0 -> "${hours}h${if (minutes > 0) " ${minutes}min" else ""}"
-                        else -> "${minutes}min"
+                        hours > 0 -> {
+                            if (minutes > 0) {
+                                stringResource(R.string.session_history_duration_hours_minutes, hours, minutes)
+                            } else {
+                                stringResource(R.string.session_history_duration_hours, hours)
+                            }
+                        }
+                        else -> stringResource(R.string.session_history_duration_minutes, minutes)
                     }
 
                     Text(
-                        text = "•",
+                        text = stringResource(R.string.session_history_separator),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Text(
-                        text = "Durée: $durationText",
+                        text = "${stringResource(R.string.session_history_duration_prefix)} $durationText",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

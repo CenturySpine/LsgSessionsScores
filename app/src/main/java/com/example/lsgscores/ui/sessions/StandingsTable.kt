@@ -8,9 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.lsgscores.R
 import com.example.lsgscores.viewmodel.TeamStanding
 
 @Composable
@@ -28,7 +30,7 @@ fun StandingsTable(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Current Standings",
+                text = stringResource(R.string.standings_table_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -41,7 +43,7 @@ fun StandingsTable(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Pos",
+                    text = stringResource(R.string.standings_table_header_pos),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(40.dp)
@@ -51,20 +53,20 @@ fun StandingsTable(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = "Team",
+                    text = stringResource(R.string.standings_table_header_team),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "Strokes",
+                    text = stringResource(R.string.standings_table_header_strokes),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(60.dp),
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Score",
+                    text = stringResource(R.string.standings_table_header_score),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(60.dp),

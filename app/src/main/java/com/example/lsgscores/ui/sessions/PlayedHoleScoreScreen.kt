@@ -22,8 +22,10 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.lsgscores.R
 import com.example.lsgscores.ui.common.NumberInputField
 import com.example.lsgscores.viewmodel.SessionViewModel
 
@@ -59,12 +61,15 @@ fun PlayedHoleScoreScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Enter the strokes for each team", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = stringResource(R.string.played_hole_score_title),
+            style = MaterialTheme.typography.titleLarge
+        )
 
         teamsWithPlayers.forEach { teamWithPlayers ->
             val playerNames =
                 listOfNotNull(teamWithPlayers.player1?.name, teamWithPlayers.player2?.name)
-                    .joinToString(" & ")
+                    .joinToString(stringResource(R.string.played_hole_score_players_separator))
 
             val strokesValue = strokesByTeam[teamWithPlayers.team.id] ?: ""
             val liveScore = calculatedScores[teamWithPlayers.team.id] ?: 0
@@ -85,7 +90,7 @@ fun PlayedHoleScoreScreen(
                 )
                 AssistChip(
                     onClick = { /* Read-only chip */ },
-                    label = { Text("$liveScore") },
+                    label = { Text(liveScore.toString()) },
                     enabled = false,
                     colors = AssistChipDefaults.assistChipColors(
                         disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -107,7 +112,7 @@ fun PlayedHoleScoreScreen(
                 },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.played_hole_score_button_cancel))
             }
 
             Button(
@@ -127,7 +132,7 @@ fun PlayedHoleScoreScreen(
                 enabled = teams.all { strokesByTeam[it.id]?.isNotEmpty() == true },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Save scores")
+                Text(stringResource(R.string.played_hole_score_button_save))
             }
         }
     }

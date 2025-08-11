@@ -219,7 +219,8 @@ fun OngoingSessionScreen(
                                 }
                             }
                         }
-                    }                }
+                    }
+                }
 
 
 
@@ -385,7 +386,8 @@ fun OngoingSessionScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(stringResource(R.string.ongoing_session_button_validate))
-            }        }
+            }
+        }
     }
     if (showDeleteConfirm) {
         AlertDialog(
@@ -410,7 +412,9 @@ fun OngoingSessionScreen(
                 ) { Text(stringResource(R.string.ongoing_session_delete_dialog_button_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.ongoing_session_delete_dialog_button_cancel)) }
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                }) { Text(stringResource(R.string.ongoing_session_delete_dialog_button_cancel)) }
             }
         )
     }
@@ -424,7 +428,7 @@ fun OngoingSessionScreen(
                 text = { Text(scoringMode.description) },
                 confirmButton = {
                     TextButton(onClick = { showScoringModeInfo = false }) {
-                        Text("OK")
+                        Text(stringResource(R.string.ongoing_session_scoring_info_button_ok))
                     }
                 }
             )
