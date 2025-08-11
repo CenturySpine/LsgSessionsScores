@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.lsgscores.R
 
@@ -47,7 +48,7 @@ fun HomeScreen() {
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.lsg_vert_banner),
-                        contentDescription = "App logo",
+                        contentDescription = stringResource(R.string.home_logo_description),
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -55,7 +56,7 @@ fun HomeScreen() {
             }
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "Welcome to LSG scores !",
+                text = stringResource(R.string.home_welcome_text),
                 style = MaterialTheme.typography.headlineMedium
             )
 

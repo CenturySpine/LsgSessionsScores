@@ -60,14 +60,14 @@ fun SessionCreationScreen(
             OutlinedTextField(
                 value = formattedDate,
                 onValueChange = {},
-                label = { Text("Date") },
+                label = { Text(stringResource(R.string.session_creation_label_date)) },
                 readOnly = true,
                 enabled = false,
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Session Type (Individual / Team)
-            Text("Session type")
+            Text(stringResource(R.string.session_creation_label_session_type))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SessionType.values().forEach { type ->
                     OutlinedButton(
@@ -77,19 +77,25 @@ fun SessionCreationScreen(
                             if (sessionDraft.sessionType == type) MaterialTheme.colorScheme.primary else Color.LightGray
                         )
                     ) {
-                        Text(type.name.lowercase().replaceFirstChar { it.uppercase() })
+                        Text(
+                            when (type) {
+                                SessionType.INDIVIDUAL -> stringResource(R.string.session_creation_type_individual)
+                                SessionType.TEAM -> stringResource(R.string.session_creation_type_team)
+                            }
+                        )
                     }
                 }
             }
 
             // Scoring Mode
-            Text("Scoring mode")
+            Text(stringResource(R.string.session_creation_label_scoring_mode))
             Box {
                 OutlinedButton(
                     onClick = { scoringDropdownExpanded = true }
                 ) {
                     val modeName =
-                        scoringModes.find { it.id == sessionDraft.scoringModeId }?.name ?: "Choose"
+                        scoringModes.find { it.id == sessionDraft.scoringModeId }?.name
+                            ?: stringResource(R.string.session_creation_scoring_choose)
                     Text(modeName)
                 }
                 DropdownMenu(
@@ -119,16 +125,15 @@ fun SessionCreationScreen(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.session_creation_button_cancel))
                 }
-
                 Button(
                     onClick = {
                         navController.navigate("new_session_teams")
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Next")
+                    Text(stringResource(R.string.session_creation_button_next))
                 }
             }
         }

@@ -23,6 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import com.example.lsgscores.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,7 +34,7 @@ fun SessionTeamsScreen(
     playerViewModel: PlayerViewModel
 ) {
     val sessionDraft by sessionViewModel.sessionDraft.collectAsState()
-    val allPlayers by playerViewModel.players.collectAsState(initial = emptyList<Player>())
+    val allPlayers by playerViewModel.players.collectAsState(initial = emptyList())
 
     // State to track already selected players (so you don't add them in multiple teams)
     var alreadySelectedPlayerIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
@@ -46,6 +48,7 @@ fun SessionTeamsScreen(
 
     val context = LocalContext.current
     val error by sessionViewModel.error.collectAsState()
+    val errorOngoingMessage = stringResource(R.string.session_teams_error_ongoing)
 
     Scaffold { innerPadding ->
         Box(
@@ -63,7 +66,7 @@ fun SessionTeamsScreen(
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
-                    "Select players to compose a team",
+                    stringResource(R.string.session_teams_instruction),
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -126,12 +129,15 @@ fun SessionTeamsScreen(
                     },
                     enabled = currentSelection.size in 1..maxSelectable
                 ) {
-                    Text("Add team")
+                    Text(stringResource(R.string.session_teams_button_add_team))
                 }
 
                 // List of teams created so far
                 if (teams.isNotEmpty()) {
-                    Text("Teams created:", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        stringResource(R.string.session_teams_label_teams_created),
+                        style = MaterialTheme.typography.titleSmall
+                    )
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         teams.forEachIndexed { index, team ->
                             Card(
@@ -154,11 +160,13 @@ fun SessionTeamsScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Team ${index + 1}:",
+                                            text = stringResource(
+                                                R.string.session_teams_label_team_prefix,
+                                                index + 1
+                                            ),
                                             style = MaterialTheme.typography.bodyMedium,
                                             modifier = Modifier.width(70.dp)
                                         )
-
                                         team.forEach { player ->
                                             AssistChip(
                                                 onClick = {},
@@ -198,7 +206,7 @@ fun SessionTeamsScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = "Remove team",
+                                            contentDescription = stringResource(R.string.session_teams_remove_team_description),
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                     }
@@ -222,7 +230,7 @@ fun SessionTeamsScreen(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.session_teams_button_cancel))
                 }
 
                 Button(
@@ -237,7 +245,7 @@ fun SessionTeamsScreen(
                             onSessionBlocked = {
                                 Toast.makeText(
                                     context,
-                                    error ?: "A session is already ongoing.",
+                                    error ?: errorOngoingMessage,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -246,7 +254,7 @@ fun SessionTeamsScreen(
                     enabled = teams.isNotEmpty(),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Start session")
+                    Text(stringResource(R.string.session_teams_button_start))
                 }
             }
         }

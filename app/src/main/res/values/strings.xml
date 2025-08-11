@@ -5,6 +5,7 @@
 
     <!-- HomeScreen -->
     <string name="home_welcome_text">Welcome to LSG scores !</string>
+    <string name="home_logo_description">App logo</string>
 
     <!-- MainScreen - Navigation -->
     <string name="main_app_title">LSG Scores</string>
