@@ -134,10 +134,24 @@
     <string name="settings_language_english">English</string>
     <string name="settings_language_french">Français</string>
 
-    <!-- NumberInputField -->
+    <!-- Scoring Modes -->
+    <string name="scoring_mode_classic_name">Classic</string>
+    <string name="scoring_mode_classic_description">Each player\'s or team\'s score is the total number of strokes. The lowest total wins.</string>
+    <string name="scoring_mode_strict_name">Strict</string>
+    <string name="scoring_mode_strict_description">On each hole, the player or team with the lowest unique number of strokes scores 1 point. All others score 0 points.</string>
+    <string name="scoring_mode_no_second_place_name">No second place</string>
+    <string name="scoring_mode_no_second_place_description">If a single player or team has the lowest number of strokes, they get 3 points and others get 0. If multiple tie for lowest, each gets 2 points and others get 0.</string>
+    <string name="scoring_mode_redistribution_name">Redistribution</string>
+    <string name="scoring_mode_redistribution_description">If a single player is first, they get 2 points and a solo second gets 1 point. If two tie for first, they get 1 point each and a solo second gets 1 point. Three or more tied for first: nobody gets any points.</string>
+    <string name="scoring_mode_info_title">Scoring Mode Information</string>
+    <string name="scoring_mode_info_icon_description">Scoring mode information</string>
 
-    <!-- Photo Pickers -->
+    <!-- Game Modes -->
+    <string name="game_mode_individual_description">Each player plays their own ball. The lowest number of strokes wins the hole.</string>
+    <string name="game_mode_scramble_description">Each player in the team plays a ball, then the best ball is chosen for the next shot. The team continues from the position of the best shot.</string>
+    <string name="game_mode_greensome_description">Both players in the team tee off, select the best drive, then alternate shots with the selected ball until the hole is completed.</string>
+    <string name="game_mode_best_ball_description">Each player in the team plays their own ball on each hole. The best score among teammates is the team\'s score for that hole.</string>
 
-    <!-- Common Terms (used in multiple places but kept separate as requested) -->
-    <!-- These are duplicated intentionally as per requirement -->
+    <!-- Game Mode Info -->
+    <string name="game_mode_info_title">Game Mode Information</string>
 </resources>

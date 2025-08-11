@@ -191,6 +191,24 @@
     <string name="photo_picker_camera_description">Prendre une photo</string>
     <string name="photo_picker_gallery_description">Choisir depuis la galerie</string>
 
-    <!-- Common Terms (used in multiple places but kept separate as requested) -->
-    <!-- These are duplicated intentionally as per requirement -->
+    <!-- Scoring Modes -->
+    <string name="scoring_mode_classic_name">Classique</string>
+    <string name="scoring_mode_classic_description">Le score de chaque joueur ou équipe est le nombre total de coups. Le total le plus bas gagne.</string>
+    <string name="scoring_mode_strict_name">Strict</string>
+    <string name="scoring_mode_strict_description">Sur chaque trou, le joueur ou l\'équipe avec le nombre de coups le plus bas et unique marque 1 point. Tous les autres marquent 0 point.</string>
+    <string name="scoring_mode_no_second_place_name">Pas de seconde place</string>
+    <string name="scoring_mode_no_second_place_description">Si un seul joueur ou équipe a le nombre de coups le plus bas, il obtient 3 points et les autres 0. Si plusieurs sont à égalité pour le plus bas, chacun obtient 2 points et les autres 0.</string>
+    <string name="scoring_mode_redistribution_name">Redistribution</string>
+    <string name="scoring_mode_redistribution_description">Si un seul joueur est premier, il obtient 2 points et un second seul obtient 1 point. Si deux sont à égalité pour la première place, ils obtiennent 1 point chacun et un second seul obtient 1 point. Trois ou plus à égalité pour la première place : personne n\'obtient de points.</string>
+
+    <string name="scoring_mode_info_title">Information sur le mode de scoring</string>
+    <string name="scoring_mode_info_icon_description">Information sur le mode de scoring</string>
+
+    <!-- Game Modes -->
+    <string name="game_mode_individual_description">Chaque joueur joue sa propre balle. Le nombre de coups le plus bas gagne le trou.</string>
+    <string name="game_mode_scramble_description">Chaque joueur de l\'équipe joue une balle, puis la meilleure balle est choisie pour le coup suivant. L\'équipe continue depuis la position du meilleur coup.</string>
+    <string name="game_mode_greensome_description">Les deux joueurs de l\'équipe effectuent le tee shot, sélectionnent le meilleur drive, puis alternent les coups avec la balle sélectionnée jusqu\'à terminer le trou.</string>
+    <string name="game_mode_best_ball_description">Chaque joueur de l\'équipe joue sa propre balle sur chaque trou. Le meilleur score parmi les coéquipiers est le score de l\'équipe pour ce trou.</string>
+    <!-- Game Mode Info -->
+    <string name="game_mode_info_title">Information sur le mode de jeu</string>
 </resources>
