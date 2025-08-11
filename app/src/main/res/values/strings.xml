@@ -121,6 +121,7 @@
     <string name="ongoing_session_delete_hole_icon_description">Delete played hole</string>
     <string name="ongoing_session_button_cancel">Cancel</string>
     <string name="ongoing_session_button_validate">Validate</string>
+    <string name="ongoing_session_scoring_info_button_ok">OK</string>
 
     <!-- OngoingSessionScreen - Hole Picker Dialog -->
     <string name="ongoing_session_picker_title">Select or create a hole</string>

@@ -121,6 +121,7 @@
     <string name="ongoing_session_delete_hole_icon_description">Supprimer le trou joué</string>
     <string name="ongoing_session_button_cancel">Annuler</string>
     <string name="ongoing_session_button_validate">Valider</string>
+    <string name="ongoing_session_scoring_info_button_ok">OK</string>
 
     <!-- OngoingSessionScreen - Hole Picker Dialog -->
     <string name="ongoing_session_picker_title">Sélectionner ou créer un trou</string>

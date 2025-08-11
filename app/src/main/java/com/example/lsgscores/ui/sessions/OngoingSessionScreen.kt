@@ -42,10 +42,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.lsgscores.R
 import com.example.lsgscores.data.session.SessionType
 import com.example.lsgscores.ui.BottomNavItem
 import com.example.lsgscores.ui.DrawerNavItem
@@ -99,14 +101,15 @@ fun OngoingSessionScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Session du ${
+                            text = stringResource(
+                                R.string.ongoing_session_date_format,
                                 session.dateTime.format(
                                     DateTimeFormatter.ofPattern(
                                         "dd MMMM yyyy",
                                         Locale.FRENCH
                                     )
                                 )
-                            }",
+                            ),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -143,7 +146,7 @@ fun OngoingSessionScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Info,
-                                    contentDescription = "Scoring mode info",
+                                    contentDescription = stringResource(R.string.ongoing_session_scoring_info_icon_description),
                                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -162,18 +165,18 @@ fun OngoingSessionScreen(
                     onClick = { showHolePicker = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Add or associate a hole")
+                    Text(stringResource(R.string.ongoing_session_button_add_hole))
                 }
                 // Section des trous joués
                 if (playedHoles.isEmpty()) {
                     Text(
-                        text = "No holes have been played yet. Press the button below to add one.",
+                        text = stringResource(R.string.ongoing_session_no_holes_message),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else {
                     Text(
-                        text = "Holes played:",
+                        text = stringResource(R.string.ongoing_session_label_holes_played),
                         style = MaterialTheme.typography.titleMedium
                     )
 
@@ -190,7 +193,7 @@ fun OngoingSessionScreen(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
-                                        text = "Hole: ${playedHole.holeName} (${playedHole.gameModeName})",
+                                        text = "${stringResource(R.string.ongoing_session_hole_prefix)} ${playedHole.holeName} (${playedHole.gameModeName})",
                                         style = MaterialTheme.typography.titleSmall
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
@@ -210,7 +213,7 @@ fun OngoingSessionScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Delete played hole",
+                                        contentDescription = stringResource(R.string.ongoing_session_delete_hole_icon_description),
                                         tint = MaterialTheme.colorScheme.error
                                     )
                                 }
@@ -226,11 +229,11 @@ fun OngoingSessionScreen(
 
                     AlertDialog(
                         onDismissRequest = { showHolePicker = false },
-                        title = { Text("Select or create a hole") },
+                        title = { Text(stringResource(R.string.ongoing_session_picker_title)) },
                         text = {
                             Column {
                                 // Hole selection dropdown
-                                Text("Select a hole")
+                                Text(stringResource(R.string.ongoing_session_picker_label_select_hole))
                                 Spacer(Modifier.height(8.dp))
                                 ExposedDropdownMenuBox(
                                     expanded = expanded,
@@ -240,7 +243,7 @@ fun OngoingSessionScreen(
                                         value = holes.find { it.id == selectedHoleId }?.name ?: "",
                                         onValueChange = {},
                                         readOnly = true,
-                                        label = { Text("Hole") },
+                                        label = { Text(stringResource(R.string.ongoing_session_picker_label_hole)) },
                                         modifier = Modifier
                                             .menuAnchor(
                                                 MenuAnchorType.PrimaryNotEditable,
@@ -267,7 +270,7 @@ fun OngoingSessionScreen(
                                 Spacer(Modifier.height(16.dp))
 
                                 // Mode selection
-                                Text("Select game mode")
+                                Text(stringResource(R.string.ongoing_session_picker_label_game_mode))
                                 Spacer(Modifier.height(8.dp))
 
 
@@ -312,7 +315,7 @@ fun OngoingSessionScreen(
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Create a new hole")
+                                    Text(stringResource(R.string.ongoing_session_picker_button_create_hole))
                                 }
 
                                 Row(
@@ -325,7 +328,7 @@ fun OngoingSessionScreen(
                                         },
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Cancel")
+                                        Text(stringResource(R.string.ongoing_session_picker_button_cancel))
                                     }
 
                                     Button(
@@ -347,7 +350,7 @@ fun OngoingSessionScreen(
                                         enabled = selectedHoleId != null && selectedGameModeId != null,
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Add")
+                                        Text(stringResource(R.string.ongoing_session_picker_button_add))
                                     }
                                 }
 
@@ -374,25 +377,22 @@ fun OngoingSessionScreen(
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.ongoing_session_button_cancel))
             }
             Spacer(modifier = Modifier.width(24.dp))
             Button(
                 onClick = { showValidateConfirm = true },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Validate")
+                Text(stringResource(R.string.ongoing_session_button_validate))
             }        }
     }
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete session") },
+            title = { Text(stringResource(R.string.ongoing_session_delete_dialog_title)) },
             text = {
-                Text(
-                    "This will permanently delete the session and all its related data:\n" +
-                            "• Teams\n• Played holes\n• Scores\n\nThis action cannot be undone."
-                )
+                Text(stringResource(R.string.ongoing_session_delete_dialog_message))
             },
             confirmButton = {
                 TextButton(
@@ -407,10 +407,10 @@ fun OngoingSessionScreen(
                         }
                         showDeleteConfirm = false
                     }
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.ongoing_session_delete_dialog_button_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.ongoing_session_delete_dialog_button_cancel)) }
             }
         )
     }
@@ -438,12 +438,9 @@ fun OngoingSessionScreen(
                 showDeletePlayedHoleConfirm = false
                 playedHoleToDelete = null
             },
-            title = { Text("Delete played hole") },
+            title = { Text(stringResource(R.string.ongoing_session_delete_hole_dialog_title)) },
             text = {
-                Text(
-                    "This will permanently delete this played hole and all its scores.\n\n" +
-                            "This action cannot be undone."
-                )
+                Text(stringResource(R.string.ongoing_session_delete_hole_dialog_message))
             },
             confirmButton = {
                 TextButton(
@@ -456,7 +453,7 @@ fun OngoingSessionScreen(
                     }
                 ) {
                     Text(
-                        "Delete",
+                        stringResource(R.string.ongoing_session_delete_hole_dialog_button_delete),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -467,7 +464,7 @@ fun OngoingSessionScreen(
                         showDeletePlayedHoleConfirm = false
                         playedHoleToDelete = null
                     }
-                ) { Text("Cancel") }
+                ) { Text(stringResource(R.string.ongoing_session_delete_hole_dialog_button_cancel)) }
             }
         )
     }
@@ -475,9 +472,9 @@ fun OngoingSessionScreen(
     if (showValidateConfirm) {
         AlertDialog(
             onDismissRequest = { showValidateConfirm = false },
-            title = { Text("Complete session") },
+            title = { Text(stringResource(R.string.ongoing_session_validate_dialog_title)) },
             text = {
-                Text("This will mark the session as completed. You'll be able to view it in the sessions history.")
+                Text(stringResource(R.string.ongoing_session_validate_dialog_message))
             },
             confirmButton = {
                 TextButton(
@@ -494,12 +491,12 @@ fun OngoingSessionScreen(
                         showValidateConfirm = false
                     }
                 ) {
-                    Text("Complete")
+                    Text(stringResource(R.string.ongoing_session_validate_dialog_button_complete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showValidateConfirm = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.ongoing_session_validate_dialog_button_cancel))
                 }
             }
         )
