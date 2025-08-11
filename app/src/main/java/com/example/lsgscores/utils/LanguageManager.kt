@@ -36,11 +36,4 @@ object LanguageManager {
         }
     }
 
-    fun getLocaleFromLanguageCode(languageCode: String): Locale {
-        return when (languageCode) {
-            AppPreferences.LANGUAGE_FRENCH -> Locale("fr")
-            AppPreferences.LANGUAGE_ENGLISH -> Locale("en")
-            else -> Locale.getDefault()
-        }
-    }
 }
