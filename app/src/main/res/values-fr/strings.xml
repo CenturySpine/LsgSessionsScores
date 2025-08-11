@@ -200,7 +200,6 @@
     <string name="scoring_mode_no_second_place_description">Si un seul joueur ou équipe a le nombre de coups le plus bas, il obtient 3 points et les autres 0. Si plusieurs sont à égalité pour le plus bas, chacun obtient 2 points et les autres 0.</string>
     <string name="scoring_mode_redistribution_name">Redistribution</string>
     <string name="scoring_mode_redistribution_description">Si un seul joueur est premier, il obtient 2 points et un second seul obtient 1 point. Si deux sont à égalité pour la première place, ils obtiennent 1 point chacun et un second seul obtient 1 point. Trois ou plus à égalité pour la première place : personne n\'obtient de points.</string>
-
     <string name="scoring_mode_info_title">Information sur le mode de scoring</string>
     <string name="scoring_mode_info_icon_description">Information sur le mode de scoring</string>
 
@@ -209,6 +208,5 @@
     <string name="game_mode_scramble_description">Chaque joueur de l\'équipe joue une balle, puis la meilleure balle est choisie pour le coup suivant. L\'équipe continue depuis la position du meilleur coup.</string>
     <string name="game_mode_greensome_description">Les deux joueurs de l\'équipe effectuent le tee shot, sélectionnent le meilleur drive, puis alternent les coups avec la balle sélectionnée jusqu\'à terminer le trou.</string>
     <string name="game_mode_best_ball_description">Chaque joueur de l\'équipe joue sa propre balle sur chaque trou. Le meilleur score parmi les coéquipiers est le score de l\'équipe pour ce trou.</string>
-    <!-- Game Mode Info -->
     <string name="game_mode_info_title">Information sur le mode de jeu</string>
 </resources>

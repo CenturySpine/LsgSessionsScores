@@ -4,11 +4,13 @@
     <string name="app_name">LsgScores</string>
 
     <!-- HomeScreen -->
-    <string name="home_welcome_text">Welcome to LSG scores !</string>
+    <string name="home_welcome_text">Welcome to LSG scores!</string>
     <string name="home_logo_description">App logo</string>
 
     <!-- MainScreen - Navigation -->
     <string name="main_app_title">LSG Scores</string>
+    <string name="main_drawer_header">LSG Scores</string>
+    <string name="main_topbar_title_home">LSG Scores</string>
     <string name="main_topbar_title_new_session">New Session</string>
     <string name="main_topbar_title_ongoing_session">Ongoing Session</string>
     <string name="main_topbar_title_players">Players</string>
@@ -19,6 +21,7 @@
     <string name="main_topbar_title_add_hole">Add Hole</string>
     <string name="main_topbar_title_select_teams">Select Teams</string>
     <string name="main_topbar_title_player_details">Player Details</string>
+    <string name="main_menu_icon_description">Menu</string>
 
     <!-- Bottom Navigation -->
     <string name="bottom_nav_home">Home</string>
@@ -32,14 +35,61 @@
     <string name="drawer_nav_settings">Settings</string>
 
     <!-- PlayerListScreen -->
+    <string name="player_list_fab_add">+</string>
+    <string name="player_list_photo_description">Player photo</string>
+    <string name="player_list_default_icon_description">Default player icon</string>
+    <string name="player_list_delete_icon_description">Delete player</string>
+    <string name="player_list_dialog_title">Confirm Deletion</string>
+    <string name="player_list_dialog_message">Are you sure you want to delete %s?</string>
+    <string name="player_list_dialog_button_delete">Delete</string>
+    <string name="player_list_dialog_button_cancel">Cancel</string>
 
     <!-- PlayerFormScreen -->
+    <string name="player_form_label_name">Name</string>
+    <string name="player_form_button_cancel">Cancel</string>
+    <string name="player_form_button_save">Save</string>
+    <string name="player_form_photo_description">Player photo</string>
 
     <!-- PlayerDetailScreen -->
+    <string name="player_detail_not_found">Player not found</string>
+    <string name="player_detail_photo_description">Player photo</string>
+    <string name="player_detail_default_icon_description">Default player icon</string>
+    <string name="player_detail_label_name">Name</string>
+    <string name="player_detail_button_save">Save</string>
+    <string name="player_detail_button_cancel">Cancel</string>
+    <string name="player_detail_button_back">Back</string>
+    <string name="player_detail_button_edit">Edit</string>
+    <string name="player_detail_button_delete">Delete</string>
+    <string name="player_detail_dialog_title">Delete Player</string>
+    <string name="player_detail_dialog_message">Are you sure you want to delete this player?</string>
+    <string name="player_detail_dialog_button_delete">Delete</string>
+    <string name="player_detail_dialog_button_cancel">Cancel</string>
 
     <!-- HoleListScreen -->
+    <string name="hole_list_fab_add">+</string>
+    <string name="hole_list_photo_description">Hole photo</string>
+    <string name="hole_list_default_start_icon_description">Default start icon</string>
+    <string name="hole_list_default_end_icon_description">Default end icon</string>
+    <string name="hole_list_delete_icon_description">Delete hole</string>
+    <string name="hole_list_dialog_title">Confirm Deletion</string>
+    <string name="hole_list_dialog_message">Are you sure you want to delete %s?</string>
+    <string name="hole_list_dialog_button_delete">Delete</string>
+    <string name="hole_list_dialog_button_cancel">Cancel</string>
 
     <!-- HoleFormScreen -->
+    <string name="hole_form_error_name_required">Hole name is required</string>
+    <string name="hole_form_label_name">Hole name</string>
+    <string name="hole_form_label_area">Area</string>
+    <string name="hole_form_label_description">Description</string>
+    <string name="hole_form_label_constraints">Constraints</string>
+    <string name="hole_form_label_distance">Distance (m)</string>
+    <string name="hole_form_label_par">Par</string>
+    <string name="hole_form_section_start">Start</string>
+    <string name="hole_form_label_start_name">Start name</string>
+    <string name="hole_form_section_target">Target</string>
+    <string name="hole_form_label_target_name">Target name</string>
+    <string name="hole_form_button_cancel">Cancel</string>
+    <string name="hole_form_button_save">Save</string>
 
     <!-- SessionCreationScreen -->
     <string name="session_creation_label_date">Date</string>
@@ -124,7 +174,6 @@
     <string name="session_history_separator">•</string>
     <string name="session_history_date_format_pattern">EEEE, MMMM d, yyyy</string>
 
-
     <!-- SettingsScreen -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_appearance">Appearance</string>
@@ -133,6 +182,14 @@
     <string name="settings_language_system">System Default</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_french">Français</string>
+
+    <!-- NumberInputField -->
+    <string name="number_input_decrease_description">Decrease</string>
+    <string name="number_input_increase_description">Increase</string>
+
+    <!-- Photo Pickers -->
+    <string name="photo_picker_camera_description">Take a photo</string>
+    <string name="photo_picker_gallery_description">Choose from gallery</string>
 
     <!-- Scoring Modes -->
     <string name="scoring_mode_classic_name">Classic</string>
@@ -151,7 +208,5 @@
     <string name="game_mode_scramble_description">Each player in the team plays a ball, then the best ball is chosen for the next shot. The team continues from the position of the best shot.</string>
     <string name="game_mode_greensome_description">Both players in the team tee off, select the best drive, then alternate shots with the selected ball until the hole is completed.</string>
     <string name="game_mode_best_ball_description">Each player in the team plays their own ball on each hole. The best score among teammates is the team\'s score for that hole.</string>
-
-    <!-- Game Mode Info -->
     <string name="game_mode_info_title">Game Mode Information</string>
 </resources>
