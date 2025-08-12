@@ -7,6 +7,7 @@ import com.example.lsgscores.data.media.MediaDao
 import com.example.lsgscores.data.media.MediaRepository
 import com.example.lsgscores.data.player.PlayerDao
 import com.example.lsgscores.data.player.PlayerRepository
+import com.example.lsgscores.data.player.PlayerSupabaseRepository
 import com.example.lsgscores.data.scoring.ScoringModeRepository
 import com.example.lsgscores.data.session.PlayedHoleDao
 import com.example.lsgscores.data.session.PlayedHoleRepository
@@ -20,6 +21,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.jan.supabase.postgrest.Postgrest
 import javax.inject.Singleton
 
 @Module
@@ -28,8 +30,8 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun providePlayerRepository(playerDao: PlayerDao): PlayerRepository {
-        return PlayerRepository(playerDao)
+    fun providePlayerRepository(supabase: Postgrest): PlayerRepository {
+        return PlayerSupabaseRepository(supabase)
     }
 
     @Provides

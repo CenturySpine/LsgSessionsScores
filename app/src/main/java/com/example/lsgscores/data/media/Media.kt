@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 @Entity(tableName = "media")
 
 data class Media(
+    @PrimaryKey
     val id: Long = 0,
     val sessionId: Long,     
     val uri: String,

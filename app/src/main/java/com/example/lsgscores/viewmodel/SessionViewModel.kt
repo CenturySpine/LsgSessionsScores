@@ -97,15 +97,15 @@ class SessionViewModel @Inject constructor(
                                         teamRepository.getTeamsWithPlayersForSession(session.id)
                                     ) { hole, gameMode, scores, teamsWithPlayers -> // MODIFIÉ
                                         val strokesByTeam =
-                                            scores.associate { it.teamId to it.strokes }
+                                            scores.associate { it.teamId.toString() to it.strokes }
                                         val calculatedScores =
                                             computeScoresForCurrentScoringMode(strokesByTeam)
 
                                         val teamResults =
                                             teamsWithPlayers.mapNotNull { teamWithPlayers ->
-                                                val strokes = strokesByTeam[teamWithPlayers.team.id]
+                                                val strokes = strokesByTeam[teamWithPlayers.team.id.toString()]
                                                 val calculatedScore =
-                                                    calculatedScores[teamWithPlayers.team.id]
+                                                    calculatedScores[teamWithPlayers.team.id.toString()]
                                                 if (strokes != null && calculatedScore != null) {
                                                     val teamName = listOfNotNull(
                                                         teamWithPlayers.player1?.name,
@@ -368,8 +368,8 @@ class SessionViewModel @Inject constructor(
             }
     }
 
-    fun computeScoresForCurrentScoringMode(strokesByTeam: Map<Long, Int>): Map<Long, Int> {
-        // Vérifie que scoringModeId est bien défini
+    fun computeScoresForCurrentScoringMode(strokesByTeam: Map<String, Int>): Map<String, Int> {
+
         val scoringId = scoringModeId ?: return emptyMap()
         val calculator: ScoringCalculator = ScoringCalculatorFactory.getCalculatorById(scoringId)
         return calculator.calculateScores(strokesByTeam)

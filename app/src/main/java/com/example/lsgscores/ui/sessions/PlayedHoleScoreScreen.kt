@@ -48,11 +48,11 @@ fun PlayedHoleScoreScreen(
     val strokesByTeam = remember { mutableStateMapOf<Long, String>() }
 
     // Convert current strokes input into a map for the calculator
-    val strokesMap = teamsWithPlayers.associate { teamWithPlayers ->
-        teamWithPlayers.team.id to (strokesByTeam[teamWithPlayers.team.id]?.toIntOrNull() ?: 0)
+    val strokesMap: Map<String, Int> = teamsWithPlayers.associate { teamWithPlayers ->
+        teamWithPlayers.team.id.toString() to (strokesByTeam[teamWithPlayers.team.id]?.toIntOrNull() ?: 0)
     }
 
-    val calculatedScores = sessionViewModel.computeScoresForCurrentScoringMode(strokesMap)
+    val calculatedScores: Map<String, Int> = sessionViewModel.computeScoresForCurrentScoringMode(strokesMap)
 
     Column(
         modifier = Modifier
@@ -72,7 +72,7 @@ fun PlayedHoleScoreScreen(
                     .joinToString(stringResource(R.string.played_hole_score_players_separator))
 
             val strokesValue = strokesByTeam[teamWithPlayers.team.id] ?: ""
-            val liveScore = calculatedScores[teamWithPlayers.team.id] ?: 0
+            val liveScore = calculatedScores[teamWithPlayers.team.id.toString()] ?: 0
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
