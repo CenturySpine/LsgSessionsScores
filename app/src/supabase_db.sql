@@ -80,8 +80,8 @@ CREATE TABLE played_hole_scores (
 -- TABLE: media (CORRECTED)
 -- ============================================================================
 CREATE TABLE media (
-    id SERIAL PRIMARY KEY,
-    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    session_id BIGINT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
     uri TEXT NOT NULL,
     comment TEXT,
     date_added TIMESTAMPTZ NOT NULL DEFAULT NOW()
