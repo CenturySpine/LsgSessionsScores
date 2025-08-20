@@ -218,4 +218,6 @@
     <string name="share_session_pdf_title" >Share session PDF</string>
     <string name="pdf_generation_failed_toast_message">PDF generation failed</string>
     <string name="exporting_pdf_toast_message">Esport session PDF</string>
+    <string name="pdf_header_team_players">Players</string>
+    <string name="pdf_hole_prefix">Hole:</string>
 </resources>

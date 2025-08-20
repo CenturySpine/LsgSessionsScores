@@ -4,6 +4,7 @@ package com.example.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.hole.HoleRepository
 import com.example.lsgscores.data.holemode.HoleGameMode
 import com.example.lsgscores.data.holemode.HoleGameModeRepository
@@ -22,6 +23,7 @@ import com.example.lsgscores.data.session.TeamRepository
 import com.example.lsgscores.data.session.TeamWithPlayers
 import com.example.lsgscores.domain.scoring.ScoringCalculator
 import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory
+import com.example.lsgscores.ui.sessions.SessionPdfData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +32,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -388,5 +392,40 @@ class SessionViewModel @Inject constructor(
             onDeleted()
         }
     }
+
+    fun loadSessionPdfData(session: Session): Flow<SessionPdfData> {
+        return flow {
+            // Session object is passed as a parameter.
+
+            // 2. Get Teams with Players
+            val teamsWithPlayers = teamRepository.getTeamsWithPlayersForSession(session.id).first()
+
+            // 3. Get PlayedHoles
+            val playedHoles = playedHoleRepository.getPlayedHolesForSession(session.id).first()
+
+            // 4. Get HolesDetails (nom/numéro du trou)
+            // Using existing holeRepository.getAllHoles() and finding by id.
+            // This is not the most efficient way if getAllHoles() is a large list or a DB query.
+            // A dedicated getById(holeId) in HoleRepository would be better.
+            val allHolesFromRepo = holeRepository.getAllHoles().first()
+            val holesDetailsMap = mutableMapOf<Long, Hole>()
+            playedHoles.forEach { playedHole ->
+                allHolesFromRepo.find { it.id == playedHole.holeId }?.let { holeDetail ->
+                    holesDetailsMap[playedHole.holeId] = holeDetail
+                }
+            }
+
+            // 5. Get Scores
+            val scoresMap = mutableMapOf<Pair<Long, Long>, PlayedHoleScore>()
+            playedHoles.forEach { playedHole ->
+                playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id).first().forEach { score ->
+                    scoresMap[Pair(score.teamId, score.playedHoleId)] = score
+                }
+            }
+
+            emit(SessionPdfData(session, teamsWithPlayers, playedHoles, holesDetailsMap.toMap(), scoresMap.toMap()))
+        }
+    }
+
 
 }
