@@ -18,6 +18,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.lsgscores.R
 import com.example.lsgscores.viewmodel.PlayerViewModel
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
@@ -101,24 +102,21 @@ fun PlayerDetailScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Show edited photo or current photo
+                        // Show edited photo or current photo
                         val photoToShow = editedPhotoPath ?: user.photoUri
-                        val photoExists = !photoToShow.isNullOrBlank() && File(photoToShow).exists()
-                        if (photoExists) {
-                            val bitmap = remember(photoToShow) {
-                                BitmapFactory.decodeFile(photoToShow)
-                            }
-                            bitmap?.let {
-                                Image(
-                                    bitmap = it.asImageBitmap(),
-                                    contentDescription = "User photo",
-                                    modifier = Modifier
-                                        .size(400.dp)
-                                        .background(
-                                            MaterialTheme.colorScheme.surface,
-                                            shape = MaterialTheme.shapes.medium
-                                        )
-                                )
-                            }
+                        if (!photoToShow.isNullOrBlank()) {
+                            AsyncImage(
+                                model = photoToShow,
+                                contentDescription = "User photo",
+                                modifier = Modifier
+                                    .size(400.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.surface,
+                                        shape = MaterialTheme.shapes.medium
+                                    ),
+                                error = painterResource(id = R.drawable.baseline_person_24),
+                                placeholder = painterResource(id = R.drawable.baseline_person_24)
+                            )
                         } else {
                             Icon(
                                 painter = painterResource(id = R.drawable.baseline_person_24),
@@ -156,13 +154,26 @@ fun PlayerDetailScreen(
                         Button(
                             onClick = {
                                 scope.launch {
-                                    playerViewModel.updatePlayer(
+                                    val updatedPlayer = if (editedPhotoPath != null) {
                                         user.copy(
                                             name = editedName.trim(),
-                                            photoUri = editedPhotoPath ?: user.photoUri
+                                            photoUri = editedPhotoPath
                                         )
-                                    )
+                                    } else {
+                                        user.copy(name = editedName.trim())
+                                    }
+
+                                    playerViewModel.updatePlayer(updatedPlayer)
+
+                                    // Reset edit state
                                     isEditing = false
+                                    editedPhotoPath = null
+
+                                    // Refresh complet de l'écran
+                                    navController.navigate("user_detail/${user.id}") {
+                                        popUpTo("user_detail/${user.id}") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
                                 }
                             },
                             enabled = editedName.isNotBlank()
@@ -199,25 +210,19 @@ fun PlayerDetailScreen(
 
                     Spacer(Modifier.height(32.dp))
 
-                    // Photo below the name
-                    val photoExists =
-                        !user.photoUri.isNullOrBlank() && File(user.photoUri!!).exists()
-                    if (photoExists) {
-                        val bitmap = remember(user.photoUri) {
-                            BitmapFactory.decodeFile(user.photoUri)
-                        }
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "User photo",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.surface,
-                                        shape = MaterialTheme.shapes.medium
-                                    )
-                            )
-                        }
+                    if (!user.photoUri.isNullOrBlank()) {
+                        AsyncImage(
+                            model = user.photoUri,
+                            contentDescription = "User photo",
+                            modifier = Modifier
+                                .size(400.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.surface,
+                                    shape = MaterialTheme.shapes.medium
+                                ),
+                            error = painterResource(id = R.drawable.baseline_person_24),
+                            placeholder = painterResource(id = R.drawable.baseline_person_24)
+                        )
                     } else {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_person_24),

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.lsgscores.data.player.Player
 import java.io.File
 import com.example.lsgscores.R
@@ -63,17 +64,14 @@ fun PlayerListScreen(
                         }
                 ) {
 
-                    if (!player.photoUri.isNullOrBlank() && File(player.photoUri).exists()) {
-                        val bitmap = remember(player.photoUri) {
-                            BitmapFactory.decodeFile(player.photoUri)
-                        }
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "User photo",
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
+                    if (!player.photoUri.isNullOrBlank()) {
+                        AsyncImage(
+                            model = player.photoUri, // Fonctionne avec URL ET fichiers locaux
+                            contentDescription = "User photo",
+                            modifier = Modifier.size(48.dp),
+                            error = painterResource(id = R.drawable.baseline_person_24), // Fallback si erreur
+                            placeholder = painterResource(id = R.drawable.baseline_person_24) // Pendant chargement
+                        )
                     } else {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_person_24),

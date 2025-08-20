@@ -6,6 +6,7 @@ import com.example.lsgscores.data.holemode.HoleGameModeRepository
 import com.example.lsgscores.data.media.MediaDao
 import com.example.lsgscores.data.media.MediaRepository
 import com.example.lsgscores.data.player.PlayerDao
+import com.example.lsgscores.data.player.PlayerPhotoService
 import com.example.lsgscores.data.player.PlayerRepository
 import com.example.lsgscores.data.player.PlayerSupabaseRepository
 import com.example.lsgscores.data.scoring.ScoringModeRepository
@@ -22,16 +23,21 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.storage.Storage
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
-
     @Provides
     @Singleton
-    fun providePlayerRepository(supabase: Postgrest): PlayerRepository {
-        return PlayerSupabaseRepository(supabase)
+    fun providePlayerPhotoService(storage: Storage): PlayerPhotoService {
+        return PlayerPhotoService(storage)
+    }
+    @Provides
+    @Singleton
+    fun providePlayerRepository(supabase: Postgrest,photoService: PlayerPhotoService): PlayerRepository {
+        return PlayerSupabaseRepository(supabase, photoService)
     }
 
     @Provides

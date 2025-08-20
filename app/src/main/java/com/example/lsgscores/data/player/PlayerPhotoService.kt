@@ -26,7 +26,8 @@ class PlayerPhotoService @Inject constructor(
             // Get public URL
             bucket.publicUrl(fileName)
         } catch (e: Exception) {
-            // Log error
+            println("❌ DEBUG: Upload failed: ${e.message}")
+            e.printStackTrace()
             null
         }
     }
