@@ -220,4 +220,9 @@
     <string name="exporting_pdf_toast_message">Esport session PDF</string>
     <string name="pdf_header_team_players">Players</string>
     <string name="pdf_hole_prefix">Hole:</string>
+    <string name="pdf_label_session_date">Session date:</string>
+    <string name="pdf_label_session_start_time">Start time:</string>
+    <string name="pdf_label_session_end_time">End time:</string>
+    <string name="pdf_team_prefix">"Team "</string>
+    <string name="pdf_not_applicable">N/A</string>
 </resources>
