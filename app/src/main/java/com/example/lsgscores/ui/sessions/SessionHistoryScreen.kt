@@ -187,16 +187,18 @@ private fun generateAndSharePdf(
             val page = pdfDocument.startPage(pageInfo)
             val canvas = page.canvas
             val paint = Paint()
-            val boldPaint = Paint().apply { isFakeBoldText = true; textSize = 10f; }
+            val boldPaint = Paint().apply { isFakeBoldText = true }
 
             var yPosition = 40f
             val xMargin = 20f
             val lineSpacing = 18f
             val cellPadding = 5f
             val defaultTextSize = 10f
+            
             paint.textSize = defaultTextSize
             boldPaint.textSize = defaultTextSize
 
+            // Calculate ascent/descent for vertical centering AFTER setting textSize
             val textCenterOffsetYPaint = (paint.ascent() + paint.descent()) / 2f
             val textCenterOffsetYBoldPaint = (boldPaint.ascent() + boldPaint.descent()) / 2f
 
@@ -204,11 +206,18 @@ private fun generateAndSharePdf(
 
 
             // Session Name
-            paint.textSize = 16f
-            val sessionNameCenterOffsetY = (paint.ascent() + paint.descent()) / 2f
-            canvas.drawText("${context.getString(R.string.pdf_session_name_prefix)} ${pdfData.session.name}", xMargin, yPosition - sessionNameCenterOffsetY, paint)
+            paint.textSize = 16f // Temporarily increase for session name
+            boldPaint.textSize = 16f
+            val sessionNameLabel = "${context.getString(R.string.pdf_session_name_prefix)} "
+            val sessionNameLabelWidth = boldPaint.measureText(sessionNameLabel)
+            val sessionNameTextCenterOffsetYLarge = (boldPaint.ascent() + boldPaint.descent()) / 2f // For 16f
+
+            canvas.drawText(sessionNameLabel, xMargin, yPosition - sessionNameTextCenterOffsetYLarge, boldPaint)
+            canvas.drawText(pdfData.session.name, xMargin + sessionNameLabelWidth, yPosition - sessionNameTextCenterOffsetYLarge, paint)
+            
+            paint.textSize = defaultTextSize // Reset to default
+            boldPaint.textSize = defaultTextSize
             yPosition += lineSpacing * 2f
-            paint.textSize = defaultTextSize
 
 
             // Basic Session Info
@@ -216,25 +225,40 @@ private fun generateAndSharePdf(
             val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
 
             // Session Date
-            canvas.drawText("${context.getString(R.string.pdf_label_session_date)} ${pdfData.session.dateTime.format(dateFormatter)}", xMargin, yPosition - textCenterOffsetYPaint, paint)
+            var labelText = "${context.getString(R.string.pdf_label_session_date)} "
+            var labelWidth = boldPaint.measureText(labelText)
+            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(pdfData.session.dateTime.format(dateFormatter), xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
             yPosition += lineSpacing
 
             // Session Start Time
-            canvas.drawText("${context.getString(R.string.pdf_label_session_start_time)} ${pdfData.session.dateTime.format(timeFormatter)}", xMargin, yPosition - textCenterOffsetYPaint, paint)
+            labelText = "${context.getString(R.string.pdf_label_session_start_time)} "
+            labelWidth = boldPaint.measureText(labelText)
+            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(pdfData.session.dateTime.format(timeFormatter), xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
             yPosition += lineSpacing
 
             // Session End Time
-            val endTimeText = pdfData.session.endDateTime?.format(timeFormatter) ?: context.getString(R.string.pdf_not_applicable)
-            canvas.drawText("${context.getString(R.string.pdf_label_session_end_time)} $endTimeText", xMargin, yPosition - textCenterOffsetYPaint, paint)
+            labelText = "${context.getString(R.string.pdf_label_session_end_time)} "
+            labelWidth = boldPaint.measureText(labelText)
+            val endTimeValue = pdfData.session.endDateTime?.format(timeFormatter) ?: context.getString(R.string.pdf_not_applicable)
+            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(endTimeValue, xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
             yPosition += lineSpacing
             
             // Session Type
-            canvas.drawText("${context.getString(R.string.pdf_session_type_prefix)} ${pdfData.session.sessionType}", xMargin, yPosition - textCenterOffsetYPaint, paint)
+            labelText = "${context.getString(R.string.pdf_session_type_prefix)} "
+            labelWidth = boldPaint.measureText(labelText)
+            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(pdfData.session.sessionType.toString(), xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint) // Assuming sessionType can be .toString()
             yPosition += lineSpacing
             
             // Session Comment
             pdfData.session.comment?.takeIf { it.isNotBlank() }?.let {
-                canvas.drawText("${context.getString(R.string.pdf_comment_prefix)} $it", xMargin, yPosition - textCenterOffsetYPaint, paint)
+                labelText = "${context.getString(R.string.pdf_comment_prefix)} "
+                labelWidth = boldPaint.measureText(labelText)
+                canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+                canvas.drawText(it, xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
                 yPosition += lineSpacing
             }
             yPosition += lineSpacing // Extra space before table
@@ -267,7 +291,7 @@ private fun generateAndSharePdf(
                 val team = teamWithPlayers.team
                 val player1Name = teamWithPlayers.player1?.name ?: ""
                 val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
-                val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}" // Assumed R.string.pdf_team_prefix
+                val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}"
 
                 currentX = xMargin
                 canvas.drawText(teamDisplayName, currentX + cellPadding, yPosition - textCenterOffsetYPaint, paint)
@@ -287,16 +311,18 @@ private fun generateAndSharePdf(
                 yPosition += lineSpacing
             }
 
-            val tableBottomY = yPosition - lineSpacing / 2f
+            val tableBottomY = yPosition - lineSpacing / 2f 
             var lineX = xMargin + teamNameColWidth
             canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
-            for (i in 0 until numHoles -1) {
+            for (i in 0 until numHoles -1) { // Draw lines between score columns
                  lineX += scoreColWidth
                  canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
             }
-            canvas.drawLine(xMargin, tableTopY, xMargin + availableWidthForTable, tableTopY, paint)
-            canvas.drawLine(xMargin, tableTopY, xMargin, tableBottomY, paint)
-            canvas.drawLine(xMargin + availableWidthForTable, tableTopY, xMargin + availableWidthForTable, tableBottomY, paint)
+            // Draw table borders
+            canvas.drawLine(xMargin, tableTopY, xMargin + availableWidthForTable, tableTopY, paint) // Top border
+            canvas.drawLine(xMargin, tableTopY, xMargin, tableBottomY, paint) // Left border
+            canvas.drawLine(xMargin + availableWidthForTable, tableTopY, xMargin + availableWidthForTable, tableBottomY, paint) // Right border
+            // Bottom border is already drawn by the last row's line
 
             pdfDocument.finishPage(page)
 
@@ -328,30 +354,3 @@ private fun generateAndSharePdf(
         }
     }
 }
-
-// Ensure you have these string resources in your strings.xml:
-// <string name="export_session_to_pdf_content_description">Exporter la session en PDF</string>
-// <string name="share_session_pdf_title">Partager le PDF de la session via</string>
-// <string name="pdf_session_name_prefix">Session:</string>
-// <string name="pdf_session_type_prefix">Type:</string>
-// <string name="pdf_comment_prefix">Commentaire:</string>
-// <string name="exporting_pdf_toast_message">Exportation du PDF en cours...</string>
-// <string name="pdf_generation_failed_toast_message">Échec de la génération du PDF.</string>
-// <string name="session_history_empty_title">Aucune session terminée</string>
-// <string name="session_history_empty_message">Terminez une session pour la voir ici.</string>
-// <string name="session_history_date_format_pattern">EEEE d MMMM yyyy</string>
-// <string name="session_history_time_prefix">Heure:</string>
-// <string name="session_history_duration_hours_minutes">"%1$d h %2$d min"</string>
-// <string name="session_history_duration_hours">"%1$d h"</string>
-// <string name="session_history_duration_minutes">"%1$d min"</string>
-// <string name="session_history_separator">|</string>
-// <string name="session_history_duration_prefix">Durée:</string>
-// <string name="pdf_header_team_players">Équipe/Joueurs</string>
-// <string name="pdf_hole_prefix">Trou</string>
-// <string name="pdf_team_prefix">Équipe</string> // Assumed for team display name fallback
-//
-// **NEW STRINGS TO ADD:**
-// <string name="pdf_label_session_date">Date de la session:</string>
-// <string name="pdf_label_session_start_time">Heure de début:</string>
-// <string name="pdf_label_session_end_time">Heure de fin:</string>
-// <string name="pdf_not_applicable">N/A</string>
