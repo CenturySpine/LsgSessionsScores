@@ -189,31 +189,44 @@ private fun generateAndSharePdf(
             val paint = Paint()
             val boldPaint = Paint().apply { isFakeBoldText = true; textSize = 10f; }
 
-            var yPosition = 40f
+            var yPosition = 40f 
             val xMargin = 20f
-            val lineSpacing = 18f
+            val lineSpacing = 18f 
             val cellPadding = 5f
             val defaultTextSize = 10f
             paint.textSize = defaultTextSize
+            boldPaint.textSize = defaultTextSize // Ensure boldPaint also uses defaultTextSize for metrics
+
+            // Calculate the offset needed to center text vertically based on its metrics.
+            // This offset is from the visual center of the line to the baseline of the text.
+            val textCenterOffsetYPaint = (paint.ascent() + paint.descent()) / 2f
+            val textCenterOffsetYBoldPaint = (boldPaint.ascent() + boldPaint.descent()) / 2f
+
+            // yPosition will now represent the VISUAL CENTER of the current line.
+            // Adjust initial yPosition to be the center of the first line
+            yPosition += lineSpacing / 2f
+
 
             // Session Name
-            paint.textSize = 16f
-            canvas.drawText("${context.getString(R.string.pdf_session_name_prefix)} ${pdfData.session.name}", xMargin, yPosition, paint)
-            yPosition += lineSpacing * 2f
-            paint.textSize = defaultTextSize
+            paint.textSize = 16f // Special larger size for session name
+            val sessionNameCenterOffsetY = (paint.ascent() + paint.descent()) / 2f
+            canvas.drawText("${context.getString(R.string.pdf_session_name_prefix)} ${pdfData.session.name}", xMargin, yPosition - sessionNameCenterOffsetY, paint)
+            yPosition += lineSpacing * 2f 
+            paint.textSize = defaultTextSize // Reset to default for subsequent text
+
 
             // Basic Session Info (Date, Type - if needed)
             val dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault())
-            canvas.drawText("${context.getString(R.string.pdf_start_time_prefix)} ${pdfData.session.dateTime.format(dateTimeFormatter)}", xMargin, yPosition, paint)
+            canvas.drawText("${context.getString(R.string.pdf_start_time_prefix)} ${pdfData.session.dateTime.format(dateTimeFormatter)}", xMargin, yPosition - textCenterOffsetYPaint, paint)
             yPosition += lineSpacing
             pdfData.session.endDateTime?.let {
-                canvas.drawText("${context.getString(R.string.pdf_end_time_prefix)} ${it.format(dateTimeFormatter)}", xMargin, yPosition, paint)
+                canvas.drawText("${context.getString(R.string.pdf_end_time_prefix)} ${it.format(dateTimeFormatter)}", xMargin, yPosition - textCenterOffsetYPaint, paint)
                 yPosition += lineSpacing
             }
-            canvas.drawText("${context.getString(R.string.pdf_session_type_prefix)} ${pdfData.session.sessionType}", xMargin, yPosition, paint)
+            canvas.drawText("${context.getString(R.string.pdf_session_type_prefix)} ${pdfData.session.sessionType}", xMargin, yPosition - textCenterOffsetYPaint, paint)
             yPosition += lineSpacing
             pdfData.session.comment?.takeIf { it.isNotBlank() }?.let {
-                canvas.drawText("${context.getString(R.string.pdf_comment_prefix)} $it", xMargin, yPosition, paint)
+                canvas.drawText("${context.getString(R.string.pdf_comment_prefix)} $it", xMargin, yPosition - textCenterOffsetYPaint, paint)
                 yPosition += lineSpacing
             }
             yPosition += lineSpacing // Extra space before table
@@ -221,25 +234,27 @@ private fun generateAndSharePdf(
             // Scores Table
             val numHoles = pdfData.playedHoles.size
             val availableWidthForTable = pageInfo.pageWidth - (2 * xMargin)
-            val teamNameColWidth = availableWidthForTable * 0.30f // 30% for team names
+            val teamNameColWidth = availableWidthForTable * 0.30f 
             val scoreColWidth = (availableWidthForTable - teamNameColWidth) / numHoles.coerceAtLeast(1)
 
+            // Draw lines relative to yPosition being the center of the row.
+            val tableTopY = yPosition - lineSpacing / 2f // Top line of the header row
+            
             // Table Headers
             var currentX = xMargin
-            canvas.drawText(context.getString(R.string.pdf_header_team_players), currentX + cellPadding, yPosition, boldPaint)
+            canvas.drawText(context.getString(R.string.pdf_header_team_players), currentX + cellPadding, yPosition - textCenterOffsetYBoldPaint, boldPaint)
             currentX += teamNameColWidth
 
             pdfData.playedHoles.forEach { playedHole ->
                 val holeDetail = pdfData.holesDetails[playedHole.holeId]
                 val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
                 val textWidth = boldPaint.measureText(holeName)
-                canvas.drawText(holeName, currentX + (scoreColWidth - textWidth) / 2, yPosition, boldPaint)
+                canvas.drawText(holeName, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
                 currentX += scoreColWidth
             }
-            yPosition += lineSpacing
-            val tableHeaderBottomY = yPosition - (lineSpacing / 2) + 2
-            canvas.drawLine(xMargin, tableHeaderBottomY, xMargin + availableWidthForTable, tableHeaderBottomY, paint)
-
+            // Line below header
+            canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
+            yPosition += lineSpacing // Move to the center of the first data row
 
             // Table Rows
             pdfData.teamsWithPlayers.forEach { teamWithPlayers ->
@@ -249,39 +264,40 @@ private fun generateAndSharePdf(
                 val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "Équipe ${team.id}"
 
                 currentX = xMargin
-                canvas.drawText(teamDisplayName, currentX + cellPadding, yPosition, paint)
+                canvas.drawText(teamDisplayName, currentX + cellPadding, yPosition - textCenterOffsetYPaint, paint)
                 currentX += teamNameColWidth
 
                 pdfData.playedHoles.forEach { playedHole ->
                     val scoreKey = Pair(team.id, playedHole.id)
-                    val scoreData = pdfData.scores[scoreKey] // Récupère PdfScoreDisplayData
+                    val scoreData = pdfData.scores[scoreKey] 
                     val scoreText = scoreData?.let {
-                        // Affiche "calculatedScore (strokes)"
                         "${it.calculatedScore} (${it.strokes})"
                     } ?: "-"
                     val textWidth = paint.measureText(scoreText)
-                    canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition, paint)
+                    canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
                     currentX += scoreColWidth
                 }
-                yPosition += lineSpacing
-                val rowBottomY = yPosition - (lineSpacing / 2) + 2
-                canvas.drawLine(xMargin, rowBottomY, xMargin + availableWidthForTable, rowBottomY, paint)
+                // Line below data row
+                canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
+                yPosition += lineSpacing // Move to the center of the next data row
             }
 
             // Vertical Lines
-            val tableStartY = tableHeaderBottomY - lineSpacing
-            val tableEndY = yPosition - (lineSpacing / 2) + 2
+            // tableTopY is the top of the header row.
+            // The last line drawn was at (yPosition - lineSpacing) + lineSpacing / 2f which is yPosition - lineSpacing / 2f
+            // This is the y-coordinate for the bottom of the last data row.
+            val tableBottomY = yPosition - lineSpacing / 2f
             var lineX = xMargin + teamNameColWidth
-            canvas.drawLine(lineX, tableStartY, lineX, tableEndY, paint)
-            for (i in 0 until numHoles -1) {
+            canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint) // First vertical line after team names
+            for (i in 0 until numHoles -1) { // numHoles-1 because the last score column doesn't need a line after it
                  lineX += scoreColWidth
-                 canvas.drawLine(lineX, tableStartY, lineX, tableEndY, paint)
+                 canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
             }
-             // Border lines for the table
-            canvas.drawLine(xMargin, tableStartY, xMargin + availableWidthForTable, tableStartY, paint) // Top border
-            canvas.drawLine(xMargin, tableStartY, xMargin, tableEndY, paint) // Left border
-            canvas.drawLine(xMargin + availableWidthForTable, tableStartY, xMargin + availableWidthForTable, tableEndY, paint) // Right border
-
+             // Border lines for the table (re-drawing top and adding side borders based on new coordinates)
+            canvas.drawLine(xMargin, tableTopY, xMargin + availableWidthForTable, tableTopY, paint) // Top border
+            canvas.drawLine(xMargin, tableTopY, xMargin, tableBottomY, paint) // Left border
+            canvas.drawLine(xMargin + availableWidthForTable, tableTopY, xMargin + availableWidthForTable, tableBottomY, paint) // Right border
+            // Bottom border is already drawn by the last data row's line.
 
             pdfDocument.finishPage(page)
 
@@ -329,9 +345,9 @@ private fun generateAndSharePdf(
 // <string name="session_history_empty_message">Terminez une session pour la voir ici.</string>
 // <string name="session_history_date_format_pattern">EEEE d MMMM yyyy</string>
 // <string name="session_history_time_prefix">Heure:</string>
-// <string name="session_history_duration_hours_minutes">%1$d h %2$d min</string>
-// <string name="session_history_duration_hours">%1$d h</string>
-// <string name="session_history_duration_minutes">%1$d min</string>
+// <string name="session_history_duration_hours_minutes">"%1$d h %2$d min"</string>
+// <string name="session_history_duration_hours">"%1$d h"</string>
+// <string name="session_history_duration_minutes">"%1$d min"</string>
 // <string name="session_history_separator">|</string>
 // <string name="session_history_duration_prefix">Durée:</string>
 // <string name="pdf_header_team_players">Équipe/Joueurs</string>
