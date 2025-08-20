@@ -171,6 +171,109 @@ private fun SessionHistoryCard(
     }
 }
 
+
+private fun generateAndShareMarkdown(
+    context: Context,
+    session: Session,
+    sessionViewModel: SessionViewModel
+) {
+    sessionViewModel.viewModelScope.launch {
+        try {
+            // TODO: Ajouter une nouvelle ressource string pour ce message
+            Toast.makeText(context, "Exportation Markdown en cours...", Toast.LENGTH_SHORT).show()
+            val pdfData = sessionViewModel.loadSessionPdfData(session).first() // réutilisation de la même structure de données
+
+            val markdownContent = StringBuilder()
+
+            // Session Name
+            markdownContent.append("# ${context.getString(R.string.pdf_session_name_prefix)} ${pdfData.session.name}\n\n")
+
+            // Basic Session Info
+            val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
+            val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+
+            markdownContent.append("**${context.getString(R.string.pdf_label_session_date)}** ${pdfData.session.dateTime.format(dateFormatter)}\n")
+            markdownContent.append("**${context.getString(R.string.pdf_label_session_start_time)}** ${pdfData.session.dateTime.format(timeFormatter)}\n")
+            val endTimeText = pdfData.session.endDateTime?.format(timeFormatter) ?: context.getString(R.string.pdf_not_applicable)
+            markdownContent.append("**${context.getString(R.string.pdf_label_session_end_time)}** $endTimeText\n")
+            markdownContent.append("**${context.getString(R.string.pdf_session_type_prefix)}** ${pdfData.session.sessionType}\n")
+            pdfData.session.comment?.takeIf { it.isNotBlank() }?.let {
+                markdownContent.append("**${context.getString(R.string.pdf_comment_prefix)}** $it\n")
+            }
+            markdownContent.append("\n") // Extra newline before table
+
+            // Scores Table
+            // Headers
+            markdownContent.append("| ${context.getString(R.string.pdf_header_team_players)} |")
+            pdfData.playedHoles.forEach { playedHole ->
+                val holeDetail = pdfData.holesDetails[playedHole.holeId]
+                val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
+                markdownContent.append(" $holeName |")
+            }
+            markdownContent.append("\n")
+
+            // Separator line (Markdown table syntax)
+            markdownContent.append("|:---|") // Left-align team names
+            pdfData.playedHoles.forEach { _ ->
+                markdownContent.append(":---:|") // Center-align scores
+            }
+            markdownContent.append("\n")
+
+            // Table Rows
+            pdfData.teamsWithPlayers.forEach { teamWithPlayers ->
+                val team = teamWithPlayers.team
+                val player1Name = teamWithPlayers.player1?.name ?: ""
+                val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
+                val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}"
+
+                markdownContent.append("| $teamDisplayName |")
+
+                pdfData.playedHoles.forEach { playedHole ->
+                    val scoreKey = Pair(team.id, playedHole.id)
+                    val scoreData = pdfData.scores[scoreKey]
+                    val scoreText = scoreData?.let {
+                        "${it.calculatedScore} (${it.strokes})"
+                    } ?: "-"
+                    markdownContent.append(" $scoreText |")
+                }
+                markdownContent.append("\n")
+            }
+
+            // Save and Share
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis())
+            val fileName = "session_${pdfData.session.id}_${timeStamp}.md"
+            val mdDir = File(context.cacheDir, "markdowns") // Nouveau dossier pour les exports md
+            if (!mdDir.exists()) {
+                mdDir.mkdirs()
+            }
+            val mdFile = File(mdDir, fileName)
+            mdFile.writeText(markdownContent.toString())
+
+            val mdUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", mdFile)
+            // TODO: Ajouter une nouvelle ressource string pour ce titre de partage
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/markdown" // Ou "text/plain" pour une compatibilité plus large
+                putExtra(Intent.EXTRA_STREAM, mdUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                // Optionnel: ajouter un sujet
+                // putExtra(Intent.EXTRA_SUBJECT, "Export de session LsgScores")
+            }
+            context.startActivity(Intent.createChooser(shareIntent, "Partager le fichier Markdown via..."))
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // TODO: Ajouter une nouvelle ressource string pour ce message d'erreur
+            Toast.makeText(context, "Échec de la génération Markdown: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+        // Pas de 'finally { pdfDocument?.close() }' nécessaire car nous n'utilisons pas PdfDocument
+    }
+}
+
+// TODO: N'oubliez pas d'ajouter les nouvelles ressources string à votre strings.xml :
+// <string name="exporting_markdown_toast_message">Exportation Markdown en cours...</string>
+// <string name="share_session_md_title">Partager le Markdown de la session via</string>
+// <string name="md_generation_failed_toast_message">Échec de la génération du Markdown.</string>
+
 private fun generateAndSharePdf(
     context: Context,
     session: Session,
@@ -301,7 +404,7 @@ private fun generateAndSharePdf(
                     val scoreKey = Pair(team.id, playedHole.id)
                     val scoreData = pdfData.scores[scoreKey]
                     val scoreText = scoreData?.let {
-                        "${it.calculatedScore} (${it.strokes})"
+                        "${it.strokes} - ${it.calculatedScore}"
                     } ?: "-"
                     val textWidth = paint.measureText(scoreText)
                     canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
