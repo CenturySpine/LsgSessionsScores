@@ -1,15 +1,17 @@
 package com.example.lsgscores.data.player
 
-import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
 import com.example.lsgscores.data.PlayerDto
 import com.example.lsgscores.data.toDomainModel
 import com.example.lsgscores.data.toDto
+import io.github.jan.supabase.postgrest.Postgrest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,6 +25,7 @@ class PlayerSupabaseRepository @Inject constructor(
     companion object {
         private const val TABLE_NAME = "players"
     }
+
 
     override fun getAllPlayers(): Flow<List<Player>> = flow {
         try {
@@ -48,6 +51,27 @@ class PlayerSupabaseRepository @Inject constructor(
             emit(emptyList())
         }
     }.flowOn(Dispatchers.IO)
+
+    override fun getPlayerById(id: Long): Flow<Player?> = flow {
+        try {
+            println("🔍 Repository: getPlayerById called for ID: $id")
+            val playersDto = supabase
+                .from(TABLE_NAME)
+                .select {
+                    filter { eq("id", id) }
+                    limit(1)
+                }
+                .decodeList<PlayerDto>()
+
+            val player = playersDto.firstOrNull()?.toDomainModel()
+            println("🔍 Repository: getPlayerById returning: ${player?.name}, photo: ${player?.photoUri}")
+            emit(player)
+        } catch (e: Exception) {
+            println("❌ Repository: getPlayerById failed: ${e.message}")
+            emit(null)
+        }
+    }.flowOn(Dispatchers.IO)
+        .shareIn(CoroutineScope(Dispatchers.IO), SharingStarted.WhileSubscribed(5000), replay = 1)
 
     override suspend fun insertPlayer(player: Player): Long = withContext(Dispatchers.IO) {
         try {

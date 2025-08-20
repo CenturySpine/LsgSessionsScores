@@ -18,6 +18,7 @@ class PlayerViewModel @Inject constructor(
 
     val players: Flow<List<Player>> = repository.getAllPlayers()
 
+    fun getPlayerById(id: Long): Flow<Player?> = repository.getPlayerById(id)
 
     fun addPlayer(name: String, photoUri: String?, onPlayerAdded: () -> Unit) {
         viewModelScope.launch {
@@ -27,7 +28,9 @@ class PlayerViewModel @Inject constructor(
     }
     fun updatePlayer(player: Player) {
         viewModelScope.launch {
+            println("🔍 ViewModel: Starting update for player ${player.name} with photo ${player.photoUri}")
             repository.updatePlayer(player)
+            println("🔍 ViewModel: Update completed")
         }
     }
     fun deletePlayer(player: Player) {
