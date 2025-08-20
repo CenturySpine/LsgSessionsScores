@@ -22,7 +22,8 @@ import com.example.lsgscores.data.session.Team
 import com.example.lsgscores.data.session.TeamRepository
 import com.example.lsgscores.data.session.TeamWithPlayers
 import com.example.lsgscores.domain.scoring.ScoringCalculator
-import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory
+import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory // Import for Factory
+import com.example.lsgscores.ui.sessions.PdfScoreDisplayData // Import for new data class
 import com.example.lsgscores.ui.sessions.SessionPdfData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -415,11 +416,31 @@ class SessionViewModel @Inject constructor(
                 }
             }
 
-            // 5. Get Scores
-            val scoresMap = mutableMapOf<Pair<Long, Long>, PlayedHoleScore>()
+            // 5. Get Scores and Calculate them
+            val scoresMap = mutableMapOf<Pair<Long, Long>, PdfScoreDisplayData>()
             playedHoles.forEach { playedHole ->
-                playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id).first().forEach { score ->
-                    scoresMap[Pair(score.teamId, score.playedHoleId)] = score
+                // Get all strokes for the current playedHole
+                val actualScoresForHole = playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id).first() // List<PlayedHoleScore>
+
+                val strokesForHoleByTeam = actualScoresForHole.associate { it.teamId to it.strokes } // Map<TeamId, Strokes>
+
+                // Calculate scores for this hole based on the session's scoring mode
+                val calculator = ScoringCalculatorFactory.getCalculatorById(session.scoringModeId)
+                val calculatedScoresByTeam = calculator.calculateScores(strokesForHoleByTeam) // Map<TeamId, CalculatedScore>
+
+                // Populate the scoresMap with both strokes and calculated score
+                actualScoresForHole.forEach { scoreEntry -> 
+                    val teamId = scoreEntry.teamId
+                    val strokes = scoreEntry.strokes
+                    val calculatedScore = calculatedScoresByTeam[teamId]
+
+                    if (calculatedScore != null) {
+                        scoresMap[Pair(teamId, playedHole.id)] = PdfScoreDisplayData(
+                            strokes = strokes,
+                            calculatedScore = calculatedScore
+                        )
+                    }
+                    // Optional: handle cases where calculatedScore might be null
                 }
             }
 

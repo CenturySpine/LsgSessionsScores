@@ -254,9 +254,13 @@ private fun generateAndSharePdf(
 
                 pdfData.playedHoles.forEach { playedHole ->
                     val scoreKey = Pair(team.id, playedHole.id)
-                    val score = pdfData.scores[scoreKey]?.strokes?.toString() ?: "-"
-                    val textWidth = paint.measureText(score)
-                    canvas.drawText(score, currentX + (scoreColWidth - textWidth) / 2, yPosition, paint)
+                    val scoreData = pdfData.scores[scoreKey] // Récupère PdfScoreDisplayData
+                    val scoreText = scoreData?.let {
+                        // Affiche "calculatedScore (strokes)"
+                        "${it.calculatedScore} (${it.strokes})"
+                    } ?: "-"
+                    val textWidth = paint.measureText(scoreText)
+                    canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition, paint)
                     currentX += scoreColWidth
                 }
                 yPosition += lineSpacing
