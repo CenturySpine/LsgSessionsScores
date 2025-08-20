@@ -209,4 +209,8 @@
     <string name="game_mode_greensome_description">Les deux joueurs de l\'équipe effectuent le tee shot, sélectionnent le meilleur drive, puis alternent les coups avec la balle sélectionnée jusqu\'à terminer le trou.</string>
     <string name="game_mode_best_ball_description">Chaque joueur de l\'équipe joue sa propre balle sur chaque trou. Le meilleur score parmi les coéquipiers est le score de l\'équipe pour ce trou.</string>
     <string name="game_mode_info_title">Information sur le mode de jeu</string>
+    <string name="export_session_to_pdf_content_description" />
+    <string name="pdf_session_name_prefix" />
+    <string name="pdf_start_time_prefix" />
+    <string name="pdf_end_time_prefix" />
 </resources>

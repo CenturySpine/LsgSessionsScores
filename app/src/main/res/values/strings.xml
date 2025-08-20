@@ -209,4 +209,13 @@
     <string name="game_mode_greensome_description">Both players in the team tee off, select the best drive, then alternate shots with the selected ball until the hole is completed.</string>
     <string name="game_mode_best_ball_description">Each player in the team plays their own ball on each hole. The best score among teammates is the team\'s score for that hole.</string>
     <string name="game_mode_info_title">Game Mode Information</string>
+    <string name="export_session_to_pdf_content_description" >Export</string>
+    <string name="pdf_session_name_prefix" >Session:</string>
+    <string name="pdf_start_time_prefix" >Start:</string>
+    <string name="pdf_end_time_prefix" >end:</string>
+    <string name="pdf_session_type_prefix">Type:</string>
+    <string name="pdf_comment_prefix">Commentaire:</string>
+    <string name="share_session_pdf_title" >Share session PDF</string>
+    <string name="pdf_generation_failed_toast_message">PDF generation failed</string>
+    <string name="exporting_pdf_toast_message">Esport session PDF</string>
 </resources>
