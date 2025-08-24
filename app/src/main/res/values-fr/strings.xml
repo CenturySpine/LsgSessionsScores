@@ -249,4 +249,7 @@
     <string name="hole_details_edit">Modifier</string>
     <string name="hole_details_cancel">Annuler</string>
     <string name="hole_details_save">Sauvegarder</string>
+    <string name="edit_game_zone_dialog_title">Edit game zone</string>
+    <string name="update_button">Update</string>
+    <string name="edit_game_zone_content_description">Edit game zone</string>
 </resources>

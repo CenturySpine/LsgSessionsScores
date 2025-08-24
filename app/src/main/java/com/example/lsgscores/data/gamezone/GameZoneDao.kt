@@ -14,6 +14,9 @@ interface GameZoneDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(gameZone: GameZone): Long
 
+    @Update
+    suspend fun update(gameZone: GameZone)
+
     @Delete
     suspend fun delete(gameZone: GameZone)
 }

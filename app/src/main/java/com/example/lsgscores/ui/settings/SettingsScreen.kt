@@ -20,7 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -74,6 +74,7 @@ fun SettingsScreen(
 
     var showAddZoneDialog by remember { mutableStateOf(false) }
     var newZoneName by remember { mutableStateOf("") }
+    var editingGameZone by remember { mutableStateOf<GameZone?>(null) }
 
     LaunchedEffect(selectedThemeId) {
         println("DEBUG: Theme changed to: $selectedThemeId")
@@ -154,30 +155,33 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.settings_section_game_zones), // TODO: Add string resource
+                text = stringResource(R.string.settings_section_game_zones),
                 style = MaterialTheme.typography.titleLarge
             )
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    text = stringResource(R.string.settings_label_manage_game_zones), // TODO: Add string resource
+                    text = stringResource(R.string.settings_label_manage_game_zones),
                     style = MaterialTheme.typography.titleMedium
                 )
                 IconButton(onClick = { showAddZoneDialog = true }) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_game_zone_content_description)) // TODO: Add string resource
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_game_zone_content_description))
                 }
             }
 
             if (gameZones.isEmpty()) {
                 Text(
-                    text = stringResource(R.string.no_game_zones_defined), // TODO: Add string resource
+                    text = stringResource(R.string.no_game_zones_defined),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     gameZones.forEach { gameZone ->
-                        GameZoneItem(gameZone = gameZone, onDeleteClick = { gameZoneViewModel.deleteGameZone(it) })
+                        GameZoneItem(
+                            gameZone = gameZone,
+                            onEditClick = { editingGameZone = it }
+                        )
                     }
                 }
             }
@@ -187,12 +191,12 @@ fun SettingsScreen(
     if (showAddZoneDialog) {
         AlertDialog(
             onDismissRequest = { showAddZoneDialog = false },
-            title = { Text(stringResource(R.string.add_game_zone_dialog_title)) }, // TODO: Add string resource
+            title = { Text(stringResource(R.string.add_game_zone_dialog_title)) },
             text = {
                 OutlinedTextField(
                     value = newZoneName,
                     onValueChange = { newZoneName = it },
-                    label = { Text(stringResource(R.string.game_zone_name_label)) }, // TODO: Add string resource
+                    label = { Text(stringResource(R.string.game_zone_name_label)) },
                     singleLine = true
                 )
             },
@@ -202,7 +206,7 @@ fun SettingsScreen(
                     newZoneName = ""
                     showAddZoneDialog = false
                 }) {
-                    Text(stringResource(R.string.add_button)) // TODO: Add string resource
+                    Text(stringResource(R.string.add_button))
                 }
             },
             dismissButton = {
@@ -210,7 +214,36 @@ fun SettingsScreen(
                     newZoneName = ""
                     showAddZoneDialog = false
                 }) {
-                    Text(stringResource(R.string.cancel_button)) // TODO: Add string resource
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
+    }
+
+    editingGameZone?.let { gameZone ->
+        var updatedZoneName by remember { mutableStateOf(gameZone.name) }
+        AlertDialog(
+            onDismissRequest = { editingGameZone = null },
+            title = { Text(stringResource(R.string.edit_game_zone_dialog_title)) },
+            text = {
+                OutlinedTextField(
+                    value = updatedZoneName,
+                    onValueChange = { updatedZoneName = it },
+                    label = { Text(stringResource(R.string.game_zone_name_label)) },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    gameZoneViewModel.updateGameZone(gameZone.copy(name = updatedZoneName))
+                    editingGameZone = null
+                }) {
+                    Text(stringResource(R.string.update_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingGameZone = null }) {
+                    Text(stringResource(R.string.cancel_button))
                 }
             }
         )
@@ -220,7 +253,7 @@ fun SettingsScreen(
 @Composable
 private fun GameZoneItem(
     gameZone: GameZone,
-    onDeleteClick: (GameZone) -> Unit,
+    onEditClick: (GameZone) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -236,8 +269,8 @@ private fun GameZoneItem(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = { onDeleteClick(gameZone) }) {
-            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_game_zone_content_description)) // TODO: Add string resource
+        IconButton(onClick = { onEditClick(gameZone) }) {
+            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit_game_zone_content_description))
         }
     }
 }

@@ -36,9 +36,9 @@ class GameZoneViewModel @Inject constructor(
         }
     }
 
-    fun deleteGameZone(gameZone: GameZone) {
+    fun updateGameZone(gameZone: GameZone) {
         viewModelScope.launch {
-            gameZoneDao.delete(gameZone)
+            gameZoneDao.update(gameZone)
         }
     }
 

@@ -58,9 +58,11 @@ fun HoleDetailScreen(
     }
 
     Scaffold { padding ->
-        Column(modifier = Modifier
-            .padding(padding)
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+        ) {
             hole?.let {
                 if (isEditing) {
                     OutlinedTextField(
@@ -103,7 +105,7 @@ fun HoleDetailScreen(
                         val bitmap = remember(it.endPhotoUri) {
                             BitmapFactory.decodeFile(it.endPhotoUri)
                         }
-						bitmap?.let {
+                        bitmap?.let {
                             Image(
                                 bitmap = it.asImageBitmap(),
                                 contentDescription = stringResource(R.string.hole_list_photo_description),
@@ -131,7 +133,10 @@ fun HoleDetailScreen(
                 }
                 Text(text = "Par: ${it.par}", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     OutlinedButton(onClick = { navController.popBackStack() }) {
                         Text(stringResource(R.string.hole_details_back))
                     }
@@ -145,16 +150,16 @@ fun HoleDetailScreen(
                                     }
                                 }
                             }) {
-                                Text(R.string.hole_details_save))
+                                Text(stringResource(R.string.hole_details_save))
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(onClick = { isEditing = false }) {
-                                Text(R.string.hole_details_cancel)
+                                Text(stringResource(R.string.hole_details_cancel))
                             }
                         }
                     } else {
                         Button(onClick = { isEditing = true }) {
-                            Text(R.string.hole_details_edit)
+                            Text(stringResource(R.string.hole_details_edit))
                         }
                     }
                 }

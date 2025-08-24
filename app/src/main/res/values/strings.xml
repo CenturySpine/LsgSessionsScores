@@ -256,4 +256,7 @@ This action cannot be undone.</string>
     <string name="hole_details_edit">Edit</string>
     <string name="hole_details_cancel">Cancel</string>
     <string name="hole_details_save">Save</string>
+    <string name="edit_game_zone_dialog_title">Edit game zone</string>
+    <string name="update_button">Update</string>
+    <string name="edit_game_zone_content_description">Edit game zone</string>
 </resources>
