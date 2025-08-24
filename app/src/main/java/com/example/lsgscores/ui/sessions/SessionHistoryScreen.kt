@@ -369,8 +369,9 @@ private fun generateAndSharePdf(
             // Scores Table
             val numHoles = pdfData.playedHoles.size
             val availableWidthForTable = pageInfo.pageWidth - (2 * xMargin)
-            val teamNameColWidth = availableWidthForTable * 0.30f
-            val scoreColWidth = (availableWidthForTable - teamNameColWidth) / numHoles.coerceAtLeast(1)
+            val teamNameColWidth = availableWidthForTable * 0.25f
+            val totalColWidth = availableWidthForTable * 0.15f
+            val scoreColWidth = (availableWidthForTable - teamNameColWidth - totalColWidth) / numHoles.coerceAtLeast(1)
 
             val tableTopY = yPosition - lineSpacing / 2f
             
@@ -386,6 +387,11 @@ private fun generateAndSharePdf(
                 canvas.drawText(holeName, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
                 currentX += scoreColWidth
             }
+            // TODO: Use string resource for "Total"
+            val totalHeaderText = "Total"
+            val totalHeaderTextWidth = boldPaint.measureText(totalHeaderText)
+            canvas.drawText(totalHeaderText, currentX + (totalColWidth - totalHeaderTextWidth) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+            
             canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
             yPosition += lineSpacing
 
@@ -395,6 +401,10 @@ private fun generateAndSharePdf(
                 val player1Name = teamWithPlayers.player1?.name ?: ""
                 val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
                 val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}"
+
+                val totalStrokes = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.strokes ?: 0 }
+                val totalCalculatedScore = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.calculatedScore ?: 0 }
+                val totalScoreText = "$totalStrokes - $totalCalculatedScore"
 
                 currentX = xMargin
                 canvas.drawText(teamDisplayName, currentX + cellPadding, yPosition - textCenterOffsetYPaint, paint)
@@ -410,14 +420,18 @@ private fun generateAndSharePdf(
                     canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
                     currentX += scoreColWidth
                 }
+
+                val totalScoreTextWidth = paint.measureText(totalScoreText)
+                canvas.drawText(totalScoreText, currentX + (totalColWidth - totalScoreTextWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
+                
                 canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
                 yPosition += lineSpacing
             }
 
-            val tableBottomY = yPosition - lineSpacing / 2f 
+            val tableBottomY = yPosition - lineSpacing / 2f
             var lineX = xMargin + teamNameColWidth
             canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
-            for (i in 0 until numHoles -1) { // Draw lines between score columns
+            for (i in 0 until numHoles) { // Draw lines between score columns
                  lineX += scoreColWidth
                  canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
             }
