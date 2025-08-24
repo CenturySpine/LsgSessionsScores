@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.GolfCourse
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -67,28 +69,8 @@ fun HoleDetailScreen(
                         label = { Text("Nom du trou") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row {
-                        Button(onClick = {
-                            hole?.let {
-                                val updatedHole = it.copy(name = editedName)
-                                holeViewModel.updateHole(updatedHole) {
-                                    isEditing = false
-                                }
-                            }
-                        }) {
-                            Text("Enregistrer")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { isEditing = false }) {
-                            Text("Annuler")
-                        }
-                    }
                 } else {
                     Text(text = it.name, style = MaterialTheme.typography.headlineMedium)
-                    Button(onClick = { isEditing = true }) {
-                        Text("Modifier le nom")
-                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -149,8 +131,32 @@ fun HoleDetailScreen(
                 }
                 Text(text = "Par: ${it.par}", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { navController.popBackStack() }) {
-                    Text(stringResource(R.string.hole_details_back))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    OutlinedButton(onClick = { navController.popBackStack() }) {
+                        Text(stringResource(R.string.hole_details_back))
+                    }
+                    if (isEditing) {
+                        Row {
+                            Button(onClick = {
+                                hole?.let {
+                                    val updatedHole = it.copy(name = editedName)
+                                    holeViewModel.updateHole(updatedHole) {
+                                        isEditing = false
+                                    }
+                                }
+                            }) {
+                                Text(R.string.hole_details_save))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(onClick = { isEditing = false }) {
+                                Text(R.string.hole_details_cancel)
+                            }
+                        }
+                    } else {
+                        Button(onClick = { isEditing = true }) {
+                            Text(R.string.hole_details_edit)
+                        }
+                    }
                 }
             } ?: run {
                 Text(text = "Aucun trou sélectionné")

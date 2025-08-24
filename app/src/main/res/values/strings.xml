@@ -253,4 +253,7 @@ This action cannot be undone.</string>
     <string name="main_topbar_title_hole_details">Hole details</string>
     <string name="back_button_description">Back to hole list</string>
     <string name="hole_details_back">Back</string>
+    <string name="hole_details_edit">Edit</string>
+    <string name="hole_details_cancel">Cancel</string>
+    <string name="hole_details_save">Save</string>
 </resources>
