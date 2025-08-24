@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lsgscores.R
@@ -45,8 +46,6 @@ fun PlayerDetailScreen(
     // Sort users by id (or whatever ordering you want)
     val sortedUsers = remember(users) { users.sortedBy { it.name } }
     val currentIndex = sortedUsers.indexOfFirst { it.id == userId }
-    val hasPrev = sortedUsers.isNotEmpty()
-    val hasNext = sortedUsers.isNotEmpty()
 
     // Detect swipe gesture only in read-only mode
     val swipeModifier = if (!isEditing && sortedUsers.size > 1 && currentIndex != -1) {
@@ -73,8 +72,7 @@ fun PlayerDetailScreen(
         Modifier
     }
 
-    Scaffold(
-    ) { padding ->
+    Scaffold { padding ->
         if (user == null) {
             Box(
                 Modifier
@@ -82,7 +80,7 @@ fun PlayerDetailScreen(
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Player not found")
+                Text(stringResource(R.string.player_detail_not_found))
             }
         } else {
             // EDIT MODE with sticky Save/Cancel
@@ -110,7 +108,7 @@ fun PlayerDetailScreen(
                             bitmap?.let {
                                 Image(
                                     bitmap = it.asImageBitmap(),
-                                    contentDescription = "User photo",
+                                    contentDescription = stringResource(R.string.player_detail_photo_description),
                                     modifier = Modifier
                                         .size(400.dp)
                                         .background(
@@ -122,7 +120,7 @@ fun PlayerDetailScreen(
                         } else {
                             Icon(
                                 painter = painterResource(id = R.drawable.baseline_person_24),
-                                contentDescription = "Default user icon",
+                                contentDescription = stringResource(R.string.player_detail_default_icon_description),
                                 modifier = Modifier.size(400.dp)
                             )
                         }
@@ -139,7 +137,7 @@ fun PlayerDetailScreen(
                         OutlinedTextField(
                             value = editedName,
                             onValueChange = { editedName = it },
-                            label = { Text("Name") },
+                            label = { Text(stringResource(R.string.player_detail_label_name)) },
                             modifier = Modifier.fillMaxWidth(0.85f)
                         )
                     }
@@ -167,7 +165,7 @@ fun PlayerDetailScreen(
                             },
                             enabled = editedName.isNotBlank()
                         ) {
-                            Text("Save")
+                            Text(stringResource(R.string.player_detail_button_save))
                         }
                         OutlinedButton(
                             onClick = {
@@ -176,7 +174,7 @@ fun PlayerDetailScreen(
                                 editedPhotoPath = null
                             }
                         ) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.player_detail_button_cancel))
                         }
                     }
                 }
@@ -201,7 +199,7 @@ fun PlayerDetailScreen(
 
                     // Photo below the name
                     val photoExists =
-                        !user.photoUri.isNullOrBlank() && File(user.photoUri!!).exists()
+                        !user.photoUri.isNullOrBlank() && File(user.photoUri).exists()
                     if (photoExists) {
                         val bitmap = remember(user.photoUri) {
                             BitmapFactory.decodeFile(user.photoUri)
@@ -209,7 +207,7 @@ fun PlayerDetailScreen(
                         bitmap?.let {
                             Image(
                                 bitmap = it.asImageBitmap(),
-                                contentDescription = "User photo",
+                                contentDescription = stringResource(R.string.player_detail_photo_description),
                                 modifier = Modifier
                                     .size(400.dp)
                                     .background(
@@ -221,7 +219,7 @@ fun PlayerDetailScreen(
                     } else {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_person_24),
-                            contentDescription = "Default user icon",
+                            contentDescription = stringResource(R.string.player_detail_default_icon_description),
                             modifier = Modifier.size(400.dp)
                         )
                     }
@@ -233,7 +231,7 @@ fun PlayerDetailScreen(
                         OutlinedButton(
                             onClick = { navController.popBackStack() }
                         ) {
-                            Text("Back")
+                            Text(stringResource(R.string.player_detail_button_back))
                         }
                         Button(
                             onClick = {
@@ -243,13 +241,13 @@ fun PlayerDetailScreen(
                                 isEditing = true
                             }
                         ) {
-                            Text("Edit")
+                            Text(stringResource(R.string.player_detail_button_edit))
                         }
                         Button(
                             onClick = { showDeleteDialog = true },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Text("Delete")
+                            Text(stringResource(R.string.player_detail_button_delete))
                         }
                     }
                 }
@@ -261,17 +259,17 @@ fun PlayerDetailScreen(
     if (showDeleteDialog && user != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete player") },
-            text = { Text("Are you sure you want to delete this player?") },
+            title = { Text(stringResource(R.string.player_detail_dialog_title)) },
+            text = { Text(stringResource(R.string.player_detail_dialog_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     playerViewModel.deletePlayer(user)
                     showDeleteDialog = false
                     navController.popBackStack()
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.player_detail_dialog_button_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.player_detail_dialog_button_cancel)) }
             }
         )
     }

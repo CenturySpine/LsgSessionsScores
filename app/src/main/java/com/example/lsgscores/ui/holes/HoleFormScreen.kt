@@ -31,9 +31,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.lsgscores.R
 import com.example.lsgscores.data.gamezone.GameZone
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.hole.HolePoint
@@ -80,7 +82,7 @@ fun HoleFormScreen(
         ) {
             if (showNameError) {
                 Text(
-                    text = "Hole name is mandatory",
+                    text = stringResource(R.string.hole_form_error_name_required),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -91,7 +93,7 @@ fun HoleFormScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Hole name") },
+                label = { Text(stringResource(R.string.hole_form_label_name)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(12.dp))
@@ -101,7 +103,7 @@ fun HoleFormScreen(
                 OutlinedTextField(
                     value = selectedGameZone?.name ?: "",
                     onValueChange = { /* Read-only, selection via dropdown */ },
-                    label = { Text("Game Zone") },
+                    label = { Text(stringResource(R.string.session_creation_label_game_zone)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { gameZoneDropdownExpanded = true },
@@ -109,7 +111,7 @@ fun HoleFormScreen(
                     trailingIcon = {
                         Icon(
                             Icons.Filled.ArrowDropDown,
-                            "Select Game Zone",
+                            stringResource(R.string.session_creation_select_game_zone_placeholder),
                             Modifier.clickable { gameZoneDropdownExpanded = true }
                         )
                     }
@@ -134,7 +136,7 @@ fun HoleFormScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description") },
+                label = { Text(stringResource(R.string.hole_form_label_description)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 80.dp),
@@ -145,7 +147,7 @@ fun HoleFormScreen(
             OutlinedTextField(
                 value = constraints,
                 onValueChange = { constraints = it },
-                label = { Text("Constraints") },
+                label = { Text(stringResource(R.string.hole_form_label_constraints)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 80.dp),
@@ -156,7 +158,7 @@ fun HoleFormScreen(
             OutlinedTextField(
                 value = distance,
                 onValueChange = { distance = it.filter { c -> c.isDigit() } },
-                label = { Text("Distance (m)") },
+                label = { Text(stringResource(R.string.hole_form_label_distance)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -165,7 +167,7 @@ fun HoleFormScreen(
             OutlinedTextField(
                 value = par,
                 onValueChange = { par = it.filter { c -> c.isDigit() } },
-                label = { Text("Par") },
+                label = { Text(stringResource(R.string.hole_form_label_par)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -180,12 +182,12 @@ fun HoleFormScreen(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Start", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.hole_form_section_start), style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = startName,
                         onValueChange = { startName = it },
-                        label = { Text("Start name") },
+                        label = { Text(stringResource(R.string.hole_form_label_start_name)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(12.dp))
@@ -198,12 +200,12 @@ fun HoleFormScreen(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Target", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.hole_form_section_target), style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = endName,
                         onValueChange = { endName = it },
-                        label = { Text("Target name") },
+                        label = { Text(stringResource(R.string.hole_form_label_target_name)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(12.dp))
@@ -223,7 +225,7 @@ fun HoleFormScreen(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.hole_form_button_cancel))
                 }
 
                 Button(
@@ -260,7 +262,7 @@ fun HoleFormScreen(
                     enabled = name.isNotBlank() && selectedGameZone != null,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.hole_form_button_save))
                 }
             }
         }

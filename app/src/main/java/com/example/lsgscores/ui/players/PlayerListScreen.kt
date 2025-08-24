@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,7 +45,7 @@ fun PlayerListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { navController.navigate("add_user") }) {
-                Text("+")
+                Text(stringResource(R.string.player_list_fab_add))
             }
         }
     ) { padding ->
@@ -70,14 +71,14 @@ fun PlayerListScreen(
                         bitmap?.let {
                             Image(
                                 bitmap = it.asImageBitmap(),
-                                contentDescription = "User photo",
+                                contentDescription = stringResource(R.string.player_list_photo_description),
                                 modifier = Modifier.size(48.dp)
                             )
                         }
                     } else {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_person_24),
-                            contentDescription = "Default player icon",
+                            contentDescription = stringResource(R.string.player_list_default_icon_description),
                             modifier = Modifier.size(48.dp)
                         )
                     }
@@ -93,7 +94,7 @@ fun PlayerListScreen(
                     }) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Delete player",
+                            contentDescription = stringResource(R.string.player_list_delete_icon_description),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -105,16 +106,16 @@ fun PlayerListScreen(
     if (showDialog && playerToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Confirm Deletion") },
-            text = { Text("Are you sure you want to delete ${playerToDelete!!.name}?") },
+            title = { Text(stringResource(R.string.player_list_dialog_title)) },
+            text = { Text(stringResource(R.string.player_list_dialog_message, playerToDelete!!.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     playerViewModel.deletePlayer(playerToDelete!!)
                     showDialog = false
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.player_list_dialog_button_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showDialog = false }) { Text(stringResource(R.string.player_list_dialog_button_cancel)) }
             }
         )
     }

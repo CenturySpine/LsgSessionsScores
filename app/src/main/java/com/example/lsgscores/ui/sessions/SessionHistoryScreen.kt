@@ -179,8 +179,7 @@ private fun generateAndShareMarkdown(
 ) {
     sessionViewModel.viewModelScope.launch {
         try {
-            // TODO: Ajouter une nouvelle ressource string pour ce message
-            Toast.makeText(context, "Exportation Markdown en cours...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.exporting_markdown_toast_message), Toast.LENGTH_SHORT).show()
             val pdfData = sessionViewModel.loadSessionPdfData(session).first() // réutilisation de la même structure de données
 
             val markdownContent = StringBuilder()
@@ -210,13 +209,14 @@ private fun generateAndShareMarkdown(
                 val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
                 markdownContent.append(" $holeName |")
             }
-            markdownContent.append("\n")
+            markdownContent.append(" ${context.getString(R.string.pdf_header_total)} |\n")
 
             // Separator line (Markdown table syntax)
             markdownContent.append("|:---|") // Left-align team names
             pdfData.playedHoles.forEach { _ ->
                 markdownContent.append(":---:|") // Center-align scores
             }
+            markdownContent.append(":---:|") // Center-align total
             markdownContent.append("\n")
 
             // Table Rows
@@ -225,6 +225,10 @@ private fun generateAndShareMarkdown(
                 val player1Name = teamWithPlayers.player1?.name ?: ""
                 val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
                 val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}"
+
+                val totalStrokes = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.strokes ?: 0 }
+                val totalCalculatedScore = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.calculatedScore ?: 0 }
+                val totalScoreText = "$totalStrokes - $totalCalculatedScore"
 
                 markdownContent.append("| $teamDisplayName |")
 
@@ -236,7 +240,7 @@ private fun generateAndShareMarkdown(
                     } ?: "-"
                     markdownContent.append(" $scoreText |")
                 }
-                markdownContent.append("\n")
+                markdownContent.append(" $totalScoreText |\n")
             }
 
             // Save and Share
@@ -250,7 +254,6 @@ private fun generateAndShareMarkdown(
             mdFile.writeText(markdownContent.toString())
 
             val mdUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", mdFile)
-            // TODO: Ajouter une nouvelle ressource string pour ce titre de partage
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/markdown" // Ou "text/plain" pour une compatibilité plus large
                 putExtra(Intent.EXTRA_STREAM, mdUri)
@@ -258,21 +261,14 @@ private fun generateAndShareMarkdown(
                 // Optionnel: ajouter un sujet
                 // putExtra(Intent.EXTRA_SUBJECT, "Export de session LsgScores")
             }
-            context.startActivity(Intent.createChooser(shareIntent, "Partager le fichier Markdown via..."))
+            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_session_md_title)))
 
         } catch (e: Exception) {
             e.printStackTrace()
-            // TODO: Ajouter une nouvelle ressource string pour ce message d'erreur
-            Toast.makeText(context, "Échec de la génération Markdown: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "${context.getString(R.string.md_generation_failed_toast_message)} ${e.message}", Toast.LENGTH_LONG).show()
         }
-        // Pas de 'finally { pdfDocument?.close() }' nécessaire car nous n'utilisons pas PdfDocument
     }
 }
-
-// TODO: N'oubliez pas d'ajouter les nouvelles ressources string à votre strings.xml :
-// <string name="exporting_markdown_toast_message">Exportation Markdown en cours...</string>
-// <string name="share_session_md_title">Partager le Markdown de la session via</string>
-// <string name="md_generation_failed_toast_message">Échec de la génération du Markdown.</string>
 
 private fun generateAndSharePdf(
     context: Context,
@@ -387,10 +383,7 @@ private fun generateAndSharePdf(
                 canvas.drawText(holeName, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
                 currentX += scoreColWidth
             }
-            // TODO: Use string resource for "Total"
-            val totalHeaderText = "Total"
-            val totalHeaderTextWidth = boldPaint.measureText(totalHeaderText)
-            canvas.drawText(totalHeaderText, currentX + (totalColWidth - totalHeaderTextWidth) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(context.getString(R.string.pdf_header_total), currentX + (totalColWidth - boldPaint.measureText(context.getString(R.string.pdf_header_total))) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
             
             canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
             yPosition += lineSpacing

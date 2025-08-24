@@ -128,7 +128,7 @@ fun MainScreen(
                 // Drawer header
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "LSG Scores",
+                    text = stringResource(R.string.main_drawer_header),
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
@@ -146,7 +146,12 @@ fun MainScreen(
                             )
 
                     NavigationDrawerItem(
-                        icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                        icon = {
+                            Icon(
+                                item.icon,
+                                contentDescription = stringResource(item.labelRes)
+                            )
+                        },
                         label = { Text(stringResource(item.labelRes)) },
                         selected = isSelected,
                         onClick = {
@@ -175,7 +180,12 @@ fun MainScreen(
                             currentRoute == item.route
 
                     NavigationDrawerItem(
-                        icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                        icon = {
+                            Icon(
+                                item.icon,
+                                contentDescription = stringResource(item.labelRes)
+                            )
+                        },
                         label = { Text(stringResource(item.labelRes)) },
                         selected = isSelected,
                         onClick = {
@@ -203,7 +213,8 @@ fun MainScreen(
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
                         val currentRoute = navBackStackEntry?.destination?.route
 
-                        Text(when (currentRoute) {
+                        Text(
+                            when (currentRoute) {
                                 BottomNavItem.Home.route -> stringResource(R.string.main_app_title)
                                 BottomNavItem.NewSession.route -> stringResource(R.string.main_topbar_title_new_session)
                                 BottomNavItem.OngoingSession.route -> stringResource(R.string.main_topbar_title_ongoing_session)
@@ -214,9 +225,10 @@ fun MainScreen(
                                 "add_user" -> stringResource(R.string.main_topbar_title_add_player)
                                 "add_hole" -> stringResource(R.string.main_topbar_title_add_hole)
                                 "new_session_teams" -> stringResource(R.string.main_topbar_title_select_teams)
-                                "user_detail/{userId}" -> stringResource(R.string.main_topbar_title_player_details)  // AJOUTER CETTE LIGNE
-                                else -> "LSG Scores"
-                            })
+                                "user_detail/{userId}" -> stringResource(R.string.main_topbar_title_player_details)
+                                else -> stringResource(R.string.main_app_title)
+                            }
+                        )
                     },
                     navigationIcon = {
                         IconButton(onClick = {
@@ -226,7 +238,7 @@ fun MainScreen(
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu"
+                                contentDescription = stringResource(R.string.main_menu_icon_description)
                             )
                         }
                     }
@@ -249,7 +261,12 @@ fun MainScreen(
                                 currentRoute == item.route
 
                         NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                            icon = {
+                                Icon(
+                                    item.icon,
+                                    contentDescription = stringResource(item.labelRes)
+                                )
+                            },
                             label = { Text(stringResource(item.labelRes)) },
                             selected = isSelected,
                             onClick = {

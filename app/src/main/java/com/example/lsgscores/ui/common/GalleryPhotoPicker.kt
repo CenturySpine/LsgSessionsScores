@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -46,7 +47,7 @@ fun GalleryPhotoPicker(
     ) {
         Icon(
             painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
-            contentDescription = "Pick from gallery"
+            contentDescription = stringResource(R.string.photo_picker_gallery_description)
         )
     }
 }

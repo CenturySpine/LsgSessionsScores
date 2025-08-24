@@ -23,9 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.lsgscores.R
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import com.example.lsgscores.viewmodel.PlayerViewModel
 
@@ -56,7 +58,7 @@ fun PlayerFormScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.player_form_label_name)) },
                     modifier = Modifier.weight(1f)
                 )
 
@@ -70,7 +72,7 @@ fun PlayerFormScreen(
             croppedPhotoUri?.let {
                 Image(
                     painter = rememberAsyncImagePainter(it),
-                    contentDescription = "Player photo",
+                    contentDescription = stringResource(R.string.player_form_photo_description),
                     modifier = Modifier.size(128.dp)
                 )
             }
@@ -85,7 +87,7 @@ fun PlayerFormScreen(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.player_form_button_cancel))
                 }
 
                 Button(
@@ -102,7 +104,7 @@ fun PlayerFormScreen(
                     enabled = name.isNotBlank(),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.player_form_button_save))
                 }
             }
         }

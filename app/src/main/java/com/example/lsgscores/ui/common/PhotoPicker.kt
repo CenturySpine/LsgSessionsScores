@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.canhub.cropper.CropImageContract
@@ -104,7 +105,7 @@ fun PhotoPicker(
     ) {
         Icon(
             painter = painterResource(id = R.drawable.baseline_camera_alt_24),
-            contentDescription = "Take picture"
+            contentDescription = stringResource(R.string.photo_picker_camera_description)
         )
     }
 }

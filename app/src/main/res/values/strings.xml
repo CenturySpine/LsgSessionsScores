@@ -246,4 +246,8 @@ This action cannot be undone.</string>
     <string name="pdf_team_prefix">"Team "</string>
     <string name="pdf_not_applicable">N/A</string>
     <string name="session_creation_select_game_zone_placeholder">Select a game zone</string>
+    <string name="exporting_markdown_toast_message">Exporting markdown</string>
+    <string name="pdf_header_total">Total</string>
+    <string name="share_session_md_title">Share session markdown</string>
+    <string name="md_generation_failed_toast_message">Session markdown generation failed</string>
 </resources>

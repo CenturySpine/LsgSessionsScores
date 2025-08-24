@@ -239,4 +239,7 @@
     <string name="pdf_not_applicable">N/A</string>
     <string name="session_creation_label_game_zone">Zone de jeu</string>
     <string name="session_creation_select_game_zone_placeholder">Selectionner une zone de jeu</string>
+    <string name="exporting_markdown_toast_message">Exporting markdown</string>
+    <string name="pdf_header_total">Total</string>
+    <string name="share_session_md_title">Share session markdown</string>
 </resources>

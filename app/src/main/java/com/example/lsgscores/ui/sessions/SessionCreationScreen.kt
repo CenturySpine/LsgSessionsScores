@@ -117,21 +117,21 @@ fun SessionCreationScreen(
             }
 
             // Game Zone
-            Text(stringResource(R.string.session_creation_label_game_zone)) // TODO: Add string resource
+            Text(stringResource(R.string.session_creation_label_game_zone))
             ExposedDropdownMenuBox(
                 expanded = gameZoneDropdownExpanded,
                 onExpandedChange = { gameZoneDropdownExpanded = !gameZoneDropdownExpanded },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = selectedGameZone?.name ?: stringResource(R.string.session_creation_select_game_zone_placeholder), // TODO: Add string resource
+                    value = selectedGameZone?.name ?: stringResource(R.string.session_creation_select_game_zone_placeholder),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.session_creation_label_game_zone)) },
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Filled.ArrowDropDown,
-                            contentDescription = null, // TODO: Add content description
+                            contentDescription = stringResource(R.string.session_creation_select_game_zone_placeholder),
                             modifier = Modifier.clickable { gameZoneDropdownExpanded = true }
                         )
                     },
