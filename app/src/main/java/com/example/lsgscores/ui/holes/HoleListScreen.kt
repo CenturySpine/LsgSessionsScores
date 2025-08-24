@@ -77,9 +77,9 @@ fun HoleListScreen(
 
                     Text(text = holeItem.name, style = MaterialTheme.typography.titleMedium)
 
-                    if (!holeItem.start.photoUri.isNullOrBlank() && File(holeItem.start.photoUri).exists()) {
-                        val bitmap = remember(holeItem.start.photoUri) {
-                            BitmapFactory.decodeFile(holeItem.start.photoUri)
+                    if (!holeItem.startPhotoUri.isNullOrBlank() && File(holeItem.startPhotoUri).exists()) {
+                        val bitmap = remember(holeItem.startPhotoUri) {
+                            BitmapFactory.decodeFile(holeItem.startPhotoUri)
                         }
                         bitmap?.let {
                             Image(
@@ -95,9 +95,9 @@ fun HoleListScreen(
                             modifier = Modifier.size(48.dp)
                         )
                     }
-                    if (!holeItem.end.photoUri.isNullOrBlank() && File(holeItem.end.photoUri).exists()) {
-                        val bitmap = remember(holeItem.end.photoUri) {
-                            BitmapFactory.decodeFile(holeItem.end.photoUri)
+                    if (!holeItem.endPhotoUri.isNullOrBlank() && File(holeItem.endPhotoUri).exists()) {
+                        val bitmap = remember(holeItem.endPhotoUri) {
+                            BitmapFactory.decodeFile(holeItem.endPhotoUri)
                         }
                         bitmap?.let {
                             Image(

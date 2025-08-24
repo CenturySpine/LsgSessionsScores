@@ -2,7 +2,6 @@ package com.example.lsgscores.data.hole
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.Embedded
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.example.lsgscores.data.gamezone.GameZone
@@ -20,11 +19,10 @@ import com.example.lsgscores.data.gamezone.GameZone
 data class Hole(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val gameZoneId: Long, // Replaced geoZone with gameZoneId
+    val gameZoneId: Long,
     val description: String?,
-    val constraints: String?,
     val distance: Int?,
     val par: Int,
-    @Embedded(prefix = "start_") val start: HolePoint,
-    @Embedded(prefix = "end_") val end: HolePoint
+    val startPhotoUri: String?,
+    val endPhotoUri: String?
 )

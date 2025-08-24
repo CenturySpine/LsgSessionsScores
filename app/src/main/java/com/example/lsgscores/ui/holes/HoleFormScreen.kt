@@ -38,7 +38,6 @@ import androidx.navigation.NavHostController
 import com.example.lsgscores.R
 import com.example.lsgscores.data.gamezone.GameZone
 import com.example.lsgscores.data.hole.Hole
-import com.example.lsgscores.data.hole.HolePoint
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import com.example.lsgscores.viewmodel.GameZoneViewModel
 import com.example.lsgscores.viewmodel.HoleViewModel
@@ -58,16 +57,11 @@ fun HoleFormScreen(
     var name by remember { mutableStateOf("") }
     var selectedGameZone by remember { mutableStateOf<GameZone?>(null) }
     var description by remember { mutableStateOf("") }
-    var constraints by remember { mutableStateOf("") }
+
     var distance by remember { mutableStateOf("") }
     var par by remember { mutableStateOf("") }
 
-    var startName by remember { mutableStateOf("") }
-    var endName by remember { mutableStateOf("") }
-
-
     var startPhotoPath by remember { mutableStateOf<String?>(null) }
-
     var endPhotoPath by remember { mutableStateOf<String?>(null) }
 
     var gameZoneDropdownExpanded by remember { mutableStateOf(false) }
@@ -145,17 +139,6 @@ fun HoleFormScreen(
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
-                value = constraints,
-                onValueChange = { constraints = it },
-                label = { Text(stringResource(R.string.hole_form_label_constraints)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 80.dp),
-                maxLines = 4
-            )
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
                 value = distance,
                 onValueChange = { distance = it.filter { c -> c.isDigit() } },
                 label = { Text(stringResource(R.string.hole_form_label_distance)) },
@@ -184,13 +167,6 @@ fun HoleFormScreen(
                 ) {
                     Text(stringResource(R.string.hole_form_section_start), style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = startName,
-                        onValueChange = { startName = it },
-                        label = { Text(stringResource(R.string.hole_form_label_start_name)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(12.dp))
                     CombinedPhotoPicker(
                         onImagePicked = { path -> startPhotoPath = path }
                     )
@@ -202,13 +178,6 @@ fun HoleFormScreen(
                 ) {
                     Text(stringResource(R.string.hole_form_section_target), style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = endName,
-                        onValueChange = { endName = it },
-                        label = { Text(stringResource(R.string.hole_form_label_target_name)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(12.dp))
                     CombinedPhotoPicker(
                         onImagePicked = { path -> endPhotoPath = path }
                     )
@@ -243,17 +212,10 @@ fun HoleFormScreen(
                                 name = name,
                                 gameZoneId = selectedGameZone!!.id, // Use non-null assertion operator
                                 description = description.takeIf { it.isNotBlank() },
-                                constraints = constraints.takeIf { it.isNotBlank() },
                                 distance = distance.toIntOrNull(),
                                 par = par.toIntOrNull() ?: 3,
-                                start = HolePoint(
-                                    name = startName,
-                                    photoUri = startPhotoPath
-                                ),
-                                end = HolePoint(
-                                    name = endName,
-                                    photoUri = endPhotoPath
-                                )
+                                startPhotoUri =startPhotoPath,
+                                endPhotoUri = endPhotoPath
                             )
                             holeViewModel.addHole(hole)
                             navController.popBackStack()
