@@ -4,6 +4,7 @@ package com.example.lsgscores.ui.holes
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,6 +73,7 @@ fun HoleListScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clickable { navController.navigate("hole_detail/${holeItem.id}") }
                         .padding(8.dp)
                 ) {
 

@@ -12,5 +12,5 @@ class HoleRepository(private val holeDao: HoleDao) {
 
     suspend fun deleteHole(hole: Hole) = holeDao.delete(hole)
 
-    suspend fun getHoleById(id: Long): Hole? = holeDao.getById(id)
+    fun getHoleById(id: Long): Flow<Hole> = holeDao.getById(id)
 }

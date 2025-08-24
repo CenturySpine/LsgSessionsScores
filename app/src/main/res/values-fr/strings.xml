@@ -243,4 +243,7 @@
     <string name="pdf_header_total">Total</string>
     <string name="share_session_md_title">Share session markdown</string>
     <string name="md_generation_failed_toast_message">Generation du markdown de session échoué</string>
+    <string name="main_topbar_title_hole_details">Hole details</string>
+    <string name="back_button_description">Back to hole list</string>
+    <string name="hole_details_back">Back</string>
 </resources>

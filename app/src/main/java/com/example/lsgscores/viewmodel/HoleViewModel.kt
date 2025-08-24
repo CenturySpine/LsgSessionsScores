@@ -16,6 +16,10 @@ class HoleViewModel @Inject constructor(
 
     val holes: Flow<List<Hole>> = repository.getAllHoles()
 
+    fun getHoleById(id: Long): Flow<Hole> {
+        return repository.getHoleById(id)
+    }
+
     fun addHole(hole: Hole, onAdded: (() -> Unit)? = null) {
         viewModelScope.launch {
             repository.insertHole(hole)

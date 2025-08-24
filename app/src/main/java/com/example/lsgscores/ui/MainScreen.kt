@@ -39,6 +39,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.lsgscores.R
+import com.example.lsgscores.ui.holes.HoleDetailScreen
 import com.example.lsgscores.ui.holes.HoleFormScreen
 import com.example.lsgscores.ui.holes.HoleListScreen
 import com.example.lsgscores.ui.home.HomeScreen
@@ -74,6 +75,7 @@ private fun getCurrentNavigationContext(currentRoute: String?): NavigationContex
                 currentRoute == DrawerNavItem.SessionHistory.route ||
                 currentRoute == DrawerNavItem.Settings.route ||
                 currentRoute?.startsWith("user_detail/") == true ||
+                currentRoute?.startsWith("hole_detail/") == true ||
                 currentRoute == "add_user" ||
                 currentRoute == "add_hole" -> NavigationContext.DRAWER
 
@@ -142,6 +144,7 @@ fun MainScreen(
                                     // Handle dynamic routes for drawer items
                                     (item == DrawerNavItem.Players && currentRoute?.startsWith("user_detail/") == true) ||
                                     (item == DrawerNavItem.Players && currentRoute == "add_user") ||
+                                    (item == DrawerNavItem.Holes && currentRoute?.startsWith("hole_detail/") == true) ||
                                     (item == DrawerNavItem.Holes && currentRoute == "add_hole")
                             )
 
@@ -226,6 +229,7 @@ fun MainScreen(
                                 "add_hole" -> stringResource(R.string.main_topbar_title_add_hole)
                                 "new_session_teams" -> stringResource(R.string.main_topbar_title_select_teams)
                                 "user_detail/{userId}" -> stringResource(R.string.main_topbar_title_player_details)
+                                "hole_detail/{holeId}" -> stringResource(R.string.main_topbar_title_hole_details)
                                 else -> stringResource(R.string.main_app_title)
                             }
                         )
@@ -335,6 +339,16 @@ fun MainScreen(
                             playerViewModel = playerViewModel
                         )
                     }
+                }
+                composable(
+                    route = "hole_detail/{holeId}",
+                    arguments = listOf(navArgument("holeId") { type = NavType.LongType })
+                ) {
+                    val holeId = it.arguments?.getLong("holeId")
+                    HoleDetailScreen(
+                        navController = navController,
+                        holeId = holeId
+                    )
                 }
                 composable(
                     route = "played_hole_score/{playedHoleId}",
