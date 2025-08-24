@@ -77,6 +77,8 @@ fun HoleListScreen(
 
                     Text(text = holeItem.name, style = MaterialTheme.typography.titleMedium)
 
+                    Spacer(modifier = Modifier.weight(1f))
+
                     if (!holeItem.startPhotoUri.isNullOrBlank() && File(holeItem.startPhotoUri).exists()) {
                         val bitmap = remember(holeItem.startPhotoUri) {
                             BitmapFactory.decodeFile(holeItem.startPhotoUri)
@@ -113,7 +115,6 @@ fun HoleListScreen(
                             modifier = Modifier.size(48.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.weight(1f))
 
                     IconButton(onClick = {
                         holeToDelete = holeItem
