@@ -3,6 +3,8 @@ package com.example.lsgscores.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.hole.HoleDao
 import com.example.lsgscores.data.media.Media
@@ -19,10 +21,12 @@ import com.example.lsgscores.data.session.Session
 import com.example.lsgscores.data.session.SessionDao
 import com.example.lsgscores.data.session.Team
 import com.example.lsgscores.data.session.TeamDao
+import com.example.lsgscores.data.gamezone.GameZone
+import com.example.lsgscores.data.gamezone.GameZoneDao
 
 @Database(
-    entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class],
-    version = 2
+    entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class, GameZone::class],
+    version = 3
 )
 @TypeConverters(DateTimeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -40,6 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun playedHoleDao(): PlayedHoleDao
 
     abstract fun playedHoleScoreDao(): PlayedHoleScoreDao
+
+    abstract fun gameZoneDao(): GameZoneDao
 
     companion object {
         @Volatile

@@ -3,6 +3,7 @@
 package com.example.lsgscores.ui.sessions
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,9 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,12 +46,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.lsgscores.R
+import com.example.lsgscores.data.gamezone.GameZone
 import com.example.lsgscores.data.scoring.ScoringMode
 import com.example.lsgscores.data.session.SessionType
 import com.example.lsgscores.utils.getLocalizedDescription
 import com.example.lsgscores.utils.getLocalizedName
+import com.example.lsgscores.viewmodel.GameZoneViewModel
 import com.example.lsgscores.viewmodel.SessionViewModel
 import java.time.format.DateTimeFormatter
 
@@ -53,15 +62,21 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun SessionCreationScreen(
     navController: NavController,
-    sessionViewModel: SessionViewModel
+    sessionViewModel: SessionViewModel,
+    gameZoneViewModel: GameZoneViewModel = hiltViewModel()
 ) {
     val sessionDraft by sessionViewModel.sessionDraft.collectAsState()
     val scoringModes by sessionViewModel.scoringModes.collectAsState()
+    val gameZones by gameZoneViewModel.gameZones.collectAsState()
 
     // For the dropdown scoring mode
     var scoringDropdownExpanded by remember { mutableStateOf(false) }
     var showScoringModeInfo by remember { mutableStateOf(false) }
     var selectedScoringModeForInfo by remember { mutableStateOf<ScoringMode?>(null) }
+
+    // For the dropdown game zone
+    var gameZoneDropdownExpanded by remember { mutableStateOf(false) }
+    val selectedGameZone = gameZones.find { it.id == sessionDraft.gameZoneId }
 
     Scaffold { innerPadding ->
         Column(
@@ -104,10 +119,46 @@ fun SessionCreationScreen(
                 }
             }
 
-            // Scoring Mode
-            // Remplacer depuis "// Scoring Mode" jusqu'à la fin du Box par :
+            // Game Zone
+            Text(stringResource(R.string.session_creation_label_game_zone)) // TODO: Add string resource
+            ExposedDropdownMenuBox(
+                expanded = gameZoneDropdownExpanded,
+                onExpandedChange = { gameZoneDropdownExpanded = !gameZoneDropdownExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = selectedGameZone?.name ?: stringResource(R.string.session_creation_select_game_zone_placeholder), // TODO: Add string resource
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(R.string.session_creation_label_game_zone)) },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropDown,
+                            contentDescription = null, // TODO: Add content description
+                            modifier = Modifier.clickable { gameZoneDropdownExpanded = true }
+                        )
+                    },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
 
-// Scoring Mode
+                DropdownMenu(
+                    expanded = gameZoneDropdownExpanded,
+                    onDismissRequest = { gameZoneDropdownExpanded = false },
+                    modifier = Modifier.exposedDropdownSize()
+                ) {
+                    gameZones.forEach { zone ->
+                        DropdownMenuItem(
+                            text = { Text(zone.name) },
+                            onClick = {
+                                sessionViewModel.setGameZoneId(zone.id)
+                                gameZoneDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Scoring Mode
             Text(stringResource(R.string.session_creation_label_scoring_mode))
 
 // Grid 2x2 for scoring modes

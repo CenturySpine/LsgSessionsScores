@@ -21,6 +21,7 @@
     <string name="main_topbar_title_add_hole">Ajouter un trou</string>
     <string name="main_topbar_title_select_teams">Sélectionner les équipes</string>
     <string name="main_topbar_title_player_details">Détails du joueur</string>
+    <string name="main_topbar_title_add_game_zone">Ajouter une zone de jeu</string>
     <string name="main_menu_icon_description">Menu</string>
 
     <!-- Bottom Navigation -->
@@ -98,6 +99,7 @@
     <string name="session_creation_type_team">Équipe</string>
     <string name="session_creation_label_scoring_mode">Mode de scoring</string>
     <string name="session_creation_scoring_choose">Choisir</string>
+    <string name="no_game_zone_selected">Pas de zone de jeu selectionnée</string>
     <string name="session_creation_button_cancel">Annuler</string>
     <string name="session_creation_button_next">Suivant</string>
 
@@ -184,6 +186,7 @@
     <string name="settings_language_french">Français</string>
 
     <!-- NumberInputField -->
+    <string name="delete_game_zone_content_description">Supprimer la zone de jeu</string>
     <string name="number_input_decrease_description">Diminuer</string>
     <string name="number_input_increase_description">Augmenter</string>
 
@@ -209,8 +212,31 @@
     <string name="game_mode_greensome_description">Les deux joueurs de l\'équipe effectuent le tee shot, sélectionnent le meilleur drive, puis alternent les coups avec la balle sélectionnée jusqu\'à terminer le trou.</string>
     <string name="game_mode_best_ball_description">Chaque joueur de l\'équipe joue sa propre balle sur chaque trou. Le meilleur score parmi les coéquipiers est le score de l\'équipe pour ce trou.</string>
     <string name="game_mode_info_title">Information sur le mode de jeu</string>
-    <string name="export_session_to_pdf_content_description" />
-    <string name="pdf_session_name_prefix" />
-    <string name="pdf_start_time_prefix" />
-    <string name="pdf_end_time_prefix" />
+    <string name="export_session_to_pdf_content_description" >Exporter</string>
+    <string name="pdf_session_name_prefix" >"Session: "</string>
+    <string name="pdf_start_time_prefix" >Demarrée à :</string>
+    <string name="pdf_end_time_prefix" >Finie à :</string>
+    <string name="settings_section_game_zones">Zones de jeu</string>
+    <string name="settings_label_manage_game_zones">Gérer les zones de jeu</string>
+    <string name="add_game_zone_content_description">Ajouter une zone de jeu</string>
+    <string name="no_game_zones_defined">Aucune zone de jeu définie. Cliquer sur \"+\" pour en ajouter une</string>
+    <string name="add_game_zone_dialog_title">Ajouter une nouvelle zone de jeu</string>
+    <string name="game_zone_name_label">Zone de jeu</string>
+    <string name="add_button">Ajouter</string>
+    <string name="cancel_button">Annuler</string>
+    <string name="pdf_session_type_prefix">"Type : "</string>
+    <string name="pdf_comment_prefix">"Commentaires : "</string>
+    <string name="share_session_pdf_title">Partager la session en  pdf</string>
+    <string name="pdf_generation_failed_toast_message">Echec de la génération PDF</string>
+    <string name="exporting_pdf_toast_message">Export de la session en PDF</string>
+    <string name="pdf_header_team_players">Joueurs / Trous</string>
+    <string name="pdf_hole_prefix">"Trou : "</string>
+    <string name="pdf_label_session_date">"Date de la session : "</string>
+    <string name="pdf_label_session_start_time">Demarrée à :</string>
+    <string name="pdf_label_session_end_time">Finie à :</string>
+    <string name="pdf_label_game_zone">"Zone de jeu : "</string>
+    <string name="pdf_team_prefix">Equipe</string>
+    <string name="pdf_not_applicable">N/A</string>
+    <string name="session_creation_label_game_zone">Zone de jeu</string>
+    <string name="session_creation_select_game_zone_placeholder">Selectionner une zone de jeu</string>
 </resources>

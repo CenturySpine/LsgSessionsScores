@@ -14,22 +14,35 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,8 +52,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.lsgscores.R
+import com.example.lsgscores.data.gamezone.GameZone
 import com.example.lsgscores.ui.theme.availableThemes
+import com.example.lsgscores.viewmodel.GameZoneViewModel
 import com.example.lsgscores.viewmodel.LanguageOption
 import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.ThemeViewModel
@@ -49,12 +65,17 @@ import com.example.lsgscores.viewmodel.ThemeViewModel
 @Composable
 fun SettingsScreen(
     themeViewModel: ThemeViewModel,
-    languageViewModel: LanguageViewModel
+    languageViewModel: LanguageViewModel,
+    gameZoneViewModel: GameZoneViewModel = hiltViewModel()
 ) {
     val selectedThemeId by themeViewModel.selectedThemeId.collectAsState()
     val selectedLanguage by languageViewModel.selectedLanguage.collectAsState()
     val availableLanguages = languageViewModel.getAvailableLanguages()
+    val gameZones by gameZoneViewModel.gameZones.collectAsState()
     val context = LocalContext.current
+
+    var showAddZoneDialog by remember { mutableStateOf(false) }
+    var newZoneName by remember { mutableStateOf("") }
 
     LaunchedEffect(selectedThemeId) {
         println("DEBUG: Theme changed to: $selectedThemeId")
@@ -130,6 +151,95 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            // Game Zones Section
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(R.string.settings_section_game_zones), // TODO: Add string resource
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    text = stringResource(R.string.settings_label_manage_game_zones), // TODO: Add string resource
+                    style = MaterialTheme.typography.titleMedium
+                )
+                IconButton(onClick = { showAddZoneDialog = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_game_zone_content_description)) // TODO: Add string resource
+                }
+            }
+
+            if (gameZones.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_game_zones_defined), // TODO: Add string resource
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    gameZones.forEach { gameZone ->
+                        GameZoneItem(gameZone = gameZone, onDeleteClick = { gameZoneViewModel.deleteGameZone(it) })
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddZoneDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddZoneDialog = false },
+            title = { Text(stringResource(R.string.add_game_zone_dialog_title)) }, // TODO: Add string resource
+            text = {
+                OutlinedTextField(
+                    value = newZoneName,
+                    onValueChange = { newZoneName = it },
+                    label = { Text(stringResource(R.string.game_zone_name_label)) }, // TODO: Add string resource
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    gameZoneViewModel.addGameZone(newZoneName)
+                    newZoneName = ""
+                    showAddZoneDialog = false
+                }) {
+                    Text(stringResource(R.string.add_button)) // TODO: Add string resource
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    newZoneName = ""
+                    showAddZoneDialog = false
+                }) {
+                    Text(stringResource(R.string.cancel_button)) // TODO: Add string resource
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun GameZoneItem(
+    gameZone: GameZone,
+    onDeleteClick: (GameZone) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = gameZone.name,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(onClick = { onDeleteClick(gameZone) }) {
+            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_game_zone_content_description)) // TODO: Add string resource
         }
     }
 }

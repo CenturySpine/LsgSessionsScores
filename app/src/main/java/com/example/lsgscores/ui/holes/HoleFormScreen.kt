@@ -1,7 +1,9 @@
 package com.example.lsgscores.ui.holes
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,37 +14,51 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.hole.HolePoint
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import com.example.lsgscores.viewmodel.HoleViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.Icon
+import com.example.lsgscores.data.gamezone.GameZone
+import com.example.lsgscores.viewmodel.GameZoneViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HoleFormScreen(
     navController: NavHostController,
-    holeViewModel: HoleViewModel
+    holeViewModel: HoleViewModel,
+    gameZoneViewModel: GameZoneViewModel
 ) {
+
+    val gameZones by gameZoneViewModel.gameZones.collectAsState(initial = emptyList())
 
     var showNameError by remember { mutableStateOf(false) }
 
     var name by remember { mutableStateOf("") }
-    var geoZone by remember { mutableStateOf("") }
+    var selectedGameZone by remember { mutableStateOf<GameZone?>(null) }
     var description by remember { mutableStateOf("") }
     var constraints by remember { mutableStateOf("") }
     var distance by remember { mutableStateOf("") }
@@ -55,6 +71,8 @@ fun HoleFormScreen(
     var startPhotoPath by remember { mutableStateOf<String?>(null) }
 
     var endPhotoPath by remember { mutableStateOf<String?>(null) }
+
+    var gameZoneDropdownExpanded by remember { mutableStateOf(false) }
 
     Scaffold { padding ->
         Column(
@@ -82,12 +100,39 @@ fun HoleFormScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = geoZone,
-                onValueChange = { geoZone = it },
-                label = { Text("Area") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // GameZone ComboBox
+            Column {
+                OutlinedTextField(
+                    value = selectedGameZone?.name ?: "",
+                    onValueChange = { /* Read-only, selection via dropdown */ },
+                    label = { Text("Game Zone") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { gameZoneDropdownExpanded = true },
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(
+                            Icons.Filled.ArrowDropDown,
+                            "Select Game Zone",
+                            Modifier.clickable { gameZoneDropdownExpanded = true }
+                        )
+                    }
+                )
+                DropdownMenu(
+                    expanded = gameZoneDropdownExpanded,
+                    onDismissRequest = { gameZoneDropdownExpanded = false },
+                    modifier = Modifier.fillMaxWidth(0.8f) // Adjust width as needed
+                ) {
+                    gameZones.forEach { zone ->
+                        DropdownMenuItem(
+                            text = { Text(zone.name) },
+                            onClick = {
+                                selectedGameZone = zone
+                                gameZoneDropdownExpanded = false
+                            })
+                    }
+                }
+            }
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
@@ -189,11 +234,16 @@ fun HoleFormScreen(
                     onClick = {
                         if (name.isBlank()) {
                             showNameError = true
-                        } else {
+                        }
+                        else if(selectedGameZone == null)
+                        {
+                            showNameError = true
+                        }
+                        else {
                             showNameError = false
                             val hole = Hole(
                                 name = name,
-                                geoZone = geoZone,
+                                gameZoneId = selectedGameZone!!.id, // Use non-null assertion operator
                                 description = description.takeIf { it.isNotBlank() },
                                 constraints = constraints.takeIf { it.isNotBlank() },
                                 distance = distance.toIntOrNull(),
@@ -210,8 +260,8 @@ fun HoleFormScreen(
                             holeViewModel.addHole(hole)
                             navController.popBackStack()
                         }
-                    },
-                    enabled = name.isNotBlank(),
+                    }, // Enable button only if name and a game zone are selected
+                    enabled = name.isNotBlank() && selectedGameZone != null,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Save")
@@ -220,4 +270,3 @@ fun HoleFormScreen(
         }
     }
 }
-

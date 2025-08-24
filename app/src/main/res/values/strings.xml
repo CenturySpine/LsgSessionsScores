@@ -21,6 +21,7 @@
     <string name="main_topbar_title_add_hole">Add Hole</string>
     <string name="main_topbar_title_select_teams">Select Teams</string>
     <string name="main_topbar_title_player_details">Player Details</string>
+    <string name="main_topbar_title_add_game_zone">Add Game Zone</string>
     <string name="main_menu_icon_description">Menu</string>
 
     <!-- Bottom Navigation -->
@@ -98,6 +99,8 @@
     <string name="session_creation_type_team">Team</string>
     <string name="session_creation_label_scoring_mode">Scoring mode</string>
     <string name="session_creation_scoring_choose">Choose</string>
+    <string name="session_creation_label_game_zone">Game Zone</string>
+    <string name="no_game_zone_selected">No game zone selected</string>
     <string name="session_creation_button_cancel">Cancel</string>
     <string name="session_creation_button_next">Next</string>
 
@@ -134,13 +137,20 @@
 
     <!-- OngoingSessionScreen - Delete Session Dialog -->
     <string name="ongoing_session_delete_dialog_title">Delete session</string>
-    <string name="ongoing_session_delete_dialog_message">This will permanently delete the session and all its related data:\n• Teams\n• Played holes\n• Scores\n\nThis action cannot be undone.</string>
+    <string name="ongoing_session_delete_dialog_message">This will permanently delete the session and all its related data:
+• Teams
+• Played holes
+• Scores
+
+This action cannot be undone.</string>
     <string name="ongoing_session_delete_dialog_button_delete">Delete</string>
     <string name="ongoing_session_delete_dialog_button_cancel">Cancel</string>
 
     <!-- OngoingSessionScreen - Delete Played Hole Dialog -->
     <string name="ongoing_session_delete_hole_dialog_title">Delete played hole</string>
-    <string name="ongoing_session_delete_hole_dialog_message">This will permanently delete this played hole and all its scores.\n\nThis action cannot be undone.</string>
+    <string name="ongoing_session_delete_hole_dialog_message">This will permanently delete this played hole and all its scores.
+
+This action cannot be undone.</string>
     <string name="ongoing_session_delete_hole_dialog_button_delete">Delete</string>
     <string name="ongoing_session_delete_hole_dialog_button_cancel">Cancel</string>
 
@@ -182,6 +192,15 @@
     <string name="settings_language_system">System Default</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_french">Français</string>
+    <string name="settings_section_game_zones">Game Zones</string>
+    <string name="settings_label_manage_game_zones">Manage Game Zones</string>
+    <string name="add_game_zone_content_description">Add game zone</string>
+    <string name="no_game_zones_defined">No game zones defined yet. Tap the + button to add one.</string>
+    <string name="add_game_zone_dialog_title">Add New Game Zone</string>
+    <string name="game_zone_name_label">Zone Name</string>
+    <string name="add_button">Add</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="delete_game_zone_content_description">Delete game zone</string>
 
     <!-- NumberInputField -->
     <string name="number_input_decrease_description">Decrease</string>
@@ -204,7 +223,7 @@
     <string name="scoring_mode_info_icon_description">Scoring mode information</string>
 
     <!-- Game Modes -->
-    <string name="game_mode_individual_description">Each player plays their own ball. The lowest number of strokes wins the hole.</string>
+    <string name="game_mode_individual_description">Each player in the team plays their own ball. The lowest number of strokes wins the hole.</string>
     <string name="game_mode_scramble_description">Each player in the team plays a ball, then the best ball is chosen for the next shot. The team continues from the position of the best shot.</string>
     <string name="game_mode_greensome_description">Both players in the team tee off, select the best drive, then alternate shots with the selected ball until the hole is completed.</string>
     <string name="game_mode_best_ball_description">Each player in the team plays their own ball on each hole. The best score among teammates is the team\'s score for that hole.</string>
@@ -217,12 +236,14 @@
     <string name="pdf_comment_prefix">Commentaire:</string>
     <string name="share_session_pdf_title" >Share session PDF</string>
     <string name="pdf_generation_failed_toast_message">PDF generation failed</string>
-    <string name="exporting_pdf_toast_message">Esport session PDF</string>
-    <string name="pdf_header_team_players">Players</string>
+    <string name="exporting_pdf_toast_message">Export session PDF</string>
+    <string name="pdf_header_team_players">Players / Holes</string>
     <string name="pdf_hole_prefix">Hole:</string>
     <string name="pdf_label_session_date">Session date:</string>
     <string name="pdf_label_session_start_time">Start time:</string>
     <string name="pdf_label_session_end_time">End time:</string>
+    <string name="pdf_label_game_zone">Game zone:</string>
     <string name="pdf_team_prefix">"Team "</string>
     <string name="pdf_not_applicable">N/A</string>
+    <string name="session_creation_select_game_zone_placeholder">Select a game zone</string>
 </resources>

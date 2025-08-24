@@ -7,5 +7,6 @@ data class SessionDraft(
     val dateTime: LocalDateTime = LocalDateTime.now(),
     val sessionType: SessionType = SessionType.INDIVIDUAL,
     val scoringModeId: Int = 1,
+    val gameZoneId: Long = 1L, // New field for GameZone
     val comment: String? = null
 )

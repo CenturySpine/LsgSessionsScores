@@ -51,6 +51,7 @@ import com.example.lsgscores.ui.sessions.SessionCreationScreen
 import com.example.lsgscores.ui.sessions.SessionHistoryScreen
 import com.example.lsgscores.ui.sessions.SessionTeamsScreen
 import com.example.lsgscores.ui.settings.SettingsScreen
+import com.example.lsgscores.viewmodel.GameZoneViewModel
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
@@ -89,6 +90,7 @@ fun MainScreen(
     holeViewModel: HoleViewModel,
     sessionViewModel: SessionViewModel,
     languageViewModel: LanguageViewModel,
+    gameZoneViewModel: GameZoneViewModel,
     themeViewModel: ThemeViewModel = hiltViewModel()
 ) {
     val ongoingSession by sessionViewModel.ongoingSession.collectAsState(initial = null)
@@ -302,7 +304,7 @@ fun MainScreen(
                     PlayerFormScreen(navController, playerViewModel)
                 }
                 composable("add_hole") {
-                    HoleFormScreen(navController, holeViewModel)
+                    HoleFormScreen(navController, holeViewModel, gameZoneViewModel)
                 }
                 composable(
                     route = "user_detail/{userId}",

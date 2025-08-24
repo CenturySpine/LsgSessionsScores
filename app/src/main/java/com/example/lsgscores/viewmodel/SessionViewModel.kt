@@ -1,9 +1,8 @@
-// viewmodel/SessionViewModel.kt
-
 package com.example.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lsgscores.data.gamezone.GameZoneDao
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.hole.HoleRepository
 import com.example.lsgscores.data.holemode.HoleGameMode
@@ -22,10 +21,11 @@ import com.example.lsgscores.data.session.Team
 import com.example.lsgscores.data.session.TeamRepository
 import com.example.lsgscores.data.session.TeamWithPlayers
 import com.example.lsgscores.domain.scoring.ScoringCalculator
-import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory // Import for Factory
-import com.example.lsgscores.ui.sessions.PdfScoreDisplayData // Import for new data class
+import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory
+import com.example.lsgscores.ui.sessions.PdfScoreDisplayData
 import com.example.lsgscores.ui.sessions.SessionPdfData
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,7 +55,8 @@ class SessionViewModel @Inject constructor(
     scoringModeRepository: ScoringModeRepository,
     private val playedHoleRepository: PlayedHoleRepository,
     holeGameModeRepository: HoleGameModeRepository,
-    private val playedHoleScoreRepository: PlayedHoleScoreRepository
+    private val playedHoleScoreRepository: PlayedHoleScoreRepository,
+    private val gameZoneDao: GameZoneDao // Inject GameZoneDao
 ) : ViewModel() {
 
     var scoringModeId: Int? = null
@@ -64,14 +65,6 @@ class SessionViewModel @Inject constructor(
     val ongoingSession: StateFlow<Session?> =
         sessionRepository.getOngoingSessionFlow()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-
-    init {
-        viewModelScope.launch {
-            ongoingSession.filterNotNull().collect { session ->
-                scoringModeId = session.scoringModeId
-            }
-        }
-    }
 
     private val _error = MutableStateFlow<String?>(null)
 
@@ -83,6 +76,20 @@ class SessionViewModel @Inject constructor(
         holeGameModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    init {
+        viewModelScope.launch {
+            // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
+            val unknownZone = gameZoneDao.getAllGameZones().first().firstOrNull { it.name == "Zone Inconnue" }
+            _sessionDraft.update { it.copy(gameZoneId = unknownZone?.id ?: 1L) }
+
+            // Existing logic for ongoing session
+            ongoingSession.filterNotNull().collect { session ->
+                scoringModeId = session.scoringModeId
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val playedHolesWithScores: StateFlow<List<PlayedHoleDisplay>> =
         ongoingSession.flatMapLatest { session ->
             if (session != null) {
@@ -97,10 +104,10 @@ class SessionViewModel @Inject constructor(
                                         holeRepository.getAllHoles().map { holes ->
                                             holes.find { it.id == playedHole.holeId }
                                         },
-                                        holeGameModeRepository.getById(playedHole.gameModeId), // AJOUT
+                                        holeGameModeRepository.getById(playedHole.gameModeId),
                                         playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id),
                                         teamRepository.getTeamsWithPlayersForSession(session.id)
-                                    ) { hole, gameMode, scores, teamsWithPlayers -> // MODIFIÉ
+                                    ) { hole, gameMode, scores, teamsWithPlayers ->
                                         val strokesByTeam =
                                             scores.associate { it.teamId to it.strokes }
                                         val calculatedScores =
@@ -121,7 +128,7 @@ class SessionViewModel @Inject constructor(
                                             }
 
                                         PlayedHoleDisplay(
-                                            playedHoleId = playedHole.id,  // Add the played hole ID
+                                            playedHoleId = playedHole.id,
                                             holeName = hole?.name ?: "Unknown Hole",
                                             position = playedHole.position,
                                             gameModeName = gameMode?.name ?: "Unknown Mode",
@@ -137,6 +144,7 @@ class SessionViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val currentScoringModeInfo: StateFlow<ScoringMode?> =
         ongoingSession.flatMapLatest { session ->
             if (session != null) {
@@ -213,6 +221,11 @@ class SessionViewModel @Inject constructor(
         _sessionDraft.update { it.copy(scoringModeId = id) }
     }
 
+    // Update game zone
+    fun setGameZoneId(id: Long) {
+        _sessionDraft.update { it.copy(gameZoneId = id) }
+    }
+
     // (Optionally, update comment if you want a comment field)
     fun setComment(comment: String?) {
         _sessionDraft.update { it.copy(comment = comment) }
@@ -231,6 +244,7 @@ class SessionViewModel @Inject constructor(
             dateTime = draft.dateTime,
             sessionType = draft.sessionType,
             scoringModeId = draft.scoringModeId,
+            gameZoneId = draft.gameZoneId, // Use gameZoneId from draft
             comment = draft.comment
         )
     }
@@ -293,6 +307,7 @@ class SessionViewModel @Inject constructor(
                 dateTime = draft.dateTime,
                 sessionType = draft.sessionType,
                 scoringModeId = draft.scoringModeId,
+                gameZoneId = draft.gameZoneId, // Use gameZoneId from draft
                 comment = draft.comment,
                 isOngoing = true
             )
@@ -317,6 +332,7 @@ class SessionViewModel @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getTeamsForPlayedHole(playedHoleId: Long): Flow<List<Team>> {
         return playedHoleRepository.getPlayedHoleById(playedHoleId)
             .flatMapLatest { playedHole ->
@@ -398,6 +414,9 @@ class SessionViewModel @Inject constructor(
         return flow {
             // Session object is passed as a parameter.
 
+            // 1. Get GameZone for the session
+            val gameZone = gameZoneDao.getGameZoneById(session.gameZoneId)
+
             // 2. Get Teams with Players
             val teamsWithPlayers = teamRepository.getTeamsWithPlayersForSession(session.id).first()
 
@@ -444,7 +463,7 @@ class SessionViewModel @Inject constructor(
                 }
             }
 
-            emit(SessionPdfData(session, teamsWithPlayers, playedHoles, holesDetailsMap.toMap(), scoresMap.toMap()))
+            emit(SessionPdfData(session, teamsWithPlayers, playedHoles, holesDetailsMap.toMap(), scoresMap.toMap(), gameZone))
         }
     }
 

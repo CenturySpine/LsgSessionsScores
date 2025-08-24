@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.lsgscores.ui.MainScreen
 import com.example.lsgscores.ui.theme.LsgScoresTheme
 import com.example.lsgscores.utils.LanguageManager
+import com.example.lsgscores.viewmodel.GameZoneViewModel
 import com.example.lsgscores.viewmodel.HoleViewModel
 import com.example.lsgscores.viewmodel.LanguageViewModel
 import com.example.lsgscores.viewmodel.PlayerViewModel
@@ -35,6 +36,7 @@ class MainActivity : ComponentActivity() {
                     playerViewModel = hiltViewModel<PlayerViewModel>(),
                     holeViewModel = hiltViewModel<HoleViewModel>(),
                     sessionViewModel = hiltViewModel<SessionViewModel>(),
+                    gameZoneViewModel = hiltViewModel<GameZoneViewModel>(),
                     languageViewModel = languageViewModel
                 )
             }

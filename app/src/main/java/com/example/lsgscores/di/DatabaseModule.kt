@@ -3,6 +3,8 @@ package com.example.lsgscores.di
 import android.content.Context
 import androidx.room.Room
 import com.example.lsgscores.data.AppDatabase
+
+import com.example.lsgscores.data.gamezone.GameZoneDao
 import com.example.lsgscores.data.hole.HoleDao
 import com.example.lsgscores.data.media.MediaDao
 import com.example.lsgscores.data.player.PlayerDao
@@ -29,7 +31,9 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "streetgolf-db"
-        ).fallbackToDestructiveMigration().build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
@@ -55,4 +59,7 @@ object DatabaseModule {
 
     @Provides
     fun providePlayedHoleScoreDao(database: AppDatabase): PlayedHoleScoreDao = database.playedHoleScoreDao()
+
+    @Provides
+    fun provideGameZoneDao(database: AppDatabase): GameZoneDao = database.gameZoneDao()
 }
