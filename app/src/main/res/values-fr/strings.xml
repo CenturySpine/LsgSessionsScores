@@ -229,7 +229,7 @@
     <string name="share_session_pdf_title">Partager la session en  pdf</string>
     <string name="pdf_generation_failed_toast_message">Echec de la génération PDF</string>
     <string name="exporting_pdf_toast_message">Export de la session en PDF</string>
-    <string name="pdf_header_team_players">Joueurs / Trous</string>
+    <string name="pdf_header_team_players">Joueurs / Trous (Score - coups)</string>
     <string name="pdf_hole_prefix">"Trou : "</string>
     <string name="pdf_label_session_date">"Date de la session : "</string>
     <string name="pdf_label_session_start_time">Demarrée à :</string>
@@ -242,4 +242,5 @@
     <string name="exporting_markdown_toast_message">Exporting markdown</string>
     <string name="pdf_header_total">Total</string>
     <string name="share_session_md_title">Share session markdown</string>
+    <string name="md_generation_failed_toast_message">Generation du markdown de session échoué</string>
 </resources>

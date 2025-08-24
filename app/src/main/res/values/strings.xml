@@ -237,7 +237,7 @@ This action cannot be undone.</string>
     <string name="share_session_pdf_title" >Share session PDF</string>
     <string name="pdf_generation_failed_toast_message">PDF generation failed</string>
     <string name="exporting_pdf_toast_message">Export session PDF</string>
-    <string name="pdf_header_team_players">Players / Holes</string>
+    <string name="pdf_header_team_players">Players / Holes (Score - strokes)</string>
     <string name="pdf_hole_prefix">Hole:</string>
     <string name="pdf_label_session_date">Session date:</string>
     <string name="pdf_label_session_start_time">Start time:</string>

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -229,7 +230,7 @@ private fun generateAndShareMarkdown(
 
                 val totalStrokes = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.strokes ?: 0 }
                 val totalCalculatedScore = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.calculatedScore ?: 0 }
-                val totalScoreText = "$totalStrokes - $totalCalculatedScore"
+                val totalScoreText = "$totalCalculatedScore - $totalStrokes"
 
                 markdownContent.append("| $teamDisplayName |")
 
@@ -286,8 +287,20 @@ private fun generateAndSharePdf(
             val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4
             val page = pdfDocument.startPage(pageInfo)
             val canvas = page.canvas
-            val paint = Paint()
-            val boldPaint = Paint().apply { isFakeBoldText = true }
+            val defaultTextSize = 10f
+
+            val paint = Paint().apply {
+                textSize = defaultTextSize
+            }
+            val boldPaint = Paint().apply {
+                isFakeBoldText = true
+                textSize = defaultTextSize
+            }
+            val italicPaint = Paint().apply {
+                isFakeBoldText = false
+                textSkewX = -0.25f
+                textSize = defaultTextSize
+            }
             val gameModePaint = Paint().apply {
                 textSize = 8f
                 color = Color.GRAY
@@ -297,14 +310,13 @@ private fun generateAndSharePdf(
             val xMargin = 20f
             val lineSpacing = 18f
             val cellPadding = 5f
-            val defaultTextSize = 10f
 
-            paint.textSize = defaultTextSize
-            boldPaint.textSize = defaultTextSize
 
             // Calculate ascent/descent for vertical centering AFTER setting textSize
             val textCenterOffsetYPaint = (paint.ascent() + paint.descent()) / 2f
             val textCenterOffsetYBoldPaint = (boldPaint.ascent() + boldPaint.descent()) / 2f
+            val textCenterOffsetYItalicPaint = (italicPaint.ascent() + italicPaint.descent()) / 2f
+
 
             yPosition += lineSpacing / 2f
 
@@ -373,7 +385,7 @@ private fun generateAndSharePdf(
             val teamNameColWidth = availableWidthForTable * 0.25f
             val totalColWidth = availableWidthForTable * 0.15f
             val scoreColWidth = (availableWidthForTable - teamNameColWidth - totalColWidth) / numHoles.coerceAtLeast(1)
-            
+
             val tableHeaderHeight = lineSpacing * 1.5f // Increased height for two lines
 
             val tableTopY = yPosition - tableHeaderHeight / 2f + 4f
@@ -397,7 +409,7 @@ private fun generateAndSharePdf(
                 canvas.drawText(holeName, currentX + (scoreColWidth - holeNameWidth) / 2, headerCenterY - (lineSpacing/4) - textCenterOffsetYBoldPaint, boldPaint)
                 // Draw Game Mode Name (bottom part of the cell)
                 canvas.drawText(gameModeName, currentX + (scoreColWidth - gameModeNameWidth) / 2, headerCenterY + (lineSpacing/2) - textCenterOffsetYBoldPaint, gameModePaint)
-                
+
                 currentX += scoreColWidth
             }
             canvas.drawText(context.getString(R.string.pdf_header_total), currentX + (totalColWidth - boldPaint.measureText(context.getString(R.string.pdf_header_total))) / 2, headerCenterY - textCenterOffsetYBoldPaint, boldPaint)
@@ -413,10 +425,6 @@ private fun generateAndSharePdf(
                 val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
                 val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}"
 
-                val totalStrokes = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.strokes ?: 0 }
-                val totalCalculatedScore = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.calculatedScore ?: 0 }
-                val totalScoreText = "$totalStrokes - $totalCalculatedScore"
-
                 currentX = xMargin
                 canvas.drawText(teamDisplayName, currentX + cellPadding, yPosition - textCenterOffsetYPaint, paint)
                 currentX += teamNameColWidth
@@ -424,16 +432,48 @@ private fun generateAndSharePdf(
                 pdfData.playedHoles.forEach { playedHole ->
                     val scoreKey = Pair(team.id, playedHole.id)
                     val scoreData = pdfData.scores[scoreKey]
-                    val scoreText = scoreData?.let {
-                        "${it.strokes} - ${it.calculatedScore}"
-                    } ?: "-"
-                    val textWidth = paint.measureText(scoreText)
-                    canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
+
+                    if (scoreData != null) {
+                        val scoreString = scoreData.calculatedScore.toString()
+                        val strokesString = "(${scoreData.strokes})"
+                        val separator = " - "
+
+                        val scoreWidth = boldPaint.measureText(scoreString)
+                        val separatorWidth = paint.measureText(separator)
+                        val strokesWidth = italicPaint.measureText(strokesString)
+                        val totalTextWidth = scoreWidth + separatorWidth + strokesWidth
+
+                        var textX = currentX + (scoreColWidth - totalTextWidth) / 2
+                        canvas.drawText(scoreString, textX, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+                        textX += scoreWidth
+                        canvas.drawText(separator, textX, yPosition - textCenterOffsetYPaint, paint)
+                        textX += separatorWidth
+                        canvas.drawText(strokesString, textX, yPosition - textCenterOffsetYItalicPaint, italicPaint)
+                    } else {
+                        val scoreText = "-"
+                        val textWidth = paint.measureText(scoreText)
+                        canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
+                    }
                     currentX += scoreColWidth
                 }
 
-                val totalScoreTextWidth = paint.measureText(totalScoreText)
-                canvas.drawText(totalScoreText, currentX + (totalColWidth - totalScoreTextWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
+                val totalStrokes = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.strokes ?: 0 }
+                val totalCalculatedScore = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.calculatedScore ?: 0 }
+                val totalScoreString = totalCalculatedScore.toString()
+                val totalStrokesString = "($totalStrokes)"
+                val separator = " - "
+
+                val totalScoreWidth = boldPaint.measureText(totalScoreString)
+                val separatorWidth = paint.measureText(separator)
+                val totalStrokesWidth = italicPaint.measureText(totalStrokesString)
+                val totalTextWidth = totalScoreWidth + separatorWidth + totalStrokesWidth
+
+                var textX = currentX + (totalColWidth - totalTextWidth) / 2
+                canvas.drawText(totalScoreString, textX, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+                textX += totalScoreWidth
+                canvas.drawText(separator, textX, yPosition - textCenterOffsetYPaint, paint)
+                textX += separatorWidth
+                canvas.drawText(totalStrokesString, textX, yPosition - textCenterOffsetYItalicPaint, italicPaint)
 
                 canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
                 yPosition += lineSpacing
