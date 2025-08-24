@@ -185,7 +185,7 @@ private fun generateAndShareMarkdown(
             val markdownContent = StringBuilder()
 
             // Session Name
-            markdownContent.append("# ${context.getString(R.string.pdf_session_name_prefix)} ${pdfData.session.name}\n\n")
+            markdownContent.append("# ${context.getString(R.string.pdf_session_name_prefix)} ${pdfData.gameZone?.name}\n\n")
 
             // Basic Session Info
             val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
@@ -312,7 +312,7 @@ private fun generateAndSharePdf(
             val sessionNameTextCenterOffsetYLarge = (boldPaint.ascent() + boldPaint.descent()) / 2f // For 16f
 
             canvas.drawText(sessionNameLabel, xMargin, yPosition - sessionNameTextCenterOffsetYLarge, boldPaint)
-            canvas.drawText(pdfData.session.name, xMargin + sessionNameLabelWidth, yPosition - sessionNameTextCenterOffsetYLarge, paint)
+            canvas.drawText(pdfData.gameZone?.name ?: "N/A", xMargin + sessionNameLabelWidth, yPosition - sessionNameTextCenterOffsetYLarge, paint)
             
             paint.textSize = defaultTextSize // Reset to default
             boldPaint.textSize = defaultTextSize

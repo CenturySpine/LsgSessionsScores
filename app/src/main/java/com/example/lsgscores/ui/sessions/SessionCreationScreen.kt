@@ -227,6 +227,7 @@ fun SessionCreationScreen(
                     onClick = {
                         navController.navigate("new_session_teams")
                     },
+                    enabled = selectedGameZone != null, // Disable if no game zone is selected
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(stringResource(R.string.session_creation_button_next))

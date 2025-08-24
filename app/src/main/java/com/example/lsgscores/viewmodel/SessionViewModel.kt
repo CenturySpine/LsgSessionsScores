@@ -265,7 +265,6 @@ class SessionViewModel @Inject constructor(
             // Insert new session
             val draft = _sessionDraft.value
             val session = Session(
-                name = "", // Set a name if needed
                 dateTime = draft.dateTime,
                 sessionType = draft.sessionType,
                 scoringModeId = draft.scoringModeId,

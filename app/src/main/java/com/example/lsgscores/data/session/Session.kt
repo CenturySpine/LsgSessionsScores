@@ -20,7 +20,6 @@ import java.time.LocalDateTime
 data class Session(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val name: String,
     val dateTime: LocalDateTime,        // This becomes startDateTime conceptually
     val endDateTime: LocalDateTime? = null,  // New field - null while ongoing
     val sessionType: SessionType,

@@ -24,7 +24,7 @@ import com.example.lsgscores.data.session.TeamDao
 
 @Database(
     entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class, GameZone::class],
-    version = 4
+    version = 5
 )
 @TypeConverters(DateTimeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
