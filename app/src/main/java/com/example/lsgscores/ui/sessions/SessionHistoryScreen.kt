@@ -431,9 +431,10 @@ private fun generateAndSharePdf(
             val tableBottomY = yPosition - lineSpacing / 2f
             var lineX = xMargin + teamNameColWidth
             canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
-            for (i in 0 until numHoles) { // Draw lines between score columns
-                 lineX += scoreColWidth
-                 canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
+            (0 until numHoles).forEach { i ->
+                // Draw lines between score columns
+                lineX += scoreColWidth
+                canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
             }
             // Draw table borders
             canvas.drawLine(xMargin, tableTopY, xMargin + availableWidthForTable, tableTopY, paint) // Top border

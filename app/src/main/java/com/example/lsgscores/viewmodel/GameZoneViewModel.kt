@@ -42,7 +42,4 @@ class GameZoneViewModel @Inject constructor(
         }
     }
 
-    fun getGameZoneById(id: Long) = viewModelScope.launch {
-        gameZoneDao.getGameZoneById(id)
-    }
 }

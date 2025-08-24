@@ -15,15 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.lsgscores.R
-import com.example.lsgscores.data.gamezone.GameZone
 import com.example.lsgscores.data.scoring.ScoringMode
 import com.example.lsgscores.data.session.SessionType
 import com.example.lsgscores.utils.getLocalizedDescription
@@ -70,7 +68,6 @@ fun SessionCreationScreen(
     val gameZones by gameZoneViewModel.gameZones.collectAsState()
 
     // For the dropdown scoring mode
-    var scoringDropdownExpanded by remember { mutableStateOf(false) }
     var showScoringModeInfo by remember { mutableStateOf(false) }
     var selectedScoringModeForInfo by remember { mutableStateOf<ScoringMode?>(null) }
 

@@ -1,9 +1,8 @@
 package com.example.lsgscores.ui.sessions
 
-import com.example.lsgscores.data.gamezone.GameZone // Added import for GameZone
+import com.example.lsgscores.data.gamezone.GameZone
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.session.PlayedHole
-import com.example.lsgscores.data.session.PlayedHoleScore
 import com.example.lsgscores.data.session.Session
 import com.example.lsgscores.data.session.TeamWithPlayers
 

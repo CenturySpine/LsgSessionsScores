@@ -226,29 +226,6 @@ class SessionViewModel @Inject constructor(
         _sessionDraft.update { it.copy(gameZoneId = id) }
     }
 
-    // (Optionally, update comment if you want a comment field)
-    fun setComment(comment: String?) {
-        _sessionDraft.update { it.copy(comment = comment) }
-    }
-
-    // Reset session draft to defaults (for navigation/flow purposes)
-    fun resetSessionDraft() {
-        _sessionDraft.value = SessionDraft()
-    }
-
-    // For the first screen: build Session object but do not persist yet
-    fun buildSession(): Session {
-        val draft = _sessionDraft.value
-        return Session(
-            name = "", // To be set in further flow or extended
-            dateTime = draft.dateTime,
-            sessionType = draft.sessionType,
-            scoringModeId = draft.scoringModeId,
-            gameZoneId = draft.gameZoneId, // Use gameZoneId from draft
-            comment = draft.comment
-        )
-    }
-
     fun validateOngoingSession(onValidated: () -> Unit = {}) {
         viewModelScope.launch {
             val ongoing = sessionRepository.getOngoingSession()
@@ -259,21 +236,6 @@ class SessionViewModel @Inject constructor(
                 )
                 sessionRepository.update(validated)
                 onValidated()
-            }
-        }
-    }
-
-    /**
-     * Delete the ongoing session and all its teams and related data.
-     */
-    fun deleteOngoingSession(onDeleted: () -> Unit = {}) {
-        viewModelScope.launch {
-            val ongoing = sessionRepository.getOngoingSession()
-            if (ongoing != null) {
-                // Delete teams associated with this session (if cascade not handled by Room)
-                teamRepository.deleteTeamsForSession(ongoing.id)
-                sessionRepository.delete(ongoing)
-                onDeleted()
             }
         }
     }
@@ -378,6 +340,7 @@ class SessionViewModel @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getTeamsWithPlayersForPlayedHole(playedHoleId: Long): Flow<List<TeamWithPlayers>> {
         return playedHoleRepository.getPlayedHoleById(playedHoleId)
             .flatMapLatest { playedHole ->
