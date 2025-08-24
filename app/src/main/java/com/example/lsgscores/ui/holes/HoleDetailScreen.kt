@@ -18,12 +18,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
@@ -42,13 +46,50 @@ fun HoleDetailScreen(
     holeViewModel: HoleViewModel = hiltViewModel()
 ) {
     val hole by holeViewModel.getHoleById(holeId ?: 0).collectAsState(initial = null)
+    var editedName by remember { mutableStateOf("") }
+    var isEditing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(hole) {
+        hole?.let {
+            editedName = it.name
+        }
+    }
 
     Scaffold { padding ->
         Column(modifier = Modifier
             .padding(padding)
             .padding(16.dp)) {
             hole?.let {
-                Text(text = it.name, style = MaterialTheme.typography.headlineMedium)
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = editedName,
+                        onValueChange = { editedName = it },
+                        label = { Text("Nom du trou") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row {
+                        Button(onClick = {
+                            hole?.let {
+                                val updatedHole = it.copy(name = editedName)
+                                holeViewModel.updateHole(updatedHole) {
+                                    isEditing = false
+                                }
+                            }
+                        }) {
+                            Text("Enregistrer")
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { isEditing = false }) {
+                            Text("Annuler")
+                        }
+                    }
+                } else {
+                    Text(text = it.name, style = MaterialTheme.typography.headlineMedium)
+                    Button(onClick = { isEditing = true }) {
+                        Text("Modifier le nom")
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
