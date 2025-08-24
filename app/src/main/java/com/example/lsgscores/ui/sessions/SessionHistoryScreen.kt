@@ -2,6 +2,7 @@ package com.example.lsgscores.ui.sessions
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.widget.Toast
@@ -287,13 +288,17 @@ private fun generateAndSharePdf(
             val canvas = page.canvas
             val paint = Paint()
             val boldPaint = Paint().apply { isFakeBoldText = true }
+            val gameModePaint = Paint().apply {
+                textSize = 8f
+                color = Color.GRAY
+            }
 
             var yPosition = 40f
             val xMargin = 20f
             val lineSpacing = 18f
             val cellPadding = 5f
             val defaultTextSize = 10f
-            
+
             paint.textSize = defaultTextSize
             boldPaint.textSize = defaultTextSize
 
@@ -313,7 +318,7 @@ private fun generateAndSharePdf(
 
             canvas.drawText(sessionNameLabel, xMargin, yPosition - sessionNameTextCenterOffsetYLarge, boldPaint)
             canvas.drawText(pdfData.gameZone?.name ?: "N/A", xMargin + sessionNameLabelWidth, yPosition - sessionNameTextCenterOffsetYLarge, paint)
-            
+
             paint.textSize = defaultTextSize // Reset to default
             boldPaint.textSize = defaultTextSize
             yPosition += lineSpacing * 2f
@@ -344,14 +349,14 @@ private fun generateAndSharePdf(
             canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
             canvas.drawText(endTimeValue, xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
             yPosition += lineSpacing
-            
+
             // Session Type
             labelText = "${context.getString(R.string.pdf_session_type_prefix)} "
             labelWidth = boldPaint.measureText(labelText)
             canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
             canvas.drawText(pdfData.session.sessionType.toString(), xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint) // Assuming sessionType can be .toString()
             yPosition += lineSpacing
-            
+
             // Session Comment
             pdfData.session.comment?.takeIf { it.isNotBlank() }?.let {
                 labelText = "${context.getString(R.string.pdf_comment_prefix)} "
@@ -368,23 +373,36 @@ private fun generateAndSharePdf(
             val teamNameColWidth = availableWidthForTable * 0.25f
             val totalColWidth = availableWidthForTable * 0.15f
             val scoreColWidth = (availableWidthForTable - teamNameColWidth - totalColWidth) / numHoles.coerceAtLeast(1)
-
-            val tableTopY = yPosition - lineSpacing / 2f
             
+            val tableHeaderHeight = lineSpacing * 1.5f // Increased height for two lines
+
+            val tableTopY = yPosition - tableHeaderHeight / 2f + 4f
+
+
             // Table Headers
             var currentX = xMargin
-            canvas.drawText(context.getString(R.string.pdf_header_team_players), currentX + cellPadding, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+            val headerCenterY = tableTopY + tableHeaderHeight / 2f
+            canvas.drawText(context.getString(R.string.pdf_header_team_players), currentX + cellPadding, headerCenterY - textCenterOffsetYBoldPaint, boldPaint)
             currentX += teamNameColWidth
 
             pdfData.playedHoles.forEach { playedHole ->
                 val holeDetail = pdfData.holesDetails[playedHole.holeId]
                 val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
-                val textWidth = boldPaint.measureText(holeName)
-                canvas.drawText(holeName, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
+                val gameModeName = pdfData.holeGameModes[playedHole.gameModeId.toLong()] ?: ""
+
+                val holeNameWidth = boldPaint.measureText(holeName)
+                val gameModeNameWidth = gameModePaint.measureText(gameModeName)
+
+                // Draw Hole Name (top part of the cell)
+                canvas.drawText(holeName, currentX + (scoreColWidth - holeNameWidth) / 2, headerCenterY - (lineSpacing/4) - textCenterOffsetYBoldPaint, boldPaint)
+                // Draw Game Mode Name (bottom part of the cell)
+                canvas.drawText(gameModeName, currentX + (scoreColWidth - gameModeNameWidth) / 2, headerCenterY + (lineSpacing/2) - textCenterOffsetYBoldPaint, gameModePaint)
+                
                 currentX += scoreColWidth
             }
-            canvas.drawText(context.getString(R.string.pdf_header_total), currentX + (totalColWidth - boldPaint.measureText(context.getString(R.string.pdf_header_total))) / 2, yPosition - textCenterOffsetYBoldPaint, boldPaint)
-            
+            canvas.drawText(context.getString(R.string.pdf_header_total), currentX + (totalColWidth - boldPaint.measureText(context.getString(R.string.pdf_header_total))) / 2, headerCenterY - textCenterOffsetYBoldPaint, boldPaint)
+
+            yPosition = tableTopY + tableHeaderHeight - 4f
             canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
             yPosition += lineSpacing
 
@@ -416,7 +434,7 @@ private fun generateAndSharePdf(
 
                 val totalScoreTextWidth = paint.measureText(totalScoreText)
                 canvas.drawText(totalScoreText, currentX + (totalColWidth - totalScoreTextWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
-                
+
                 canvas.drawLine(xMargin, yPosition + lineSpacing / 2f, xMargin + availableWidthForTable, yPosition + lineSpacing / 2f, paint)
                 yPosition += lineSpacing
             }

@@ -17,5 +17,6 @@ data class SessionPdfData(
     val playedHoles: List<PlayedHole>,
     val holesDetails: Map<Long, Hole>, // Map de playedHole.holeId vers Hole
     val scores: Map<Pair<Long, Long>, PdfScoreDisplayData>, // Map de (teamId, playedHoleId) vers PdfScoreDisplayData
-    val gameZone: GameZone? // Added gameZone parameter
+    val gameZone: GameZone?, // Added gameZone parameter
+    val holeGameModes: Map<Long, String> // Map de gameModeId vers le nom du mode de jeu
 )

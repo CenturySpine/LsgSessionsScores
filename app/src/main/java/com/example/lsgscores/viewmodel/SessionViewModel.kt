@@ -54,7 +54,7 @@ class SessionViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     scoringModeRepository: ScoringModeRepository,
     private val playedHoleRepository: PlayedHoleRepository,
-    holeGameModeRepository: HoleGameModeRepository,
+    private val holeGameModeRepository: HoleGameModeRepository,
     private val playedHoleScoreRepository: PlayedHoleScoreRepository,
     private val gameZoneDao: GameZoneDao // Inject GameZoneDao
 ) : ViewModel() {
@@ -386,9 +386,6 @@ class SessionViewModel @Inject constructor(
             val playedHoles = playedHoleRepository.getPlayedHolesForSession(session.id).first()
 
             // 4. Get HolesDetails (nom/numéro du trou)
-            // Using existing holeRepository.getAllHoles() and finding by id.
-            // This is not the most efficient way if getAllHoles() is a large list or a DB query.
-            // A dedicated getById(holeId) in HoleRepository would be better.
             val allHolesFromRepo = holeRepository.getAllHoles().first()
             val holesDetailsMap = mutableMapOf<Long, Hole>()
             playedHoles.forEach { playedHole ->
@@ -400,17 +397,12 @@ class SessionViewModel @Inject constructor(
             // 5. Get Scores and Calculate them
             val scoresMap = mutableMapOf<Pair<Long, Long>, PdfScoreDisplayData>()
             playedHoles.forEach { playedHole ->
-                // Get all strokes for the current playedHole
-                val actualScoresForHole = playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id).first() // List<PlayedHoleScore>
-
-                val strokesForHoleByTeam = actualScoresForHole.associate { it.teamId to it.strokes } // Map<TeamId, Strokes>
-
-                // Calculate scores for this hole based on the session's scoring mode
+                val actualScoresForHole = playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id).first()
+                val strokesForHoleByTeam = actualScoresForHole.associate { it.teamId to it.strokes }
                 val calculator = ScoringCalculatorFactory.getCalculatorById(session.scoringModeId)
-                val calculatedScoresByTeam = calculator.calculateScores(strokesForHoleByTeam) // Map<TeamId, CalculatedScore>
+                val calculatedScoresByTeam = calculator.calculateScores(strokesForHoleByTeam)
 
-                // Populate the scoresMap with both strokes and calculated score
-                actualScoresForHole.forEach { scoreEntry -> 
+                actualScoresForHole.forEach { scoreEntry ->
                     val teamId = scoreEntry.teamId
                     val strokes = scoreEntry.strokes
                     val calculatedScore = calculatedScoresByTeam[teamId]
@@ -421,13 +413,14 @@ class SessionViewModel @Inject constructor(
                             calculatedScore = calculatedScore
                         )
                     }
-                    // Optional: handle cases where calculatedScore might be null
                 }
             }
 
-            emit(SessionPdfData(session, teamsWithPlayers, playedHoles, holesDetailsMap.toMap(), scoresMap.toMap(), gameZone))
+            // 6. Get HoleGameModes
+            val allGameModes = holeGameModeRepository.getAll().first()
+            val holeGameModesMap = allGameModes.associate { it.id.toLong() to it.name }
+
+            emit(SessionPdfData(session, teamsWithPlayers, playedHoles, holesDetailsMap.toMap(), scoresMap.toMap(), gameZone, holeGameModesMap))
         }
     }
-
-
 }
