@@ -2,8 +2,6 @@
 
 package com.example.lsgscores.ui.holes
 
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,14 +29,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.lsgscores.R
 import com.example.lsgscores.viewmodel.HoleViewModel
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,17 +77,12 @@ fun HoleDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (!it.startPhotoUri.isNullOrBlank() && File(it.startPhotoUri).exists()) {
-                        val bitmap = remember(it.startPhotoUri) {
-                            BitmapFactory.decodeFile(it.startPhotoUri)
-                        }
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = stringResource(R.string.hole_list_photo_description),
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                    if (!it.startPhotoUri.isNullOrBlank()) {
+                        AsyncImage(
+                            model = it.startPhotoUri,
+                            contentDescription = stringResource(R.string.hole_list_photo_description),
+                            modifier = Modifier.weight(1f)
+                        )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.GolfCourse,
@@ -101,17 +93,12 @@ fun HoleDetailScreen(
                         )
                     }
 
-                    if (!it.endPhotoUri.isNullOrBlank() && File(it.endPhotoUri).exists()) {
-                        val bitmap = remember(it.endPhotoUri) {
-                            BitmapFactory.decodeFile(it.endPhotoUri)
-                        }
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = stringResource(R.string.hole_list_photo_description),
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                    if (!it.endPhotoUri.isNullOrBlank()) {
+                        AsyncImage(
+                            model = it.endPhotoUri,
+                            contentDescription = stringResource(R.string.hole_list_photo_description),
+                            modifier = Modifier.weight(1f)
+                        )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.GolfCourse,

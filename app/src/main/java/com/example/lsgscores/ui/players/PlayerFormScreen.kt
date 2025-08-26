@@ -1,7 +1,7 @@
 package com.example.lsgscores.ui.players
 
 import android.net.Uri
-import androidx.compose.foundation.Image
+import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
 import com.example.lsgscores.R
 import com.example.lsgscores.ui.common.CombinedPhotoPicker
 import com.example.lsgscores.viewmodel.PlayerViewModel
@@ -70,8 +69,8 @@ fun PlayerFormScreen(
 
             // Show cropped photo if available
             croppedPhotoUri?.let {
-                Image(
-                    painter = rememberAsyncImagePainter(it),
+                AsyncImage(
+                    model = it,
                     contentDescription = stringResource(R.string.player_form_photo_description),
                     modifier = Modifier.size(128.dp)
                 )
