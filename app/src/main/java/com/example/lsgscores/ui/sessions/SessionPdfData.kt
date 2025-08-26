@@ -4,7 +4,6 @@ import com.example.lsgscores.data.gamezone.GameZone
 import com.example.lsgscores.data.hole.Hole
 import com.example.lsgscores.data.session.PlayedHole
 import com.example.lsgscores.data.session.Session
-import com.example.lsgscores.data.session.TeamWithPlayers
 
 data class PdfScoreDisplayData(
     val strokes: Int,
@@ -13,10 +12,9 @@ data class PdfScoreDisplayData(
 
 data class SessionPdfData(
     val session: Session,
-    val teamsWithPlayers: List<TeamWithPlayers>,
+    val teams: List<TeamPdfData>, // Sorted by total calculated score (descending)
     val playedHoles: List<PlayedHole>,
-    val holesDetails: Map<Long, Hole>, // Map de playedHole.holeId vers Hole
-    val scores: Map<Pair<Long, Long>, PdfScoreDisplayData>, // Map de (teamId, playedHoleId) vers PdfScoreDisplayData
-    val gameZone: GameZone?, // Added gameZone parameter
-    val holeGameModes: Map<Long, String> // Map de gameModeId vers le nom du mode de jeu
+    val holesDetails: Map<Long, Hole>,
+    val gameZone: GameZone?,
+    val holeGameModes: Map<Long, String>
 )

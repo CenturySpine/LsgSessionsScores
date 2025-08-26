@@ -24,6 +24,7 @@ import com.example.lsgscores.domain.scoring.ScoringCalculator
 import com.example.lsgscores.domain.scoring.ScoringCalculatorFactory
 import com.example.lsgscores.ui.sessions.PdfScoreDisplayData
 import com.example.lsgscores.ui.sessions.SessionPdfData
+import com.example.lsgscores.ui.sessions.TeamPdfData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -374,8 +375,6 @@ class SessionViewModel @Inject constructor(
 
     fun loadSessionPdfData(session: Session): Flow<SessionPdfData> {
         return flow {
-            // Session object is passed as a parameter.
-
             // 1. Get GameZone for the session
             val gameZone = gameZoneDao.getGameZoneById(session.gameZoneId)
 
@@ -385,7 +384,7 @@ class SessionViewModel @Inject constructor(
             // 3. Get PlayedHoles
             val playedHoles = playedHoleRepository.getPlayedHolesForSession(session.id).first()
 
-            // 4. Get HolesDetails (nom/numéro du trou)
+            // 4. Get HolesDetails
             val allHolesFromRepo = holeRepository.getAllHoles().first()
             val holesDetailsMap = mutableMapOf<Long, Hole>()
             playedHoles.forEach { playedHole ->
@@ -394,33 +393,77 @@ class SessionViewModel @Inject constructor(
                 }
             }
 
-            // 5. Get Scores and Calculate them
-            val scoresMap = mutableMapOf<Pair<Long, Long>, PdfScoreDisplayData>()
-            playedHoles.forEach { playedHole ->
-                val actualScoresForHole = playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id).first()
-                val strokesForHoleByTeam = actualScoresForHole.associate { it.teamId to it.strokes }
-                val calculator = ScoringCalculatorFactory.getCalculatorById(session.scoringModeId)
-                val calculatedScoresByTeam = calculator.calculateScores(strokesForHoleByTeam)
-
-                actualScoresForHole.forEach { scoreEntry ->
-                    val teamId = scoreEntry.teamId
-                    val strokes = scoreEntry.strokes
-                    val calculatedScore = calculatedScoresByTeam[teamId]
-
-                    if (calculatedScore != null) {
-                        scoresMap[Pair(teamId, playedHole.id)] = PdfScoreDisplayData(
-                            strokes = strokes,
-                            calculatedScore = calculatedScore
-                        )
-                    }
-                }
-            }
-
-            // 6. Get HoleGameModes
+            // 5. Get HoleGameModes
             val allGameModes = holeGameModeRepository.getAll().first()
             val holeGameModesMap = allGameModes.associate { it.id.toLong() to it.name }
 
-            emit(SessionPdfData(session, teamsWithPlayers, playedHoles, holesDetailsMap.toMap(), scoresMap.toMap(), gameZone, holeGameModesMap))
+            // 6. Build team data with scores
+            val teamDataList = mutableListOf<TeamPdfData>()
+
+            teamsWithPlayers.forEach { teamWithPlayers ->
+                val team = teamWithPlayers.team
+                val player1Name = teamWithPlayers.player1?.name ?: ""
+                val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
+                val teamName = "$player1Name$player2Name".takeIf { it.isNotBlank() }
+                    ?: "Team ${team.id}"
+
+                // Collect scores for this team
+                val holeScoresMap = mutableMapOf<Long, PdfScoreDisplayData>()
+                var totalStrokes = 0
+                var totalCalculatedScore = 0
+
+                playedHoles.forEach { playedHole ->
+                    val actualScoresForHole = playedHoleScoreRepository
+                        .getScoresForPlayedHole(playedHole.id).first()
+                    val strokesForHoleByTeam = actualScoresForHole
+                        .associate { it.teamId to it.strokes }
+
+                    // Calculate scores using the scoring mode
+                    val calculator = ScoringCalculatorFactory
+                        .getCalculatorById(session.scoringModeId)
+                    val calculatedScoresByTeam = calculator
+                        .calculateScores(strokesForHoleByTeam)
+
+                    // Find this team's score
+                    val teamScore = actualScoresForHole.find { it.teamId == team.id }
+                    if (teamScore != null) {
+                        val calculatedScore = calculatedScoresByTeam[team.id] ?: 0
+                        holeScoresMap[playedHole.id] = PdfScoreDisplayData(
+                            strokes = teamScore.strokes,
+                            calculatedScore = calculatedScore
+                        )
+                        totalStrokes += teamScore.strokes
+                        totalCalculatedScore += calculatedScore
+                    }
+                }
+
+                teamDataList.add(
+                    TeamPdfData(
+                        teamId = team.id,
+                        teamName = teamName,
+                        holeScores = holeScoresMap,
+                        totalStrokes = totalStrokes,
+                        totalCalculatedScore = totalCalculatedScore
+                    )
+                )
+            }
+
+            // 7. Sort teams by total calculated score (descending) and assign positions
+            val sortedTeams = teamDataList
+                .sortedByDescending { it.totalCalculatedScore }
+                .mapIndexed { index, teamData ->
+                    teamData.copy(position = index + 1)
+                }
+
+            emit(
+                SessionPdfData(
+                    session = session,
+                    teams = sortedTeams,
+                    playedHoles = playedHoles,
+                    holesDetails = holesDetailsMap.toMap(),
+                    gameZone = gameZone,
+                    holeGameModes = holeGameModesMap
+                )
+            )
         }
-    }
-}
+    }}

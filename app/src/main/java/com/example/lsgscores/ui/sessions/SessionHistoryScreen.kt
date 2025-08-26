@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -174,104 +173,6 @@ private fun SessionHistoryCard(
 }
 
 
-private fun generateAndShareMarkdown(
-    context: Context,
-    session: Session,
-    sessionViewModel: SessionViewModel
-) {
-    sessionViewModel.viewModelScope.launch {
-        try {
-            Toast.makeText(context, context.getString(R.string.exporting_markdown_toast_message), Toast.LENGTH_SHORT).show()
-            val pdfData = sessionViewModel.loadSessionPdfData(session).first() // réutilisation de la même structure de données
-
-            val markdownContent = StringBuilder()
-
-            // Session Name
-            markdownContent.append("# ${context.getString(R.string.pdf_session_name_prefix)} ${pdfData.gameZone?.name}\n\n")
-
-            // Basic Session Info
-            val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
-            val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
-
-            markdownContent.append("**${context.getString(R.string.pdf_label_session_date)}** ${pdfData.session.dateTime.format(dateFormatter)}\n")
-            markdownContent.append("**${context.getString(R.string.pdf_label_session_start_time)}** ${pdfData.session.dateTime.format(timeFormatter)}\n")
-            val endTimeText = pdfData.session.endDateTime?.format(timeFormatter) ?: context.getString(R.string.pdf_not_applicable)
-            markdownContent.append("**${context.getString(R.string.pdf_label_session_end_time)}** $endTimeText\n")
-            markdownContent.append("**${context.getString(R.string.pdf_session_type_prefix)}** ${pdfData.session.sessionType}\n")
-            pdfData.session.comment?.takeIf { it.isNotBlank() }?.let {
-                markdownContent.append("**${context.getString(R.string.pdf_comment_prefix)}** $it\n")
-            }
-            markdownContent.append("\n") // Extra newline before table
-
-            // Scores Table
-            // Headers
-            markdownContent.append("| ${context.getString(R.string.pdf_header_team_players)} |")
-            pdfData.playedHoles.forEach { playedHole ->
-                val holeDetail = pdfData.holesDetails[playedHole.holeId]
-                val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
-                markdownContent.append(" $holeName |")
-            }
-            markdownContent.append(" ${context.getString(R.string.pdf_header_total)} |\n")
-
-            // Separator line (Markdown table syntax)
-            markdownContent.append("|:---|") // Left-align team names
-            pdfData.playedHoles.forEach { _ ->
-                markdownContent.append(":---:|") // Center-align scores
-            }
-            markdownContent.append(":---:|") // Center-align total
-            markdownContent.append("\n")
-
-            // Table Rows
-            pdfData.teamsWithPlayers.forEach { teamWithPlayers ->
-                val team = teamWithPlayers.team
-                val player1Name = teamWithPlayers.player1?.name ?: ""
-                val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
-                val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}"
-
-                val totalStrokes = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.strokes ?: 0 }
-                val totalCalculatedScore = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.calculatedScore ?: 0 }
-                val totalScoreText = "$totalCalculatedScore - $totalStrokes"
-
-                markdownContent.append("| $teamDisplayName |")
-
-                pdfData.playedHoles.forEach { playedHole ->
-                    val scoreKey = Pair(team.id, playedHole.id)
-                    val scoreData = pdfData.scores[scoreKey]
-                    val scoreText = scoreData?.let {
-                        "${it.calculatedScore} (${it.strokes})"
-                    } ?: "-"
-                    markdownContent.append(" $scoreText |")
-                }
-                markdownContent.append(" $totalScoreText |\n")
-            }
-
-            // Save and Share
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis())
-            val fileName = "session_${pdfData.session.id}_${timeStamp}.md"
-            val mdDir = File(context.cacheDir, "markdowns") // Nouveau dossier pour les exports md
-            if (!mdDir.exists()) {
-                mdDir.mkdirs()
-            }
-            val mdFile = File(mdDir, fileName)
-            mdFile.writeText(markdownContent.toString())
-
-            val mdUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", mdFile)
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/markdown" // Ou "text/plain" pour une compatibilité plus large
-                putExtra(Intent.EXTRA_STREAM, mdUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                // Optionnel: ajouter un sujet
-                // putExtra(Intent.EXTRA_SUBJECT, "Export de session LsgScores")
-            }
-            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_session_md_title)))
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(context, "${context.getString(R.string.md_generation_failed_toast_message)} ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-}
-
 private fun generateAndSharePdf(
     context: Context,
     session: Session,
@@ -419,19 +320,20 @@ private fun generateAndSharePdf(
             yPosition += lineSpacing
 
             // Table Rows
-            pdfData.teamsWithPlayers.forEach { teamWithPlayers ->
-                val team = teamWithPlayers.team
-                val player1Name = teamWithPlayers.player1?.name ?: ""
-                val player2Name = teamWithPlayers.player2?.name?.let { " & $it" } ?: ""
-                val teamDisplayName = "$player1Name$player2Name".takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_team_prefix)} ${team.id}"
-
+            pdfData.teams.forEach { teamData ->
                 currentX = xMargin
-                canvas.drawText(teamDisplayName, currentX + cellPadding, yPosition - textCenterOffsetYPaint, paint)
+                val teamDisplayText = "${teamData.position}. ${teamData.teamName}"
+                canvas.drawText(
+                    teamDisplayText,
+                    currentX + cellPadding,
+                    yPosition - textCenterOffsetYPaint,
+                    paint
+                )
                 currentX += teamNameColWidth
 
+                // Draw scores for each hole
                 pdfData.playedHoles.forEach { playedHole ->
-                    val scoreKey = Pair(team.id, playedHole.id)
-                    val scoreData = pdfData.scores[scoreKey]
+                    val scoreData = teamData.holeScores[playedHole.id]
 
                     if (scoreData != null) {
                         val scoreString = scoreData.calculatedScore.toString()
@@ -452,15 +354,19 @@ private fun generateAndSharePdf(
                     } else {
                         val scoreText = "-"
                         val textWidth = paint.measureText(scoreText)
-                        canvas.drawText(scoreText, currentX + (scoreColWidth - textWidth) / 2, yPosition - textCenterOffsetYPaint, paint)
+                        canvas.drawText(
+                            scoreText,
+                            currentX + (scoreColWidth - textWidth) / 2,
+                            yPosition - textCenterOffsetYPaint,
+                            paint
+                        )
                     }
                     currentX += scoreColWidth
                 }
 
-                val totalStrokes = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.strokes ?: 0 }
-                val totalCalculatedScore = pdfData.playedHoles.sumOf { pdfData.scores[Pair(team.id, it.id)]?.calculatedScore ?: 0 }
-                val totalScoreString = totalCalculatedScore.toString()
-                val totalStrokesString = "($totalStrokes)"
+                // Draw total
+                val totalScoreString = teamData.totalCalculatedScore.toString()
+                val totalStrokesString = "(${teamData.totalStrokes})"
                 val separator = " - "
 
                 val totalScoreWidth = boldPaint.measureText(totalScoreString)
