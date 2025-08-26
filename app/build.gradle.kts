@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lsgscores"
+    namespace = "fr.centuryspine.lsgscores"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.lsgscores"
+        applicationId = "fr.centuryspine.lsgscores"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
