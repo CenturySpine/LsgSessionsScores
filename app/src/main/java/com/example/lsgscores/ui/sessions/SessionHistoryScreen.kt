@@ -399,6 +399,19 @@ private fun generateAndSharePdf(
             canvas.drawLine(xMargin + availableWidthForTable, tableTopY, xMargin + availableWidthForTable, tableBottomY, paint) // Right border
             // Bottom border is already drawn by the last row's line
 
+            // Footer signature
+            yPosition += lineSpacing / 2f // Half line spacing
+            val footerText = context.getString(R.string.pdf_footer_created_by)
+            val footerPaint = Paint().apply {
+                textSize = defaultTextSize
+                textSkewX = -0.25f // Italic
+                color = Color.parseColor("#555555") // Dark gray
+            }
+            val footerTextWidth = footerPaint.measureText(footerText)
+            val footerX = xMargin + availableWidthForTable - footerTextWidth
+            val footerTextCenterOffsetY = (footerPaint.ascent() + footerPaint.descent()) / 2f
+            canvas.drawText(footerText, footerX, yPosition - footerTextCenterOffsetY, footerPaint)
+
             pdfDocument.finishPage(page)
 
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis())

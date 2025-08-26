@@ -259,4 +259,5 @@ This action cannot be undone.</string>
     <string name="edit_game_zone_dialog_title">Edit game zone</string>
     <string name="update_button">Update</string>
     <string name="edit_game_zone_content_description">Edit game zone</string>
+    <string name="pdf_footer_created_by">Created by LsgScore App</string>
 </resources>
