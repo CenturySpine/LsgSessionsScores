@@ -1,0 +1,90 @@
+package fr.centuryspine.lsgscores.di
+
+import fr.centuryspine.lsgscores.data.hole.HoleDao
+import fr.centuryspine.lsgscores.data.hole.HoleRepository
+import fr.centuryspine.lsgscores.data.holemode.HoleGameModeRepository
+import fr.centuryspine.lsgscores.data.media.MediaDao
+import fr.centuryspine.lsgscores.data.media.MediaRepository
+import fr.centuryspine.lsgscores.data.player.PlayerDao
+import fr.centuryspine.lsgscores.data.player.PlayerRepository
+import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
+import fr.centuryspine.lsgscores.data.session.PlayedHoleDao
+import fr.centuryspine.lsgscores.data.session.PlayedHoleRepository
+import fr.centuryspine.lsgscores.data.session.PlayedHoleScoreDao
+import fr.centuryspine.lsgscores.data.session.PlayedHoleScoreRepository
+import fr.centuryspine.lsgscores.data.session.SessionDao
+import fr.centuryspine.lsgscores.data.session.SessionRepository
+import fr.centuryspine.lsgscores.data.session.TeamDao
+import fr.centuryspine.lsgscores.data.session.TeamRepository
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object RepositoryModule {
+
+    @Provides
+    @Singleton
+    fun providePlayerRepository(playerDao: PlayerDao): PlayerRepository {
+        return PlayerRepository(playerDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideHoleRepository(holeDao: HoleDao): HoleRepository {
+        return HoleRepository(holeDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTeamRepository(teamDao: TeamDao): TeamRepository {
+        return TeamRepository(teamDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMediaRepository(mediaDao: MediaDao): MediaRepository {
+        return MediaRepository(mediaDao)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlayedHoleRepository(
+        playedHoleDao: PlayedHoleDao,
+        playedHoleScoreDao: PlayedHoleScoreDao
+    ): PlayedHoleRepository {
+        return PlayedHoleRepository(playedHoleDao, playedHoleScoreDao)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlayedHoleScoreRepository(playedHoleScoreDao: PlayedHoleScoreDao): PlayedHoleScoreRepository {
+        return PlayedHoleScoreRepository(playedHoleScoreDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSessionRepository(
+        sessionDao: SessionDao,
+        teamDao: TeamDao,
+        playedHoleDao: PlayedHoleDao,
+        playedHoleScoreDao: PlayedHoleScoreDao
+    ): SessionRepository {
+        return SessionRepository(sessionDao, teamDao, playedHoleDao, playedHoleScoreDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideScoringModeRepository(): ScoringModeRepository {
+        return ScoringModeRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideHoleGameModeRepository(): HoleGameModeRepository {
+        return HoleGameModeRepository()
+    }
+}
