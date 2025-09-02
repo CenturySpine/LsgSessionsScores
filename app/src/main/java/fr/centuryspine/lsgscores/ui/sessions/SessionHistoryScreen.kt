@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -61,6 +62,12 @@ import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +76,8 @@ fun SessionHistoryScreen(
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsState()
     val context = LocalContext.current
+    var sessionToDelete by remember { mutableStateOf<Session?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -129,11 +138,53 @@ fun SessionHistoryScreen(
                                 sessionViewModel,
                                 photoPath
                             )
+                        },
+                        onDeleteClick = { selectedSession ->
+                            sessionToDelete = selectedSession
+                            showDeleteDialog = true
                         }
                     )
                 }
             }
         }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog && sessionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteDialog = false
+                sessionToDelete = null
+            },
+            title = { Text(stringResource(R.string.session_history_delete_dialog_title)) },
+            text = { Text(stringResource(R.string.session_history_delete_dialog_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sessionToDelete?.let { session ->
+                            sessionViewModel.deleteSessionAndAllData(session)
+                        }
+                        showDeleteDialog = false
+                        sessionToDelete = null
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.session_history_delete_dialog_button_delete),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        sessionToDelete = null
+                    }
+                ) {
+                    Text(stringResource(R.string.session_history_delete_dialog_button_cancel))
+                }
+            }
+        )
     }
 }
 
@@ -142,6 +193,7 @@ private fun SessionHistoryCard(
     session: Session,
     onExportClick: (Session) -> Unit,
     onExportPhoto: (Session, String) -> Unit,
+    onDeleteClick: (Session) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -230,6 +282,14 @@ private fun SessionHistoryCard(
                 Icon(
                     imageVector = Icons.Filled.PictureAsPdf,
                     contentDescription = stringResource(R.string.export_session_to_pdf_content_description)
+                )
+            }
+            // Delete button
+            IconButton(onClick = { onDeleteClick(session) }) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.session_history_delete_icon_description),
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }

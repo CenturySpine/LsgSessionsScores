@@ -264,4 +264,11 @@ This action cannot be undone.</string>
     <string name="pdf_weather_title">Weather</string>
     <string name="pdf_wind_label">Wind:</string>
 
+
+    <string name="session_history_delete_icon_description">Delete session</string>
+    <string name="session_history_delete_dialog_title">Delete session</string>
+    <string name="session_history_delete_dialog_message">Are you sure you want to permanently delete this session?\n\nThis will delete:\n• All teams\n• All played holes\n• All scores\n\nThis action cannot be undone.</string>
+    <string name="session_history_delete_dialog_button_delete">Delete</string>
+    <string name="session_history_delete_dialog_button_cancel">Cancel</string>
+
 </resources>

@@ -256,4 +256,11 @@
 
     <string name="pdf_weather_title">Météo</string>
     <string name="pdf_wind_label">Vent :</string>
+
+    <!-- SessionHistoryScreen - Delete Session -->
+    <string name="session_history_delete_icon_description">Supprimer la session</string>
+    <string name="session_history_delete_dialog_title">Supprimer la session</string>
+    <string name="session_history_delete_dialog_message">Êtes-vous sûr de vouloir supprimer définitivement cette session ?\n\nCela supprimera :\n• Toutes les équipes\n• Tous les trous joués\n• Tous les scores\n\nCette action ne peut pas être annulée.</string>
+    <string name="session_history_delete_dialog_button_delete">Supprimer</string>
+    <string name="session_history_delete_dialog_button_cancel">Annuler</string>
 </resources>
