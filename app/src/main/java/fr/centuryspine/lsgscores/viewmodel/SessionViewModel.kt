@@ -472,12 +472,26 @@ class SessionViewModel @Inject constructor(
                 )
             }
 
-            // 7. Sort teams by total calculated score (descending) and assign positions
-            val sortedTeams = teamDataList
-                .sortedByDescending { it.totalCalculatedScore }
-                .mapIndexed { index, teamData ->
-                    teamData.copy(position = index + 1)
+
+            // 7. Sort teams based on scoring mode and assign positions
+            val sortedTeams = when (session.scoringModeId) {
+                1 -> {
+                    // Classic mode: sort by total strokes (ascending - lowest is best)
+                    teamDataList
+                        .sortedBy { it.totalStrokes }
+                        .mapIndexed { index, teamData ->
+                            teamData.copy(position = index + 1)
+                        }
                 }
+                else -> {
+                    // Point-based modes: sort by total calculated score (descending - highest is best)
+                    teamDataList
+                        .sortedByDescending { it.totalCalculatedScore }
+                        .mapIndexed { index, teamData ->
+                            teamData.copy(position = index + 1)
+                        }
+                }
+            }
 
             emit(
                 SessionPdfData(
