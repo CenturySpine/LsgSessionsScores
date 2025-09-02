@@ -83,8 +83,10 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
 import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
+import fr.centuryspine.lsgscores.ui.components.WeatherIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -286,6 +288,29 @@ private fun SessionHistoryCard(
                     }
                 }
             }
+            session.weatherData?.let { weather ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    WeatherIcon(
+                        weatherInfo = weather,
+                        size = 32.dp
+                    )
+                    Column {
+                        Text(
+                            text = "${weather.temperature}°C",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${weather.windSpeedKmh} km/h",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
             // Export menu
             var showExportMenu by remember { mutableStateOf(false) }
             val launchCamera = usePhotoCameraLauncher { photoPath ->
@@ -395,7 +420,7 @@ private fun generateAndSharePdf(
                 Toast.LENGTH_SHORT
             ).show()
             val pdfData = sessionViewModel.loadSessionPdfData(session).first()
-            val weatherInfo = sessionViewModel.getCurrentWeatherInfo()
+            val weatherInfo = session.weatherData ?: sessionViewModel.getCurrentWeatherInfo()
 
             pdfDocument = PdfDocument()
 
@@ -857,7 +882,7 @@ private fun generateAndShareImageExport(
 
             // Get session data and weather info
             val pdfData = sessionViewModel.loadSessionPdfData(session).first()
-            val weatherInfo = sessionViewModel.getCurrentWeatherInfo()
+            val weatherInfo = session.weatherData ?: sessionViewModel.getCurrentWeatherInfo()
 
             // Load the base image
             val originalBitmap = BitmapFactory.decodeFile(imagePath)

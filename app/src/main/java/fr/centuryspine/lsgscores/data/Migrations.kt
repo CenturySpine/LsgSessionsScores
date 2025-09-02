@@ -10,14 +10,15 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 object Migrations {
 
     /**
-     * Example migration for testing infrastructure
-     * This is a no-op migration that doesn't change anything
-     * Can be removed once real migrations are added
+     * Migration 5 to 6: Add weather data to sessions
+     * Adds a nullable weatherData column to store weather information as JSON
+     * captured at session creation time
      */
     val MIGRATION_5_6_TEST = object : Migration(5, 6) {
         override fun migrate(database: SupportSQLiteDatabase) {
             // No-op migration for testing
             // This will be replaced with actual weather data migration
+            database.execSQL("ALTER TABLE sessions ADD COLUMN weatherData TEXT")
         }
     }
 

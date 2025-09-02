@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.example.lsgscores.data.weather.WeatherInfo
 import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import java.time.LocalDateTime
 
@@ -26,5 +27,6 @@ data class Session(
     val scoringModeId: Int,
     val gameZoneId: Long, // New field for GameZone
     val comment: String? = null,
-    val isOngoing: Boolean = false
+    val isOngoing: Boolean = false,
+    val weatherData: WeatherInfo? = null
 )

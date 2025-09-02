@@ -278,13 +278,22 @@ class SessionViewModel @Inject constructor(
         onSessionBlocked: () -> Unit = {}
     ) {
         viewModelScope.launch {
-// Check if there is already an ongoing session
+
+            // Check if there is already an ongoing session
             val ongoing = sessionRepository.getOngoingSession()
             if (ongoing != null) {
                 // Session is already ongoing: block creation
                 _error.value = "A session is already ongoing."
                 onSessionBlocked()
                 return@launch
+            }
+
+            // Capture weather data (non-blocking, null if fails)
+            val weatherInfo = try {
+                getCurrentWeatherInfo()
+            } catch (e: Exception) {
+                // Log error but don't block session creation
+                null
             }
 
             // Insert new session
@@ -295,7 +304,8 @@ class SessionViewModel @Inject constructor(
                 scoringModeId = draft.scoringModeId,
                 gameZoneId = draft.gameZoneId, // Use gameZoneId from draft
                 comment = draft.comment,
-                isOngoing = true
+                isOngoing = true,
+                weatherData = weatherInfo
             )
             val sessionId = sessionRepository.insert(session)
             scoringModeId = draft.scoringModeId
