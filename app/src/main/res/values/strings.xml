@@ -271,6 +271,12 @@ This action cannot be undone.</string>
     <string name="session_history_delete_dialog_button_delete">Delete</string>
     <string name="session_history_delete_dialog_button_cancel">Cancel</string>
 
+    <!-- SessionHistoryScreen - Export Menu -->
+    <string name="session_history_export_menu_description">Export options</string>
+    <string name="session_history_export_camera">Export with camera photo</string>
+    <string name="session_history_export_gallery">Export with gallery photo</string>
+    <string name="session_history_export_pdf">Export as PDF</string>
+
     <!-- SessionTeamsScreen - Random mode -->
     <string name="session_teams_mode_manual">Manual mode</string>
     <string name="session_teams_mode_random">Random mode</string>

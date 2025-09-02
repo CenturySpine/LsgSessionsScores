@@ -264,6 +264,12 @@
     <string name="session_history_delete_dialog_button_delete">Supprimer</string>
     <string name="session_history_delete_dialog_button_cancel">Annuler</string>
 
+    <!-- SessionHistoryScreen - Export Menu -->
+    <string name="session_history_export_menu_description">Options d\'export</string>
+    <string name="session_history_export_camera">Exporter avec photo caméra</string>
+    <string name="session_history_export_gallery">Exporter avec photo galerie</string>
+    <string name="session_history_export_pdf">Exporter en PDF</string>
+
     <!-- SessionTeamsScreen - Mode aléatoire -->
     <string name="session_teams_mode_manual">Mode manuel</string>
     <string name="session_teams_mode_random">Mode aléatoire</string>

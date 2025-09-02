@@ -15,11 +15,14 @@ import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import fr.centuryspine.lsgscores.R
 
+/**
+ * Provides gallery launcher functionality without UI.
+ * Returns a function that can be called to trigger the gallery picker.
+ */
 @Composable
-fun GalleryPhotoPicker(
-    modifier: Modifier = Modifier,
+fun usePhotoGalleryLauncher(
     onPhotoPicked: (String?) -> Unit
-) {
+): () -> Unit {
     val context = LocalContext.current
 
     val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
@@ -41,8 +44,20 @@ fun GalleryPhotoPicker(
         }
     }
 
+    return {
+        pickImageLauncher.launch("image/*")
+    }
+}
+
+@Composable
+fun GalleryPhotoPicker(
+    modifier: Modifier = Modifier,
+    onPhotoPicked: (String?) -> Unit
+) {
+    val launchGallery = usePhotoGalleryLauncher(onPhotoPicked)
+
     IconButton(
-        onClick = { pickImageLauncher.launch("image/*") },
+        onClick = launchGallery,
         modifier = modifier
     ) {
         Icon(

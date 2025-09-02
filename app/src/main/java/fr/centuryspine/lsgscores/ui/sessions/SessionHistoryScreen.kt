@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -68,6 +70,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
+
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.res.painterResource
+import fr.centuryspine.lsgscores.ui.common.GalleryPhotoPicker
+import fr.centuryspine.lsgscores.ui.common.PhotoPicker
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.res.painterResource
+import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
+import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -269,21 +286,88 @@ private fun SessionHistoryCard(
                     }
                 }
             }
-            // Image Export (Camera + Gallery combined)
-            CombinedPhotoPicker(
-                modifier = Modifier,
-                onImagePicked = { photoPath ->
-                    photoPath?.let {
-                        onExportPhoto(session, it)
-                    }
-                }
-            )
-            IconButton(onClick = { onExportClick(session) }) {
-                Icon(
-                    imageVector = Icons.Filled.PictureAsPdf,
-                    contentDescription = stringResource(R.string.export_session_to_pdf_content_description)
-                )
+            // Export menu
+            var showExportMenu by remember { mutableStateOf(false) }
+            val launchCamera = usePhotoCameraLauncher { photoPath ->
+                photoPath?.let { onExportPhoto(session, it) }
             }
+            val launchGallery = usePhotoGalleryLauncher { photoPath ->
+                photoPath?.let { onExportPhoto(session, it) }
+            }
+
+            Box {
+                IconButton(onClick = { showExportMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.session_history_export_menu_description)
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showExportMenu,
+                    onDismissRequest = { showExportMenu = false }
+                ) {
+                    // Camera export option
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(stringResource(R.string.session_history_export_camera))
+                            }
+                        },
+                        onClick = {
+                            showExportMenu = false
+                            launchCamera()
+                        }
+                    )
+
+                    // Gallery export option
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(stringResource(R.string.session_history_export_gallery))
+                            }
+                        },
+                        onClick = {
+                            showExportMenu = false
+                            launchGallery()
+                        }
+                    )
+
+                    HorizontalDivider()
+
+                    // PDF export option
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.PictureAsPdf,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(stringResource(R.string.session_history_export_pdf))
+                            }
+                        },
+                        onClick = {
+                            showExportMenu = false
+                            onExportClick(session)
+                        }
+                    )
+                }
+            }
+
             // Delete button
             IconButton(onClick = { onDeleteClick(session) }) {
                 Icon(

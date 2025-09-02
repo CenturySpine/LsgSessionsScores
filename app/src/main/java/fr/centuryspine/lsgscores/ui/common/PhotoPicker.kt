@@ -30,27 +30,19 @@ import java.util.Date
 import java.util.Locale
 import fr.centuryspine.lsgscores.R
 
+/**
+ * Provides camera launcher functionality without UI.
+ * Returns a function that can be called to trigger the camera.
+ */
 @Composable
-fun PhotoPicker(
-    modifier: Modifier = Modifier,
+fun usePhotoCameraLauncher(
     onPhotoPicked: (String?) -> Unit
-) {
+): () -> Unit {
     val context = LocalContext.current
 
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    // Hold the latest captured photo URI and its File
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var photoFile by remember { mutableStateOf<File?>(null) }
 
-    // Cropper launcher (unchanged)
     val cropImageLauncher = rememberLauncherForActivityResult(
         CropImageContract()
     ) { result ->
@@ -62,14 +54,11 @@ fun PhotoPicker(
         }
     }
 
-    // High-res photo launcher
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success: Boolean ->
         if (success && photoUri != null && photoFile != null) {
-            // Save the original (uncropped) photo to the gallery
             savePhotoToGallery(context, photoFile!!)
-            // Continue with cropping for app use
             cropImageLauncher.launch(
                 CropImageContractOptions(photoUri, CropImageOptions())
             )
@@ -79,7 +68,6 @@ fun PhotoPicker(
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
-        hasCameraPermission = granted
         if (granted) {
             launchCamera(context) { uri, file ->
                 photoUri = uri
@@ -89,18 +77,33 @@ fun PhotoPicker(
         }
     }
 
-    IconButton(
-        onClick = {
-            if (hasCameraPermission) {
-                launchCamera(context) { uri, file ->
-                    photoUri = uri
-                    photoFile = file
-                    takePictureLauncher.launch(uri)
-                }
-            } else {
-                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+    return {
+        val hasCameraPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasCameraPermission) {
+            launchCamera(context) { uri, file ->
+                photoUri = uri
+                photoFile = file
+                takePictureLauncher.launch(uri)
             }
-        },
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+}
+
+@Composable
+fun PhotoPicker(
+    modifier: Modifier = Modifier,
+    onPhotoPicked: (String?) -> Unit
+) {
+    val launchCamera = usePhotoCameraLauncher(onPhotoPicked)
+
+    IconButton(
+        onClick = launchCamera,
         modifier = modifier
     ) {
         Icon(
