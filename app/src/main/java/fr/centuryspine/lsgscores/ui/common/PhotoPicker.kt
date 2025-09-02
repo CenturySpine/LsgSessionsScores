@@ -149,7 +149,7 @@ fun saveCroppedImageToInternalStorage(context: Context, sourceUri: Uri): String?
 }
 
 /**
- * Save the original photo file into the public gallery (MediaStore) in the "StreetGolf" album.
+ * Save the original photo file into the public gallery (MediaStore) in the "LsgScores" album.
  * Returns the URI of the newly inserted photo, or null if it fails.
  */
 fun savePhotoToGallery(context: Context, photoFile: File): Uri? {
@@ -161,7 +161,7 @@ fun savePhotoToGallery(context: Context, photoFile: File): Uri? {
         put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
         put(MediaStore.Images.Media.MIME_TYPE, mimeType)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/StreetGolf")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LsgScores")
             put(MediaStore.Images.Media.IS_PENDING, 1)
         }
     }
