@@ -19,10 +19,14 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import fr.centuryspine.lsgscores.data.Migrations
+
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
+
+    // Replace the existing provideAppDatabase function with:
 
     @Provides
     @Singleton
@@ -32,7 +36,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "streetgolf-db"
         )
-            .fallbackToDestructiveMigration()
+            .addMigrations(*Migrations.ALL_MIGRATIONS)
             .build()
     }
 
