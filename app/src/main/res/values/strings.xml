@@ -260,4 +260,8 @@ This action cannot be undone.</string>
     <string name="update_button">Update</string>
     <string name="edit_game_zone_content_description">Edit game zone</string>
     <string name="pdf_footer_created_by">Created by LsgScore App</string>
+
+    <string name="pdf_weather_title">Weather</string>
+    <string name="pdf_wind_label">Wind:</string>
+
 </resources>

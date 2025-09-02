@@ -32,6 +32,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import fr.centuryspine.lsgscores.R
 import androidx.compose.foundation.lazy.items
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +43,12 @@ fun SessionHistoryScreen(
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsState()
     val context = LocalContext.current
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        // Permission handled in generateAndSharePdf - weather will be null if denied
+    }
 
     Scaffold(
         topBar = {
@@ -82,6 +91,7 @@ fun SessionHistoryScreen(
                     SessionHistoryCard(
                         session = session,
                         onExportClick = { selectedSession ->
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             generateAndSharePdf(context, selectedSession, sessionViewModel)
                         }
                     )
@@ -183,8 +193,10 @@ private fun generateAndSharePdf(
         try {
             Toast.makeText(context, context.getString(R.string.exporting_pdf_toast_message), Toast.LENGTH_SHORT).show()
             val pdfData = sessionViewModel.loadSessionPdfData(session).first()
+            val weatherInfo = sessionViewModel.getCurrentWeatherInfo()
 
             pdfDocument = PdfDocument()
+
             val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4
             val page = pdfDocument.startPage(pageInfo)
             val canvas = page.canvas
@@ -241,36 +253,71 @@ private fun generateAndSharePdf(
             val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
             val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
 
-            // Session Date
+            // Calculate table width first (moved up from later in function)
+            val numHoles = pdfData.playedHoles.size
+            val availableWidthForTable = pageInfo.pageWidth - (2 * xMargin)
+
+            // Two columns layout
+            val leftColumnX = xMargin
+            val rightColumnX = xMargin + (availableWidthForTable * 0.6f) // 60% for left column
+            var currentY = yPosition
+
+            // LEFT COLUMN - Session Info
             var labelText = "${context.getString(R.string.pdf_label_session_date)} "
             var labelWidth = boldPaint.measureText(labelText)
-            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
-            canvas.drawText(pdfData.session.dateTime.format(dateFormatter), xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
-            yPosition += lineSpacing
+            canvas.drawText(labelText, leftColumnX, currentY - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(pdfData.session.dateTime.format(dateFormatter), leftColumnX + labelWidth, currentY - textCenterOffsetYPaint, paint)
+            currentY += lineSpacing
 
             // Session Start Time
             labelText = "${context.getString(R.string.pdf_label_session_start_time)} "
             labelWidth = boldPaint.measureText(labelText)
-            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
-            canvas.drawText(pdfData.session.dateTime.format(timeFormatter), xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
-            yPosition += lineSpacing
+            canvas.drawText(labelText, leftColumnX, currentY - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(pdfData.session.dateTime.format(timeFormatter), leftColumnX + labelWidth, currentY - textCenterOffsetYPaint, paint)
+            currentY += lineSpacing
 
             // Session End Time
             labelText = "${context.getString(R.string.pdf_label_session_end_time)} "
             labelWidth = boldPaint.measureText(labelText)
             val endTimeValue = pdfData.session.endDateTime?.format(timeFormatter) ?: context.getString(R.string.pdf_not_applicable)
-            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
-            canvas.drawText(endTimeValue, xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint)
-            yPosition += lineSpacing
+            canvas.drawText(labelText, leftColumnX, currentY - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(endTimeValue, leftColumnX + labelWidth, currentY - textCenterOffsetYPaint, paint)
+            currentY += lineSpacing
 
             // Session Type
             labelText = "${context.getString(R.string.pdf_session_type_prefix)} "
             labelWidth = boldPaint.measureText(labelText)
-            canvas.drawText(labelText, xMargin, yPosition - textCenterOffsetYBoldPaint, boldPaint)
-            canvas.drawText(pdfData.session.sessionType.toString(), xMargin + labelWidth, yPosition - textCenterOffsetYPaint, paint) // Assuming sessionType can be .toString()
-            yPosition += lineSpacing
+            canvas.drawText(labelText, leftColumnX, currentY - textCenterOffsetYBoldPaint, boldPaint)
+            canvas.drawText(pdfData.session.sessionType.toString(), leftColumnX + labelWidth, currentY - textCenterOffsetYPaint, paint)
+            currentY += lineSpacing
 
-            // Session Comment
+            // RIGHT COLUMN - Weather Info
+            if (weatherInfo != null) {
+                var weatherY = yPosition // Start from same Y as left column
+
+                // Weather title
+                val weatherTitle = context.getString(R.string.pdf_weather_title)
+                canvas.drawText(weatherTitle, rightColumnX, weatherY - textCenterOffsetYBoldPaint, boldPaint)
+                weatherY += lineSpacing
+
+                // Temperature
+                val tempText = "${weatherInfo.temperature}°C"
+                canvas.drawText(tempText, rightColumnX, weatherY - textCenterOffsetYPaint, paint)
+                weatherY += lineSpacing
+
+                // Weather description
+                canvas.drawText(weatherInfo.description, rightColumnX, weatherY - textCenterOffsetYPaint, italicPaint)
+                weatherY += lineSpacing
+
+                // Wind
+                val windText = "${context.getString(R.string.pdf_wind_label)} ${weatherInfo.windSpeedKmh} km/h"
+                canvas.drawText(windText, rightColumnX, weatherY - textCenterOffsetYPaint, paint)
+            }
+
+            // Update yPosition to after both columns
+            yPosition = currentY
+
+            // Session Comment (full width, below both columns)
             pdfData.session.comment?.takeIf { it.isNotBlank() }?.let {
                 labelText = "${context.getString(R.string.pdf_comment_prefix)} "
                 labelWidth = boldPaint.measureText(labelText)
@@ -280,9 +327,9 @@ private fun generateAndSharePdf(
             }
             yPosition += lineSpacing // Extra space before table
 
+
             // Scores Table
-            val numHoles = pdfData.playedHoles.size
-            val availableWidthForTable = pageInfo.pageWidth - (2 * xMargin)
+
             val teamNameColWidth = availableWidthForTable * 0.25f
             val totalColWidth = availableWidthForTable * 0.15f
             val scoreColWidth = (availableWidthForTable - teamNameColWidth - totalColWidth) / numHoles.coerceAtLeast(1)

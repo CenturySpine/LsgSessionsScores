@@ -45,6 +45,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
+import android.content.Context
+import com.example.lsgscores.data.weather.WeatherRepository
+import com.example.lsgscores.data.weather.WeatherInfo
+import com.example.lsgscores.utils.LocationHelper
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 
 @HiltViewModel
@@ -57,7 +62,9 @@ class SessionViewModel @Inject constructor(
     private val playedHoleRepository: PlayedHoleRepository,
     private val holeGameModeRepository: HoleGameModeRepository,
     private val playedHoleScoreRepository: PlayedHoleScoreRepository,
-    private val gameZoneDao: GameZoneDao // Inject GameZoneDao
+    private val gameZoneDao: GameZoneDao,
+    private val weatherRepository: WeatherRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     var scoringModeId: Int? = null
@@ -68,6 +75,9 @@ class SessionViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     private val _error = MutableStateFlow<String?>(null)
+
+
+    private val locationHelper by lazy { LocationHelper(context) }
 
     // State for current session being created
     private val _sessionDraft = MutableStateFlow(SessionDraft())
@@ -80,7 +90,8 @@ class SessionViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
-            val unknownZone = gameZoneDao.getAllGameZones().first().firstOrNull { it.name == "Zone Inconnue" }
+            val unknownZone =
+                gameZoneDao.getAllGameZones().first().firstOrNull { it.name == "Zone Inconnue" }
             _sessionDraft.update { it.copy(gameZoneId = unknownZone?.id ?: 1L) }
 
             // Existing logic for ongoing session
@@ -233,11 +244,24 @@ class SessionViewModel @Inject constructor(
             if (ongoing != null) {
                 val validated = ongoing.copy(
                     isOngoing = false,
-                    endDateTime = LocalDateTime.now()  // Set end time
+                    endDateTime = LocalDateTime.now()
                 )
                 sessionRepository.update(validated)
                 onValidated()
             }
+        }
+    }
+
+    suspend fun getCurrentWeatherInfo(): WeatherInfo? {
+        return try {
+            val location = locationHelper.getCurrentLocation()
+            if (location != null) {
+                weatherRepository.getCurrentWeather(location.first, location.second)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -466,4 +490,5 @@ class SessionViewModel @Inject constructor(
                 )
             )
         }
-    }}
+    }
+}
