@@ -271,4 +271,10 @@ This action cannot be undone.</string>
     <string name="session_history_delete_dialog_button_delete">Delete</string>
     <string name="session_history_delete_dialog_button_cancel">Cancel</string>
 
+    <!-- SessionTeamsScreen - Random mode -->
+    <string name="session_teams_mode_manual">Manual mode</string>
+    <string name="session_teams_mode_random">Random mode</string>
+    <string name="session_teams_random_helper">Select an even number of players (minimum 4) to create random teams</string>
+    <string name="session_teams_error_odd_number">Please select an even number of players</string>
+    <string name="session_teams_button_create_random">Create random teams</string>
 </resources>

@@ -25,7 +25,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import fr.centuryspine.lsgscores.R
-
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import kotlin.random.Random
+import androidx.compose.ui.res.painterResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionTeamsScreen(
@@ -44,7 +47,14 @@ fun SessionTeamsScreen(
     // State for currently selected players for the next team
     var currentSelection by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
-    val maxSelectable = if (sessionDraft.sessionType == SessionType.INDIVIDUAL) 1 else 2
+    // Toggle state for manual vs random mode
+    var isRandomMode by remember { mutableStateOf(false) }
+
+    val maxSelectable = if (isRandomMode) {
+        Int.MAX_VALUE // No limit in random mode
+    } else {
+        if (sessionDraft.sessionType == SessionType.INDIVIDUAL) 1 else 2
+    }
 
     val context = LocalContext.current
     val error by sessionViewModel.error.collectAsState()
@@ -69,7 +79,62 @@ fun SessionTeamsScreen(
                     stringResource(R.string.session_teams_instruction),
                     style = MaterialTheme.typography.titleMedium
                 )
+// Mode toggle (only in TEAM mode)
+                if (sessionDraft.sessionType == SessionType.TEAM) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isRandomMode) {
+                                    stringResource(R.string.session_teams_mode_random)
+                                } else {
+                                    stringResource(R.string.session_teams_mode_manual)
+                                },
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Switch(
+                                checked = isRandomMode,
+                                onCheckedChange = {
+                                    isRandomMode = it
+                                    currentSelection = emptySet() // Reset selection when switching modes
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
+                    }
 
+                    // Show helper text based on mode
+                    if (isRandomMode) {
+                        Text(
+                            text = stringResource(R.string.session_teams_random_helper),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
+                        // Show error if odd number selected
+                        if (currentSelection.size > 0 && currentSelection.size % 2 != 0) {
+                            Text(
+                                text = stringResource(R.string.session_teams_error_odd_number),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
                 // Chips selector
                 FlowRow(
                     mainAxisSpacing = 8.dp,
@@ -77,12 +142,12 @@ fun SessionTeamsScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
                     allPlayers.forEach { player ->
-                        val isSelectable =
-                            (currentSelection.size < maxSelectable || currentSelection.contains(
-                                player.id
-                            )) &&
+                        val isSelectable = if (isRandomMode) {
+                            !alreadySelectedPlayerIds.contains(player.id)
+                        } else {
+                            (currentSelection.size < maxSelectable || currentSelection.contains(player.id)) &&
                                     !alreadySelectedPlayerIds.contains(player.id)
-
+                        }
                         AssistChip(
                             onClick = {
                                 if (!isSelectable) return@AssistChip
@@ -117,19 +182,44 @@ fun SessionTeamsScreen(
                     }
                 }
 
-                Button(
-                    onClick = {
-                        // Add the new team and reset selection
-                        val selectedPlayers = allPlayers.filter { currentSelection.contains(it.id) }
-                        if (selectedPlayers.isNotEmpty()) {
-                            teams = teams + listOf(selectedPlayers)
+                if (isRandomMode) {
+                    // Random mode button
+                    Button(
+                        onClick = {
+                            val selectedPlayers = allPlayers.filter { currentSelection.contains(it.id) }
+                            val shuffled = selectedPlayers.shuffled(Random.Default)
+                            val newTeams = shuffled.chunked(2)
+
+                            teams = teams + newTeams
                             alreadySelectedPlayerIds = alreadySelectedPlayerIds + currentSelection
                             currentSelection = emptySet()
-                        }
-                    },
-                    enabled = currentSelection.size in 1..maxSelectable
-                ) {
-                    Text(stringResource(R.string.session_teams_button_add_team))
+                            isRandomMode = false // Reset to manual mode after creation
+                        },
+                        enabled = currentSelection.size >= 4 && currentSelection.size % 2 == 0
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_dice),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.session_teams_button_create_random))
+                    }
+                } else {
+                    // Manual mode button
+                    Button(
+                        onClick = {
+                            val selectedPlayers = allPlayers.filter { currentSelection.contains(it.id) }
+                            if (selectedPlayers.isNotEmpty()) {
+                                teams = teams + listOf(selectedPlayers)
+                                alreadySelectedPlayerIds = alreadySelectedPlayerIds + currentSelection
+                                currentSelection = emptySet()
+                            }
+                        },
+                        enabled = currentSelection.size in 1..2
+                    ) {
+                        Text(stringResource(R.string.session_teams_button_add_team))
+                    }
                 }
 
                 // List of teams created so far

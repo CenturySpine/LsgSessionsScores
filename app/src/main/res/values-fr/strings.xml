@@ -263,4 +263,11 @@
     <string name="session_history_delete_dialog_message">Êtes-vous sûr de vouloir supprimer définitivement cette session ?\n\nCela supprimera :\n• Toutes les équipes\n• Tous les trous joués\n• Tous les scores\n\nCette action ne peut pas être annulée.</string>
     <string name="session_history_delete_dialog_button_delete">Supprimer</string>
     <string name="session_history_delete_dialog_button_cancel">Annuler</string>
+
+    <!-- SessionTeamsScreen - Mode aléatoire -->
+    <string name="session_teams_mode_manual">Mode manuel</string>
+    <string name="session_teams_mode_random">Mode aléatoire</string>
+    <string name="session_teams_random_helper">Sélectionnez un nombre pair de joueurs (minimum 4) pour créer des équipes aléatoires</string>
+    <string name="session_teams_error_odd_number">Veuillez sélectionner un nombre pair de joueurs</string>
+    <string name="session_teams_button_create_random">Créer équipes aléatoires</string>
 </resources>
