@@ -318,7 +318,7 @@ fun MainScreen(
             ) {
                 // Existing routes...
                 composable(BottomNavItem.Home.route) {
-                    HomeScreen()
+                    HomeScreen(cityViewModel = cityViewModel)
                 }
                 composable(BottomNavItem.NewSession.route) {
                     SessionCreationScreen(navController, sessionViewModel)

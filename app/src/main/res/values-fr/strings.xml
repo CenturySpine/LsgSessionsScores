@@ -278,4 +278,9 @@
     <string name="session_teams_button_create_random">Créer équipes aléatoires</string>
     <string name="no_city_alert_select_a_city">Select a city</string>
     <string name="no_city_alert_you_must_select_a_city">You must select a city before accessing this feature.</string>
+
+
+    <!-- HomeScreen - City Selection -->
+    <string name="home_select_city">Sélectionnez votre ville</string>
+    <string name="home_no_city_selected">Aucune ville sélectionnée</string>
 </resources>
