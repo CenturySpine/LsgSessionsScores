@@ -20,6 +20,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
+import fr.centuryspine.lsgscores.data.gamezone.GameZoneRepository
 import javax.inject.Singleton
 
 @Module
@@ -34,8 +36,11 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideHoleRepository(holeDao: HoleDao): HoleRepository {
-        return HoleRepository(holeDao)
+    fun provideHoleRepository(
+        holeDao: HoleDao,
+        gameZoneDao: GameZoneDao
+    ): HoleRepository {
+        return HoleRepository(holeDao, gameZoneDao)
     }
 
     @Provides
@@ -71,11 +76,11 @@ object RepositoryModule {
         sessionDao: SessionDao,
         teamDao: TeamDao,
         playedHoleDao: PlayedHoleDao,
-        playedHoleScoreDao: PlayedHoleScoreDao
+        playedHoleScoreDao: PlayedHoleScoreDao,
+        gameZoneDao: GameZoneDao  // Add dependency
     ): SessionRepository {
-        return SessionRepository(sessionDao, teamDao, playedHoleDao, playedHoleScoreDao)
+        return SessionRepository(sessionDao, teamDao, playedHoleDao, playedHoleScoreDao, gameZoneDao)
     }
-
     @Provides
     @Singleton
     fun provideScoringModeRepository(): ScoringModeRepository {
@@ -86,5 +91,15 @@ object RepositoryModule {
     @Singleton
     fun provideHoleGameModeRepository(): HoleGameModeRepository {
         return HoleGameModeRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGameZoneRepository(
+        gameZoneDao: GameZoneDao,
+        holeDao: HoleDao,
+        sessionDao: SessionDao
+    ): GameZoneRepository {
+        return GameZoneRepository(gameZoneDao, holeDao, sessionDao)
     }
 }

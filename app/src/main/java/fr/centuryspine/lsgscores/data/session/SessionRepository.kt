@@ -1,5 +1,6 @@
 package fr.centuryspine.lsgscores.data.session
 import androidx.room.Transaction
+import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import kotlinx.coroutines.flow.Flow
 
 class SessionRepository(
@@ -7,15 +8,30 @@ class SessionRepository(
     private val teamDao: TeamDao,
     private val playedHoleDao: PlayedHoleDao,
     private val playedHoleScoreDao: PlayedHoleScoreDao,
+    private val gameZoneDao: GameZoneDao
     ) {
 
     fun getAll(): Flow<List<Session>> = sessionDao.getAll()
 
     fun getById(id: Int): Flow<Session?> = sessionDao.getById(id)
 
-    suspend fun insert(session: Session): Long = sessionDao.insert(session)
+    suspend fun insert(session: Session): Long {
+        // Validate that GameZone exists
+        val gameZone = gameZoneDao.getGameZoneById(session.gameZoneId)
+        if (gameZone == null) {
+            throw IllegalArgumentException("GameZone with id ${session.gameZoneId} does not exist")
+        }
+        return sessionDao.insert(session)
+    }
 
-    suspend fun update(session: Session) = sessionDao.update(session)
+    suspend fun update(session: Session) {
+        // Validate that GameZone exists
+        val gameZone = gameZoneDao.getGameZoneById(session.gameZoneId)
+        if (gameZone == null) {
+            throw IllegalArgumentException("GameZone with id ${session.gameZoneId} does not exist")
+        }
+        sessionDao.update(session)
+    }
 
     suspend fun delete(session: Session) = sessionDao.delete(session)
 

@@ -24,7 +24,7 @@ import fr.centuryspine.lsgscores.data.session.TeamDao
 
 @Database(
     entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class, GameZone::class],
-    version = 6
+    version = 7
 )
 @TypeConverters(DateTimeConverters::class,WeatherConverters::class)
 abstract class AppDatabase : RoomDatabase() {

@@ -19,4 +19,6 @@ interface HoleDao {
 
     @Query("SELECT * FROM holes WHERE id = :id")
     fun getById(id: Long): Flow<Hole>
+    @Query("SELECT * FROM holes WHERE gameZoneId = :gameZoneId")
+    suspend fun getHolesByGameZoneId(gameZoneId: Long): List<Hole>
 }

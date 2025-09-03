@@ -23,11 +23,71 @@ object Migrations {
     }
 
     /**
+     * Migration 6 to 7: Remove foreign key constraints
+     * - Removes FK constraints from holes and sessions tables
+     * - Data is preserved, only constraints are removed
+     * - This enables better offline/sync capabilities
+     */
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Step 1: Recreate holes table without foreign key
+            database.execSQL("""
+            CREATE TABLE IF NOT EXISTS holes_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                name TEXT NOT NULL,
+                gameZoneId INTEGER NOT NULL,
+                description TEXT,
+                distance INTEGER,
+                par INTEGER NOT NULL,
+                startPhotoUri TEXT,
+                endPhotoUri TEXT
+            )
+        """)
+
+            database.execSQL("""
+            INSERT INTO holes_new (id, name, gameZoneId, description, distance, par, startPhotoUri, endPhotoUri)
+            SELECT id, name, gameZoneId, description, distance, par, startPhotoUri, endPhotoUri FROM holes
+        """)
+
+            database.execSQL("DROP TABLE holes")
+            database.execSQL("ALTER TABLE holes_new RENAME TO holes")
+
+            // Recreate index for holes
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_holes_gameZoneId ON holes (gameZoneId)")
+
+            // Step 2: Recreate sessions table without foreign key
+            database.execSQL("""
+            CREATE TABLE IF NOT EXISTS sessions_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                dateTime TEXT NOT NULL,
+                endDateTime TEXT,
+                sessionType TEXT NOT NULL,
+                scoringModeId INTEGER NOT NULL,
+                gameZoneId INTEGER NOT NULL,
+                comment TEXT,
+                isOngoing INTEGER NOT NULL,
+                weatherData TEXT
+            )
+        """)
+
+            database.execSQL("""
+            INSERT INTO sessions_new (id, dateTime, endDateTime, sessionType, scoringModeId, gameZoneId, comment, isOngoing, weatherData)
+            SELECT id, dateTime, endDateTime, sessionType, scoringModeId, gameZoneId, comment, isOngoing, weatherData FROM sessions
+        """)
+
+            database.execSQL("DROP TABLE sessions")
+            database.execSQL("ALTER TABLE sessions_new RENAME TO sessions")
+
+            // Recreate index for sessions
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_sessions_gameZoneId ON sessions (gameZoneId)")
+        }
+    }
+
+    /**
      * List of all migrations to be applied to the database
      * Add new migrations here as the schema evolves
      */
     val ALL_MIGRATIONS = arrayOf(
-        // Add migrations here as needed
-         MIGRATION_5_6_TEST // Commented out until we implement real migration
-    )
-}
+        MIGRATION_5_6_TEST,
+        MIGRATION_6_7
+    )}

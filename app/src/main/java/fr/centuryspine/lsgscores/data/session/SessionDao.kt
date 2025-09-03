@@ -35,5 +35,6 @@ interface SessionDao {
 
     @Query("SELECT * FROM sessions WHERE isOngoing = 1 LIMIT 1")
     fun getOngoingSessionFlow(): Flow<Session?>
-
+    @Query("SELECT * FROM sessions WHERE gameZoneId = :gameZoneId")
+    suspend fun getSessionsByGameZoneId(gameZoneId: Long): List<Session>
 }

@@ -10,13 +10,7 @@ import java.time.LocalDateTime
 
 @Entity(
     tableName = "sessions",
-    foreignKeys = [
-        ForeignKey(entity = GameZone::class,
-                   parentColumns = ["id"],
-                   childColumns = ["gameZoneId"],
-                   onDelete = ForeignKey.RESTRICT)
-    ],
-    indices = [Index(value = ["gameZoneId"])]
+        indices = [Index(value = ["gameZoneId"])]
 )
 data class Session(
     @PrimaryKey(autoGenerate = true)

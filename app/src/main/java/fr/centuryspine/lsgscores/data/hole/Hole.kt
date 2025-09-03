@@ -8,13 +8,7 @@ import fr.centuryspine.lsgscores.data.gamezone.GameZone
 
 @Entity(
     tableName = "holes",
-    foreignKeys = [
-        ForeignKey(entity = GameZone::class,
-                   parentColumns = ["id"],
-                   childColumns = ["gameZoneId"],
-                   onDelete = ForeignKey.RESTRICT)
-    ],
-    indices = [Index(value = ["gameZoneId"])]
+        indices = [Index(value = ["gameZoneId"])]
 )
 data class Hole(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
