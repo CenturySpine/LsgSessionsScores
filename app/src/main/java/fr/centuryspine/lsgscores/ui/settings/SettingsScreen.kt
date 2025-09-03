@@ -64,17 +64,14 @@ import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
 fun SettingsScreen(
     themeViewModel: ThemeViewModel,
     languageViewModel: LanguageViewModel,
-    gameZoneViewModel: GameZoneViewModel = hiltViewModel()
-) {
+
+    ) {
     val selectedThemeId by themeViewModel.selectedThemeId.collectAsState()
     val selectedLanguage by languageViewModel.selectedLanguage.collectAsState()
     val availableLanguages = languageViewModel.getAvailableLanguages()
-    val gameZones by gameZoneViewModel.gameZones.collectAsState()
+
     val context = LocalContext.current
 
-    var showAddZoneDialog by remember { mutableStateOf(false) }
-    var newZoneName by remember { mutableStateOf("") }
-    var editingGameZone by remember { mutableStateOf<GameZone?>(null) }
 
     LaunchedEffect(selectedThemeId) {
         println("DEBUG: Theme changed to: $selectedThemeId")
@@ -151,129 +148,13 @@ fun SettingsScreen(
                 }
             }
 
-            // Game Zones Section
-            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = stringResource(R.string.settings_section_game_zones),
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(
-                    text = stringResource(R.string.settings_label_manage_game_zones),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                IconButton(onClick = { showAddZoneDialog = true }) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_game_zone_content_description))
-                }
-            }
-
-            if (gameZones.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_game_zones_defined),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    gameZones.forEach { gameZone ->
-                        GameZoneItem(
-                            gameZone = gameZone,
-                            onEditClick = { editingGameZone = it }
-                        )
-                    }
-                }
-            }
         }
     }
 
-    if (showAddZoneDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddZoneDialog = false },
-            title = { Text(stringResource(R.string.add_game_zone_dialog_title)) },
-            text = {
-                OutlinedTextField(
-                    value = newZoneName,
-                    onValueChange = { newZoneName = it },
-                    label = { Text(stringResource(R.string.game_zone_name_label)) },
-                    singleLine = true
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    gameZoneViewModel.addGameZone(newZoneName)
-                    newZoneName = ""
-                    showAddZoneDialog = false
-                }) {
-                    Text(stringResource(R.string.add_button))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    newZoneName = ""
-                    showAddZoneDialog = false
-                }) {
-                    Text(stringResource(R.string.cancel_button))
-                }
-            }
-        )
-    }
 
-    editingGameZone?.let { gameZone ->
-        var updatedZoneName by remember { mutableStateOf(gameZone.name) }
-        AlertDialog(
-            onDismissRequest = { editingGameZone = null },
-            title = { Text(stringResource(R.string.edit_game_zone_dialog_title)) },
-            text = {
-                OutlinedTextField(
-                    value = updatedZoneName,
-                    onValueChange = { updatedZoneName = it },
-                    label = { Text(stringResource(R.string.game_zone_name_label)) },
-                    singleLine = true
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    gameZoneViewModel.updateGameZone(gameZone.copy(name = updatedZoneName))
-                    editingGameZone = null
-                }) {
-                    Text(stringResource(R.string.update_button))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { editingGameZone = null }) {
-                    Text(stringResource(R.string.cancel_button))
-                }
-            }
-        )
-    }
 }
 
-@Composable
-private fun GameZoneItem(
-    gameZone: GameZone,
-    onEditClick: (GameZone) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = gameZone.name,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(onClick = { onEditClick(gameZone) }) {
-            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit_game_zone_content_description))
-        }
-    }
-}
 
 @Composable
 private fun CompactThemePreviewCard(

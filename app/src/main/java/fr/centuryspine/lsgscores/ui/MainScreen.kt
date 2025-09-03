@@ -389,7 +389,7 @@ fun MainScreen(
                     SettingsScreen(themeViewModel, languageViewModel)
                 }
                 composable(DrawerNavItem.Areas.route) {
-                    AreasScreen()
+                    AreasScreen(gameZoneViewModel)
                 }
             }
         }
