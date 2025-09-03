@@ -11,4 +11,8 @@ class CityRepository @Inject constructor(
     fun getAllCities(): Flow<List<City>> = cityDao.getAllCities()
 
     suspend fun getCityById(id: Long): City? = cityDao.getCityById(id)
+
+    suspend fun insert(city: City): Long = cityDao.insert(city)
+
+    suspend fun update(city: City) = cityDao.update(city)
 }

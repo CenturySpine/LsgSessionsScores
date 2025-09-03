@@ -295,4 +295,13 @@ This action cannot be undone.</string>
     <string name="areas_section_cities">Cities</string>
     <string name="areas_section_gaming_zones">Gaming Zones</string>
     <string name="main_topbar_title_areas">Areas</string>
+
+    <!-- AreasScreen - Cities -->
+    <string name="areas_label_manage_cities">Manage Cities</string>
+    <string name="add_city_content_description">Add city</string>
+    <string name="no_cities_defined">No cities defined yet.</string>
+    <string name="add_city_dialog_title">Add New City</string>
+    <string name="city_name_label">City Name</string>
+    <string name="edit_city_dialog_title">Edit City</string>
+    <string name="edit_city_content_description">Edit city</string>
 </resources>

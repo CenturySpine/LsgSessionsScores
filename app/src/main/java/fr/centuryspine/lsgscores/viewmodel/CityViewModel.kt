@@ -1,12 +1,15 @@
 package fr.centuryspine.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.centuryspine.lsgscores.data.city.City
 import fr.centuryspine.lsgscores.data.city.CityRepository
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,5 +35,21 @@ class CityViewModel @Inject constructor(
         appPreferences.setSelectedCityId(cityId)
         _selectedCityId.value = cityId
         _hasCitySelected.value = true  // Ajouter cette ligne
+    }
+
+    fun addCity(name: String) {
+        if (name.isNotBlank()) {
+            viewModelScope.launch {
+                cityRepository.insert(City(name = name))
+            }
+        }
+    }
+
+    fun updateCity(city: City) {
+        if (city.name.isNotBlank()) {
+            viewModelScope.launch {
+                cityRepository.update(city)
+            }
+        }
     }
 }
