@@ -18,6 +18,8 @@ class AppPreferences(context: Context) {
         const val LANGUAGE_SYSTEM = "system"
         const val LANGUAGE_ENGLISH = "en"
         const val LANGUAGE_FRENCH = "fr"
+
+        private const val KEY_SELECTED_CITY = "selected_city_id"
     }
 
     var selectedTheme: String
@@ -27,4 +29,17 @@ class AppPreferences(context: Context) {
     var selectedLanguage: String
         get() = prefs.getString(KEY_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
         set(value) = prefs.edit { putString(KEY_LANGUAGE, value) }
+
+    fun getSelectedCityId(): Long? {
+        val cityId = prefs.getLong(KEY_SELECTED_CITY, -1L)
+        return if (cityId == -1L) null else cityId
+    }
+
+    fun setSelectedCityId(cityId: Long) {
+        prefs.edit().putLong(KEY_SELECTED_CITY, cityId).apply()
+    }
+
+    fun clearSelectedCity() {
+        prefs.edit().remove(KEY_SELECTED_CITY).apply()
+    }
 }

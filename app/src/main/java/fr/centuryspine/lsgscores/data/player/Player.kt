@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class Player(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val photoUri: String? = null  // <-- new property
+    val photoUri: String? = null , 
+    val cityId: Long = 1
 )

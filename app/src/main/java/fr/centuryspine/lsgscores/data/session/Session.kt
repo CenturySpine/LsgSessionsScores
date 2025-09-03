@@ -15,12 +15,13 @@ import java.time.LocalDateTime
 data class Session(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val dateTime: LocalDateTime,        // This becomes startDateTime conceptually
-    val endDateTime: LocalDateTime? = null,  // New field - null while ongoing
+    val dateTime: LocalDateTime,
+    val endDateTime: LocalDateTime? = null,
     val sessionType: SessionType,
     val scoringModeId: Int,
-    val gameZoneId: Long, // New field for GameZone
+    val gameZoneId: Long,
     val comment: String? = null,
     val isOngoing: Boolean = false,
-    val weatherData: WeatherInfo? = null
+    val weatherData: WeatherInfo? = null,
+    val cityId: Long = 1
 )

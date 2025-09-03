@@ -3,6 +3,8 @@ package fr.centuryspine.lsgscores.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import fr.centuryspine.lsgscores.data.city.City
+import fr.centuryspine.lsgscores.data.city.CityDao
 import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.hole.Hole
@@ -23,8 +25,8 @@ import fr.centuryspine.lsgscores.data.session.Team
 import fr.centuryspine.lsgscores.data.session.TeamDao
 
 @Database(
-    entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class, GameZone::class],
-    version = 7
+    entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class, GameZone::class, City::class],
+    version = 9
 )
 @TypeConverters(DateTimeConverters::class,WeatherConverters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -44,6 +46,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun playedHoleScoreDao(): PlayedHoleScoreDao
 
     abstract fun gameZoneDao(): GameZoneDao
+
+    abstract fun cityDao(): CityDao
 
     companion object {
         @Volatile

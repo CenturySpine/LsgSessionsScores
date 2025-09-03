@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -21,12 +22,16 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +44,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import fr.centuryspine.lsgscores.R
+import fr.centuryspine.lsgscores.data.city.CurrentCityManager
 import fr.centuryspine.lsgscores.ui.holes.HoleDetailScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleFormScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleListScreen
@@ -52,6 +58,7 @@ import fr.centuryspine.lsgscores.ui.sessions.SessionCreationScreen
 import fr.centuryspine.lsgscores.ui.sessions.SessionHistoryScreen
 import fr.centuryspine.lsgscores.ui.sessions.SessionTeamsScreen
 import fr.centuryspine.lsgscores.ui.settings.SettingsScreen
+import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
 import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
@@ -88,16 +95,21 @@ private fun getCurrentNavigationContext(currentRoute: String?): NavigationContex
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    playerViewModel: PlayerViewModel,
-    holeViewModel: HoleViewModel,
-    sessionViewModel: SessionViewModel,
-    languageViewModel: LanguageViewModel,
-    gameZoneViewModel: GameZoneViewModel,
-    themeViewModel: ThemeViewModel = hiltViewModel()
+    playerViewModel: PlayerViewModel = hiltViewModel(),
+    holeViewModel: HoleViewModel = hiltViewModel(),
+    sessionViewModel: SessionViewModel = hiltViewModel(),
+    languageViewModel: LanguageViewModel = hiltViewModel(),
+    gameZoneViewModel: GameZoneViewModel = hiltViewModel(),
+    themeViewModel: ThemeViewModel = hiltViewModel(),
+    cityViewModel: CityViewModel = hiltViewModel()
 ) {
     val ongoingSession by sessionViewModel.ongoingSession.collectAsState(initial = null)
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
+    // Add city check
+    val hasCitySelected by cityViewModel.hasCitySelected.collectAsState()  // Add this
+    var showNoCityAlert by remember { mutableStateOf(false) }  // Add this
 
     // Bottom bar items (only 3 now)
     val bottomItems = listOf(
@@ -158,26 +170,31 @@ fun MainScreen(
                         label = { Text(stringResource(item.labelRes)) },
                         selected = isSelected,
                         onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
+                            if (!hasCitySelected) {
+                                showNoCityAlert = true
+                            } else {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                            scope.launch {
-                                drawerState.close()
+                                scope.launch {
+                                    drawerState.close()
+                                }
                             }
                         },
                         modifier = Modifier.padding(horizontal = 12.dp)
                     )
                 }
-// Separator
+
+                // Separator
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Spacer(modifier = Modifier.height(8.dp))
 
-// Drawer system items
+                // Drawer system items
                 drawerSystemItems.forEach { item ->
                     val isSelected = navigationContext == NavigationContext.DRAWER &&
                             currentRoute == item.route
@@ -275,12 +292,16 @@ fun MainScreen(
                             selected = isSelected,
                             onClick = {
                                 if (isEnabled) {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.startDestinationId) {
-                                            saveState = true
+                                    if (item == BottomNavItem.NewSession && !hasCitySelected) {
+                                        showNoCityAlert = true
+                                    } else {
+                                        navController.navigate(item.route) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
                                 }
                             },
@@ -366,5 +387,18 @@ fun MainScreen(
                 }
             }
         }
+    }
+    // No city selected alert dialog
+    if (showNoCityAlert) {
+        AlertDialog(
+            onDismissRequest = { showNoCityAlert = false },
+            title = { Text(stringResource(R.string.no_city_alert_select_a_city)) },
+            text = { Text(stringResource(R.string.no_city_alert_you_must_select_a_city)) },
+            confirmButton = {
+                TextButton(onClick = { showNoCityAlert = false }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }

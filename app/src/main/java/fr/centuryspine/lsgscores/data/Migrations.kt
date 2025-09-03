@@ -83,11 +83,47 @@ object Migrations {
         }
     }
 
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Create cities table
+            database.execSQL("""
+            CREATE TABLE IF NOT EXISTS cities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                name TEXT NOT NULL
+            )
+        """)
+
+            // Create unique index on city name
+            database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_cities_name ON cities (name)")
+
+            // Insert Lyon as default city
+            database.execSQL("INSERT INTO cities (id, name) VALUES (1, 'Lyon')")
+
+            // Add cityId column to players table
+            database.execSQL("ALTER TABLE players ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
+
+            // Add cityId column to game_zones table
+            database.execSQL("ALTER TABLE game_zones ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
+
+            // Add cityId column to sessions table
+            database.execSQL("ALTER TABLE sessions ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Empty migration - schema already correct from MIGRATION_7_8
+            // This is just to fix the version mismatch issue
+        }
+    }
+
     /**
      * List of all migrations to be applied to the database
      * Add new migrations here as the schema evolves
      */
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_5_6_TEST,
-        MIGRATION_6_7
+        MIGRATION_6_7,
+        MIGRATION_7_8,
+        MIGRATION_8_9
     )}

@@ -20,6 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import fr.centuryspine.lsgscores.data.Migrations
+import fr.centuryspine.lsgscores.data.city.CityDao
 
 
 @Module
@@ -66,4 +67,7 @@ object DatabaseModule {
 
     @Provides
     fun provideGameZoneDao(database: AppDatabase): GameZoneDao = database.gameZoneDao()
+
+    @Provides
+    fun provideCityDao(database: AppDatabase): CityDao = database.cityDao()
 }

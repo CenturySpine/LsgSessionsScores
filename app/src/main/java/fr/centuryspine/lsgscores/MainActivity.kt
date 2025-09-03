@@ -33,10 +33,6 @@ class MainActivity : ComponentActivity() {
 
                 MainScreen(
                     navController = navController,
-                    playerViewModel = hiltViewModel<PlayerViewModel>(),
-                    holeViewModel = hiltViewModel<HoleViewModel>(),
-                    sessionViewModel = hiltViewModel<SessionViewModel>(),
-                    gameZoneViewModel = hiltViewModel<GameZoneViewModel>(),
                     languageViewModel = languageViewModel
                 )
             }

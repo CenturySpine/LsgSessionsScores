@@ -276,4 +276,6 @@
     <string name="session_teams_random_helper">Sélectionnez un nombre pair de joueurs (minimum 4) pour créer des équipes aléatoires</string>
     <string name="session_teams_error_odd_number">Veuillez sélectionner un nombre pair de joueurs</string>
     <string name="session_teams_button_create_random">Créer équipes aléatoires</string>
+    <string name="no_city_alert_select_a_city">Select a city</string>
+    <string name="no_city_alert_you_must_select_a_city">You must select a city before accessing this feature.</string>
 </resources>
