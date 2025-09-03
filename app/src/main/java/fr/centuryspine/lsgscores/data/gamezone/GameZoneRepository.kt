@@ -11,7 +11,8 @@ class GameZoneRepository(
     private val sessionDao: SessionDao
 ) {
 
-    fun getAllGameZones(): Flow<List<GameZone>> = gameZoneDao.getAllGameZones()
+    fun getGameZonesByCityId(cityId: Long): Flow<List<GameZone>> =
+        gameZoneDao.getGameZonesByCityId(cityId)
 
     suspend fun getGameZoneById(id: Long): GameZone? = gameZoneDao.getGameZoneById(id)
 

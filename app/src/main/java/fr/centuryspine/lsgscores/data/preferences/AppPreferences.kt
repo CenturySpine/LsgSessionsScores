@@ -36,10 +36,10 @@ class AppPreferences(context: Context) {
     }
 
     fun setSelectedCityId(cityId: Long) {
-        prefs.edit().putLong(KEY_SELECTED_CITY, cityId).apply()
+        prefs.edit { putLong(KEY_SELECTED_CITY, cityId) }
     }
 
     fun clearSelectedCity() {
-        prefs.edit().remove(KEY_SELECTED_CITY).apply()
+        prefs.edit { remove(KEY_SELECTED_CITY) }
     }
 }

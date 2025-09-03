@@ -5,8 +5,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GameZoneDao {
-    @Query("SELECT * FROM game_zones ORDER BY name ASC")
-    fun getAllGameZones(): Flow<List<GameZone>>
+//    @Query("SELECT * FROM game_zones ORDER BY name ASC")
+//    fun getAllGameZones(): Flow<List<GameZone>>
+
+    @Query("SELECT * FROM game_zones WHERE cityId = :cityId ORDER BY name ASC")
+    fun getGameZonesByCityId(cityId: Long): Flow<List<GameZone>>
 
     @Query("SELECT * FROM game_zones WHERE id = :id")
     suspend fun getGameZoneById(id: Long): GameZone?

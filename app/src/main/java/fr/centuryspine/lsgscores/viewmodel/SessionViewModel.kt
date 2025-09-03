@@ -50,6 +50,7 @@ import com.example.lsgscores.data.weather.WeatherRepository
 import com.example.lsgscores.data.weather.WeatherInfo
 import com.example.lsgscores.utils.LocationHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
+import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 
 
 @HiltViewModel
@@ -64,9 +65,11 @@ class SessionViewModel @Inject constructor(
     private val playedHoleScoreRepository: PlayedHoleScoreRepository,
     private val gameZoneDao: GameZoneDao,
     private val weatherRepository: WeatherRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
+    val selectedCity = appPreferences.getSelectedCityId();
     var scoringModeId: Int? = null
         private set
 
@@ -88,10 +91,13 @@ class SessionViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
+        if(selectedCity == null)
+            throw Exception("No city selected");
+
         viewModelScope.launch {
             // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
             val unknownZone =
-                gameZoneDao.getAllGameZones().first().firstOrNull { it.name == "Zone Inconnue" }
+                gameZoneDao.getGameZonesByCityId(selectedCity).first().firstOrNull { it.name == "Zone Inconnue" }
             _sessionDraft.update { it.copy(gameZoneId = unknownZone?.id ?: 1L) }
 
             // Existing logic for ongoing session
