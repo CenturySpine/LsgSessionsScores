@@ -44,7 +44,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import fr.centuryspine.lsgscores.R
-import fr.centuryspine.lsgscores.data.city.CurrentCityManager
 import fr.centuryspine.lsgscores.ui.holes.HoleDetailScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleFormScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleListScreen

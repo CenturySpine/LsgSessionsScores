@@ -15,10 +15,10 @@ object Migrations {
      * captured at session creation time
      */
     val MIGRATION_5_6_TEST = object : Migration(5, 6) {
-        override fun migrate(database: SupportSQLiteDatabase) {
+        override fun migrate(db: SupportSQLiteDatabase) {
             // No-op migration for testing
             // This will be replaced with actual weather data migration
-            database.execSQL("ALTER TABLE sessions ADD COLUMN weatherData TEXT")
+            db.execSQL("ALTER TABLE sessions ADD COLUMN weatherData TEXT")
         }
     }
 
@@ -29,9 +29,9 @@ object Migrations {
      * - This enables better offline/sync capabilities
      */
     val MIGRATION_6_7 = object : Migration(6, 7) {
-        override fun migrate(database: SupportSQLiteDatabase) {
+        override fun migrate(db: SupportSQLiteDatabase) {
             // Step 1: Recreate holes table without foreign key
-            database.execSQL("""
+            db.execSQL("""
             CREATE TABLE IF NOT EXISTS holes_new (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 name TEXT NOT NULL,
@@ -44,19 +44,19 @@ object Migrations {
             )
         """)
 
-            database.execSQL("""
+            db.execSQL("""
             INSERT INTO holes_new (id, name, gameZoneId, description, distance, par, startPhotoUri, endPhotoUri)
             SELECT id, name, gameZoneId, description, distance, par, startPhotoUri, endPhotoUri FROM holes
         """)
 
-            database.execSQL("DROP TABLE holes")
-            database.execSQL("ALTER TABLE holes_new RENAME TO holes")
+            db.execSQL("DROP TABLE holes")
+            db.execSQL("ALTER TABLE holes_new RENAME TO holes")
 
             // Recreate index for holes
-            database.execSQL("CREATE INDEX IF NOT EXISTS index_holes_gameZoneId ON holes (gameZoneId)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_holes_gameZoneId ON holes (gameZoneId)")
 
             // Step 2: Recreate sessions table without foreign key
-            database.execSQL("""
+            db.execSQL("""
             CREATE TABLE IF NOT EXISTS sessions_new (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 dateTime TEXT NOT NULL,
@@ -70,23 +70,23 @@ object Migrations {
             )
         """)
 
-            database.execSQL("""
+            db.execSQL("""
             INSERT INTO sessions_new (id, dateTime, endDateTime, sessionType, scoringModeId, gameZoneId, comment, isOngoing, weatherData)
             SELECT id, dateTime, endDateTime, sessionType, scoringModeId, gameZoneId, comment, isOngoing, weatherData FROM sessions
         """)
 
-            database.execSQL("DROP TABLE sessions")
-            database.execSQL("ALTER TABLE sessions_new RENAME TO sessions")
+            db.execSQL("DROP TABLE sessions")
+            db.execSQL("ALTER TABLE sessions_new RENAME TO sessions")
 
             // Recreate index for sessions
-            database.execSQL("CREATE INDEX IF NOT EXISTS index_sessions_gameZoneId ON sessions (gameZoneId)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_sessions_gameZoneId ON sessions (gameZoneId)")
         }
     }
 
     val MIGRATION_7_8 = object : Migration(7, 8) {
-        override fun migrate(database: SupportSQLiteDatabase) {
+        override fun migrate(db: SupportSQLiteDatabase) {
             // Create cities table
-            database.execSQL("""
+            db.execSQL("""
             CREATE TABLE IF NOT EXISTS cities (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 name TEXT NOT NULL
@@ -94,24 +94,24 @@ object Migrations {
         """)
 
             // Create unique index on city name
-            database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_cities_name ON cities (name)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_cities_name ON cities (name)")
 
             // Insert Lyon as default city
-            database.execSQL("INSERT INTO cities (id, name) VALUES (1, 'Lyon')")
+            db.execSQL("INSERT INTO cities (id, name) VALUES (1, 'Lyon')")
 
             // Add cityId column to players table
-            database.execSQL("ALTER TABLE players ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("ALTER TABLE players ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
 
             // Add cityId column to game_zones table
-            database.execSQL("ALTER TABLE game_zones ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("ALTER TABLE game_zones ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
 
             // Add cityId column to sessions table
-            database.execSQL("ALTER TABLE sessions ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("ALTER TABLE sessions ADD COLUMN cityId INTEGER NOT NULL DEFAULT 1")
         }
     }
 
     val MIGRATION_8_9 = object : Migration(8, 9) {
-        override fun migrate(database: SupportSQLiteDatabase) {
+        override fun migrate(db: SupportSQLiteDatabase) {
             // Empty migration - schema already correct from MIGRATION_7_8
             // This is just to fix the version mismatch issue
         }

@@ -1,11 +1,9 @@
 package fr.centuryspine.lsgscores.data.session
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.lsgscores.data.weather.WeatherInfo
-import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import java.time.LocalDateTime
 
 @Entity(
