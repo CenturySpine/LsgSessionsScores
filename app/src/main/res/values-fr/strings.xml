@@ -283,4 +283,10 @@
     <!-- HomeScreen - City Selection -->
     <string name="home_select_city">Sélectionnez votre ville</string>
     <string name="home_no_city_selected">Aucune ville sélectionnée</string>
+
+    <!-- AreasScreen -->
+    <string name="drawer_nav_areas">Localisation</string>
+    <string name="areas_section_cities">Villes</string>
+    <string name="areas_section_gaming_zones">Zones de jeu</string>
+    <string name="main_topbar_title_areas">Areas</string>
 </resources>

@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.GolfCourse
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,5 +34,11 @@ sealed class DrawerNavItem(
         "settings",
         R.string.drawer_nav_settings,
         Icons.Filled.Settings
+    )
+
+    object Areas : DrawerNavItem(
+        "areas",
+        R.string.drawer_nav_areas,
+        Icons.Filled.LocationOn
     )
 }

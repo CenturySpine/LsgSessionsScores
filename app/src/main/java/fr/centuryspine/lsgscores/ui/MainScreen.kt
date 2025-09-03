@@ -44,6 +44,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import fr.centuryspine.lsgscores.R
+import fr.centuryspine.lsgscores.ui.areas.AreasScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleDetailScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleFormScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleListScreen
@@ -76,7 +77,8 @@ private fun getCurrentNavigationContext(currentRoute: String?): NavigationContex
                 currentRoute?.startsWith("played_hole_score/") == true -> NavigationContext.BOTTOM_BAR
 
         // Drawer routes (including dynamic routes)
-        currentRoute == DrawerNavItem.Players.route ||
+        currentRoute == DrawerNavItem.Areas.route ||
+                currentRoute == DrawerNavItem.Players.route ||
                 currentRoute == DrawerNavItem.Holes.route ||
                 currentRoute == DrawerNavItem.SessionHistory.route ||
                 currentRoute == DrawerNavItem.Settings.route ||
@@ -120,6 +122,7 @@ fun MainScreen(
     // Drawer items
 
     val drawerMainItems = listOf(
+        DrawerNavItem.Areas,
         DrawerNavItem.Players,
         DrawerNavItem.Holes,
         DrawerNavItem.SessionHistory
@@ -237,6 +240,7 @@ fun MainScreen(
                                 BottomNavItem.Home.route -> stringResource(R.string.main_app_title)
                                 BottomNavItem.NewSession.route -> stringResource(R.string.main_topbar_title_new_session)
                                 BottomNavItem.OngoingSession.route -> stringResource(R.string.main_topbar_title_ongoing_session)
+                                DrawerNavItem.Areas.route -> stringResource(R.string.main_topbar_title_areas)
                                 DrawerNavItem.Players.route -> stringResource(R.string.main_topbar_title_players)
                                 DrawerNavItem.Holes.route -> stringResource(R.string.main_topbar_title_holes)
                                 DrawerNavItem.SessionHistory.route -> stringResource(R.string.main_topbar_title_session_history)
@@ -383,6 +387,9 @@ fun MainScreen(
                 }
                 composable(DrawerNavItem.Settings.route) {
                     SettingsScreen(themeViewModel, languageViewModel)
+                }
+                composable(DrawerNavItem.Areas.route) {
+                    AreasScreen()
                 }
             }
         }

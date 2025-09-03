@@ -131,7 +131,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-// Language section with grid layout
+            // Language section with grid layout
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

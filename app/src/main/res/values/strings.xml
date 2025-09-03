@@ -289,4 +289,10 @@ This action cannot be undone.</string>
     <!-- HomeScreen - City Selection -->
     <string name="home_select_city">Select your city</string>
     <string name="home_no_city_selected">No city selected</string>
+
+    <!-- AreasScreen -->
+    <string name="drawer_nav_areas">Areas</string>
+    <string name="areas_section_cities">Cities</string>
+    <string name="areas_section_gaming_zones">Gaming Zones</string>
+    <string name="main_topbar_title_areas">Areas</string>
 </resources>

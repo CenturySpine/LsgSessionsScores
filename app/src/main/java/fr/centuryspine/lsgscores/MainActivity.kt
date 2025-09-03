@@ -22,7 +22,6 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val languageViewModel: LanguageViewModel = hiltViewModel()
 
-            // Remove the problematic LaunchedEffect that was causing infinite recreation
 
             LsgScoresTheme(themeViewModel = themeViewModel) {
                 val navController = rememberNavController()
