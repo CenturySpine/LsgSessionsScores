@@ -349,7 +349,7 @@ fun MainScreen(
                     PlayerFormScreen(navController, playerViewModel)
                 }
                 composable("add_hole") {
-                    HoleFormScreen(navController, holeViewModel, gameZoneViewModel)
+                    HoleFormScreen(navController, holeViewModel, gameZoneViewModel, cityViewModel)
                 }
                 composable(
                     route = "user_detail/{userId}",

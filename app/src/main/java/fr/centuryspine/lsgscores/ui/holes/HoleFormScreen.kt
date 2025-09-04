@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,7 @@ import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import fr.centuryspine.lsgscores.data.hole.Hole
 import fr.centuryspine.lsgscores.ui.common.CombinedPhotoPicker
+import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
 import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 
@@ -47,10 +49,17 @@ import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 fun HoleFormScreen(
     navController: NavHostController,
     holeViewModel: HoleViewModel,
-    gameZoneViewModel: GameZoneViewModel
+    gameZoneViewModel: GameZoneViewModel,
+    cityViewModel: CityViewModel
 ) {
 
     val gameZones by gameZoneViewModel.gameZones.collectAsState(initial = emptyList())
+    
+    val selectedCityId by cityViewModel.selectedCityId.collectAsState()
+    
+    LaunchedEffect(selectedCityId) {
+        gameZoneViewModel.refreshGameZones()
+    }
 
     var showNameError by remember { mutableStateOf(false) }
 
