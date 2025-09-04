@@ -1,11 +1,21 @@
 package fr.centuryspine.lsgscores.data.hole
 
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
+import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class HoleRepository(private val holeDao: HoleDao, private val gameZoneDao: GameZoneDao) {
+class HoleRepository @Inject constructor(
+    private val holeDao: HoleDao,
+    private val gameZoneDao: GameZoneDao,
+    private val appPreferences: AppPreferences
+) {
 
-    fun getAllHoles(): Flow<List<Hole>> = holeDao.getAll()
+    fun getHolesByCurrentCity(): Flow<List<Hole>> {
+        val cityId = appPreferences.getSelectedCityId()
+            ?: throw IllegalStateException("No city selected. Holes screen should not be accessible without a selected city.")
+        return holeDao.getHolesByCityId(cityId)
+    }
 
     suspend fun insertHole(hole: Hole): Long {
         // Validate that GameZone exists

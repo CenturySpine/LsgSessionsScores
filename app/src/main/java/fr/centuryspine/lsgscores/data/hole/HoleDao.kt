@@ -5,8 +5,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HoleDao {
-    @Query("SELECT * FROM holes")
-    fun getAll(): Flow<List<Hole>>
+    @Query("""
+        SELECT h.* FROM holes h 
+        INNER JOIN game_zones gz ON h.gameZoneId = gz.id 
+        WHERE gz.cityId = :cityId
+    """)
+    fun getHolesByCityId(cityId: Long): Flow<List<Hole>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(hole: Hole): Long

@@ -69,7 +69,7 @@ class SessionViewModel @Inject constructor(
     private val appPreferences: AppPreferences
 ) : ViewModel() {
 
-    val selectedCity = appPreferences.getSelectedCityId();
+    val selectedCity = appPreferences.getSelectedCityId()
     var scoringModeId: Int? = null
         private set
 
@@ -92,7 +92,7 @@ class SessionViewModel @Inject constructor(
 
     init {
         if(selectedCity == null)
-            throw Exception("No city selected");
+            throw Exception("No city selected")
 
         viewModelScope.launch {
             // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
@@ -119,7 +119,7 @@ class SessionViewModel @Inject constructor(
                             combine(
                                 playedHoles.map { playedHole ->
                                     combine(
-                                        holeRepository.getAllHoles().map { holes ->
+                                        holeRepository.getHolesByCurrentCity().map { holes ->
                                             holes.find { it.id == playedHole.holeId }
                                         },
                                         holeGameModeRepository.getById(playedHole.gameModeId),
@@ -425,7 +425,7 @@ class SessionViewModel @Inject constructor(
             val playedHoles = playedHoleRepository.getPlayedHolesForSession(session.id).first()
 
             // 4. Get HolesDetails
-            val allHolesFromRepo = holeRepository.getAllHoles().first()
+            val allHolesFromRepo = holeRepository.getHolesByCurrentCity().first()
             val holesDetailsMap = mutableMapOf<Long, Hole>()
             playedHoles.forEach { playedHole ->
                 allHolesFromRepo.find { it.id == playedHole.holeId }?.let { holeDetail ->

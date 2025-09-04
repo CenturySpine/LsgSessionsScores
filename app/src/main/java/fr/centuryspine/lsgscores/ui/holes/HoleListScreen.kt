@@ -25,6 +25,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,13 +41,15 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.hole.Hole
+import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HoleListScreen(
     navController: NavController,
-    holeViewModel: HoleViewModel
+    holeViewModel: HoleViewModel,
+    cityViewModel: CityViewModel
 ) {
     val holes by holeViewModel.holes.collectAsStateWithLifecycle(
         lifecycle = LocalLifecycleOwner.current.lifecycle,
@@ -53,6 +57,12 @@ fun HoleListScreen(
     )
     var holeToDelete by remember { mutableStateOf<Hole?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    
+    val selectedCityId by cityViewModel.selectedCityId.collectAsState()
+    
+    LaunchedEffect(selectedCityId) {
+        holeViewModel.refreshHoles()
+    }
 
     Scaffold(
         floatingActionButton = {

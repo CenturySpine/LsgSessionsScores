@@ -42,9 +42,10 @@ object RepositoryModule {
     @Singleton
     fun provideHoleRepository(
         holeDao: HoleDao,
-        gameZoneDao: GameZoneDao
+        gameZoneDao: GameZoneDao,
+        appPreferences: AppPreferences
     ): HoleRepository {
-        return HoleRepository(holeDao, gameZoneDao)
+        return HoleRepository(holeDao, gameZoneDao, appPreferences)
     }
 
     @Provides
