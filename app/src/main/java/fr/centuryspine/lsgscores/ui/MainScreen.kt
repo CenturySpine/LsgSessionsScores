@@ -341,7 +341,7 @@ fun MainScreen(
                     HoleListScreen(navController, holeViewModel, cityViewModel)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
-                    SessionHistoryScreen(sessionViewModel)
+                    SessionHistoryScreen(sessionViewModel,cityViewModel)
                 }
 
                 // Other routes (unchanged)

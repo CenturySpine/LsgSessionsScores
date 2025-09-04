@@ -69,7 +69,9 @@ class SessionViewModel @Inject constructor(
     private val appPreferences: AppPreferences
 ) : ViewModel() {
 
-    val selectedCity = appPreferences.getSelectedCityId()
+    private val _selectedCityId = MutableStateFlow<Long?>(null)
+    val selectedCityId: StateFlow<Long?> = _selectedCityId.asStateFlow()
+    
     var scoringModeId: Int? = null
         private set
 
@@ -91,10 +93,13 @@ class SessionViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        if(selectedCity == null)
-            throw Exception("No city selected")
-
         viewModelScope.launch {
+            val selectedCity = appPreferences.getSelectedCityId()
+            if(selectedCity == null)
+                throw Exception("No city selected")
+            
+            _selectedCityId.value = selectedCity
+
             // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
             val unknownZone =
                 gameZoneDao.getGameZonesByCityId(selectedCity).first().firstOrNull { it.name == "Zone Inconnue" }
@@ -220,14 +225,20 @@ class SessionViewModel @Inject constructor(
         scoringModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Add this property to get all completed sessions
+    // Add this property to get all completed sessions filtered by selected city
+    @OptIn(ExperimentalCoroutinesApi::class)
     val completedSessions: StateFlow<List<Session>> =
-        sessionRepository.getAll()
-            .map { sessions ->
-                sessions.filter { !it.isOngoing }
-                    .sortedByDescending { it.dateTime }
+        _selectedCityId.flatMapLatest { cityId ->
+            if (cityId != null) {
+                sessionRepository.getAll()
+                    .map { sessions ->
+                        sessions.filter { !it.isOngoing && it.cityId == cityId }
+                            .sortedByDescending { it.dateTime }
+                    }
+            } else {
+                throw Exception("No city selected")
             }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Update session type (individual or team)
     fun setSessionType(type: SessionType) {
@@ -411,6 +422,15 @@ class SessionViewModel @Inject constructor(
             playedHoleRepository.deletePlayedHole(playedHoleId)
             onDeleted()
         }
+    }
+
+    fun refreshSessions() {
+        // The StateFlow automatically refreshes when the repository data changes
+        // This method can be called to trigger any additional refresh logic if needed
+    }
+
+    fun updateSelectedCity(cityId: Long?) {
+        _selectedCityId.value = cityId
     }
 
     fun loadSessionPdfData(session: Session): Flow<SessionPdfData> {

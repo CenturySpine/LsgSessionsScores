@@ -42,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -87,16 +88,24 @@ import androidx.compose.ui.text.font.FontWeight
 import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
 import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
 import fr.centuryspine.lsgscores.ui.components.WeatherIcon
+import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionHistoryScreen(
-    sessionViewModel: SessionViewModel
+    sessionViewModel: SessionViewModel,
+    cityViewModel: CityViewModel
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsState()
     val context = LocalContext.current
     var sessionToDelete by remember { mutableStateOf<Session?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    val selectedCityId by cityViewModel.selectedCityId.collectAsState()
+    
+    LaunchedEffect(selectedCityId) {
+        sessionViewModel.updateSelectedCity(selectedCityId)
+    }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
