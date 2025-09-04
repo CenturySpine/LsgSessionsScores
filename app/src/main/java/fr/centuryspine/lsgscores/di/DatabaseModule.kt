@@ -6,7 +6,6 @@ import fr.centuryspine.lsgscores.data.AppDatabase
 
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.hole.HoleDao
-import fr.centuryspine.lsgscores.data.media.MediaDao
 import fr.centuryspine.lsgscores.data.player.PlayerDao
 import fr.centuryspine.lsgscores.data.scoring.ScoringModeDao
 import fr.centuryspine.lsgscores.data.session.PlayedHoleDao
@@ -53,8 +52,6 @@ object DatabaseModule {
     @Provides
     fun provideScoringModeDao(database: AppDatabase): ScoringModeDao = database.scoringModeDao()
 
-    @Provides
-    fun provideMediaDao(database: AppDatabase): MediaDao = database.mediaDao()
 
     @Provides
     fun provideTeamDao(database: AppDatabase): TeamDao = database.teamDao()

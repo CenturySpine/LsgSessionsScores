@@ -118,6 +118,18 @@ object Migrations {
     }
 
     /**
+     * Migration 9 to 10: Remove media table
+     * - Drops the media table as media functionality is no longer needed
+     * - All media-related code and dependencies have been removed from the app
+     */
+    val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Drop the media table if it exists
+            db.execSQL("DROP TABLE IF EXISTS media")
+        }
+    }
+
+    /**
      * List of all migrations to be applied to the database
      * Add new migrations here as the schema evolves
      */
@@ -125,5 +137,6 @@ object Migrations {
         MIGRATION_5_6_TEST,
         MIGRATION_6_7,
         MIGRATION_7_8,
-        MIGRATION_8_9
+        MIGRATION_8_9,
+        MIGRATION_9_10
     )}

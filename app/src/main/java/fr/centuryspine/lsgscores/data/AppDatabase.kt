@@ -9,8 +9,6 @@ import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.hole.Hole
 import fr.centuryspine.lsgscores.data.hole.HoleDao
-import fr.centuryspine.lsgscores.data.media.Media
-import fr.centuryspine.lsgscores.data.media.MediaDao
 import fr.centuryspine.lsgscores.data.player.Player
 import fr.centuryspine.lsgscores.data.player.PlayerDao
 import fr.centuryspine.lsgscores.data.scoring.ScoringMode
@@ -25,8 +23,8 @@ import fr.centuryspine.lsgscores.data.session.Team
 import fr.centuryspine.lsgscores.data.session.TeamDao
 
 @Database(
-    entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Media::class, Team::class, PlayedHole::class, PlayedHoleScore::class, GameZone::class, City::class],
-    version = 9
+    entities = [Player::class, Hole::class, Session::class, ScoringMode::class, Team::class, PlayedHole::class, PlayedHoleScore::class, GameZone::class, City::class],
+    version = 10
 )
 @TypeConverters(DateTimeConverters::class,WeatherConverters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -37,7 +35,6 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun scoringModeDao(): ScoringModeDao
 
-    abstract fun mediaDao(): MediaDao
 
     abstract fun teamDao(): TeamDao
 
@@ -50,8 +47,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cityDao(): CityDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
 
     }
 }

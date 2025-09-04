@@ -3,8 +3,6 @@ package fr.centuryspine.lsgscores.di
 import fr.centuryspine.lsgscores.data.hole.HoleDao
 import fr.centuryspine.lsgscores.data.hole.HoleRepository
 import fr.centuryspine.lsgscores.data.holemode.HoleGameModeRepository
-import fr.centuryspine.lsgscores.data.media.MediaDao
-import fr.centuryspine.lsgscores.data.media.MediaRepository
 import fr.centuryspine.lsgscores.data.player.PlayerDao
 import fr.centuryspine.lsgscores.data.player.PlayerRepository
 import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
@@ -54,11 +52,6 @@ object RepositoryModule {
         return TeamRepository(teamDao)
     }
 
-    @Provides
-    @Singleton
-    fun provideMediaRepository(mediaDao: MediaDao): MediaRepository {
-        return MediaRepository(mediaDao)
-    }
 
     @Provides
     @Singleton
