@@ -79,7 +79,7 @@ fun SessionTeamsScreen(
                     stringResource(R.string.session_teams_instruction),
                     style = MaterialTheme.typography.titleMedium
                 )
-// Mode toggle (only in TEAM mode)
+                // Mode toggle (only in TEAM mode)
                 if (sessionDraft.sessionType == SessionType.TEAM) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),

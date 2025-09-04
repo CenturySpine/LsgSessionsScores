@@ -315,6 +315,8 @@ class SessionViewModel @Inject constructor(
 
             // Insert new session
             val draft = _sessionDraft.value
+            val currentCityId = _selectedCityId.value
+                ?: throw Exception("No city selected")
             val session = Session(
                 dateTime = draft.dateTime,
                 sessionType = draft.sessionType,
@@ -322,7 +324,8 @@ class SessionViewModel @Inject constructor(
                 gameZoneId = draft.gameZoneId, // Use gameZoneId from draft
                 comment = draft.comment,
                 isOngoing = true,
-                weatherData = weatherInfo
+                weatherData = weatherInfo,
+                cityId = currentCityId
             )
             val sessionId = sessionRepository.insert(session)
             scoringModeId = draft.scoringModeId
@@ -422,11 +425,6 @@ class SessionViewModel @Inject constructor(
             playedHoleRepository.deletePlayedHole(playedHoleId)
             onDeleted()
         }
-    }
-
-    fun refreshSessions() {
-        // The StateFlow automatically refreshes when the repository data changes
-        // This method can be called to trigger any additional refresh logic if needed
     }
 
     fun updateSelectedCity(cityId: Long?) {
