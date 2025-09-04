@@ -22,6 +22,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneRepository
+import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import javax.inject.Singleton
 
 @Module
@@ -30,8 +31,11 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun providePlayerRepository(playerDao: PlayerDao): PlayerRepository {
-        return PlayerRepository(playerDao)
+    fun providePlayerRepository(
+        playerDao: PlayerDao,
+        appPreferences: AppPreferences
+    ): PlayerRepository {
+        return PlayerRepository(playerDao, appPreferences)
     }
 
     @Provides

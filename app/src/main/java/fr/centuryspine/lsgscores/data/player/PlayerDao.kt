@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PlayerDao {
-    @Query("SELECT * FROM players")
-     fun getAll(): Flow<List<Player>>
+    @Query("SELECT * FROM players WHERE cityId = :cityId")
+    fun getPlayersByCityId(cityId: Long): Flow<List<Player>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
      fun insert(player: Player): Long

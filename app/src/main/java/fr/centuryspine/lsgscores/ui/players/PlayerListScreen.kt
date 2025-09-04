@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,14 +38,17 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.player.Player
+import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 import fr.centuryspine.lsgscores.viewmodel.PlayerViewModel
 import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerListScreen(
     navController: NavController,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    cityViewModel: CityViewModel
 ) {
     val users by playerViewModel.players.collectAsStateWithLifecycle(
         lifecycle = LocalLifecycleOwner.current.lifecycle,
@@ -53,6 +57,12 @@ fun PlayerListScreen(
     val sortedPlayers = remember(users) { users.sortedBy { it.name } }
     var playerToDelete by remember { mutableStateOf<Player?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+        
+    val selectedCityId by cityViewModel.selectedCityId.collectAsState()
+    
+    LaunchedEffect(selectedCityId) {
+        playerViewModel.refreshPlayers()
+    }
 
     Scaffold(
         topBar = {

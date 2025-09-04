@@ -335,7 +335,7 @@ fun MainScreen(
 
                 // Drawer routes
                 composable(DrawerNavItem.Players.route) {
-                    PlayerListScreen(navController, playerViewModel)
+                    PlayerListScreen(navController, playerViewModel, cityViewModel)
                 }
                 composable(DrawerNavItem.Holes.route) {
                     HoleListScreen(navController, holeViewModel)
