@@ -304,4 +304,13 @@ This action cannot be undone.</string>
     <string name="city_name_label">City Name</string>
     <string name="edit_city_dialog_title">Edit City</string>
     <string name="edit_city_content_description">Edit city</string>
+    
+    <!-- AreasScreen - Delete GameZone -->
+    <string name="delete_game_zone_delete_button">Delete</string>
+    <string name="delete_game_zone_ok_button">OK</string>
+    <string name="delete_game_zone_dialog_title">Delete Game Zone</string>
+    <string name="delete_game_zone_dialog_message">Are you sure you want to delete the game zone \"%s\"?</string>
+    <string name="delete_game_zone_error_title">Cannot Delete Game Zone</string>
+    <string name="delete_game_zone_error_has_holes">This game zone cannot be deleted because it has associated holes. Please delete all holes first.</string>
+    <string name="delete_game_zone_error_has_sessions">This game zone cannot be deleted because it has associated sessions. Please delete all sessions first.</string>
 </resources>

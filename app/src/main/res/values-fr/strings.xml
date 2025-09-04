@@ -298,4 +298,13 @@
     <string name="city_name_label">Nom de la ville</string>
     <string name="edit_city_dialog_title">Modifier la ville</string>
     <string name="edit_city_content_description">Modifier la ville</string>
+    
+    <!-- AreasScreen - Delete GameZone -->
+    <string name="delete_game_zone_delete_button">Supprimer</string>
+    <string name="delete_game_zone_ok_button">OK</string>
+    <string name="delete_game_zone_dialog_title">Supprimer la zone de jeu</string>
+    <string name="delete_game_zone_dialog_message">Êtes-vous sûr de vouloir supprimer la zone de jeu \"%s\" ?</string>
+    <string name="delete_game_zone_error_title">Impossible de supprimer la zone de jeu</string>
+    <string name="delete_game_zone_error_has_holes">Cette zone de jeu ne peut pas être supprimée car elle contient des trous associés. Veuillez d\'abord supprimer tous les trous.</string>
+    <string name="delete_game_zone_error_has_sessions">Cette zone de jeu ne peut pas être supprimée car elle contient des sessions associées. Veuillez d\'abord supprimer toutes les sessions.</string>
 </resources>

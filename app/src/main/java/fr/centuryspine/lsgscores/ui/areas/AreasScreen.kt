@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,11 +59,14 @@ fun AreasScreen(
     var showAddZoneDialog by remember { mutableStateOf(false) }
     var editingGameZone by remember { mutableStateOf<GameZone?>(null) }
     var newZoneName by remember { mutableStateOf("") }
+    var gameZoneToDelete by remember { mutableStateOf<GameZone?>(null) }
+    var showDeleteZoneDialog by remember { mutableStateOf(false) }
+    var deleteErrorMessage by remember { mutableStateOf<String?>(null) }
+    
+    val gameZoneError by gameZoneViewModel.error.collectAsState()
 
-    // Observer les changements de ville sélectionnée
     val selectedCityId by cityViewModel.selectedCityId.collectAsState()
     
-    // Rafraîchir les GameZones quand la ville change
     LaunchedEffect(selectedCityId) {
         gameZoneViewModel.refreshGameZones()
     }
@@ -155,7 +160,11 @@ fun AreasScreen(
                         gameZones.forEach { gameZone ->
                             GameZoneItem(
                                 gameZone = gameZone,
-                                onEditClick = { editingGameZone = it }
+                                onEditClick = { editingGameZone = it },
+                                onDeleteClick = {
+                                    gameZoneToDelete = it
+                                    showDeleteZoneDialog = true
+                                }
                             )
                         }
                     }
@@ -286,6 +295,70 @@ fun AreasScreen(
             }
         )
     }
+    
+    // Delete game zone confirmation dialog
+    if (showDeleteZoneDialog && gameZoneToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showDeleteZoneDialog = false
+                gameZoneToDelete = null
+            },
+            title = { Text(stringResource(R.string.delete_game_zone_dialog_title)) },
+            text = { Text(stringResource(R.string.delete_game_zone_dialog_message, gameZoneToDelete!!.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    gameZoneViewModel.deleteGameZone(gameZoneToDelete!!)
+                    showDeleteZoneDialog = false
+                    gameZoneToDelete = null
+                }) {
+                    Text(stringResource(R.string.delete_game_zone_delete_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showDeleteZoneDialog = false
+                    gameZoneToDelete = null
+                }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
+    }
+    
+    // Error dialog for failed deletion
+    gameZoneError?.let { errorMessage ->
+        if (errorMessage.contains("holes")) {
+            AlertDialog(
+                onDismissRequest = { 
+                    gameZoneViewModel.clearError()
+                },
+                title = { Text(stringResource(R.string.delete_game_zone_error_title)) },
+                text = { Text(stringResource(R.string.delete_game_zone_error_has_holes)) },
+                confirmButton = {
+                    TextButton(onClick = { 
+                        gameZoneViewModel.clearError()
+                    }) {
+                        Text(stringResource(R.string.delete_game_zone_ok_button))
+                    }
+                }
+            )
+        } else if (errorMessage.contains("sessions")) {
+            AlertDialog(
+                onDismissRequest = { 
+                    gameZoneViewModel.clearError()
+                },
+                title = { Text(stringResource(R.string.delete_game_zone_error_title)) },
+                text = { Text(stringResource(R.string.delete_game_zone_error_has_sessions)) },
+                confirmButton = {
+                    TextButton(onClick = { 
+                        gameZoneViewModel.clearError()
+                    }) {
+                        Text(stringResource(R.string.delete_game_zone_ok_button))
+                    }
+                }
+            )
+        }
+    }
 }
 
 @Composable
@@ -317,6 +390,7 @@ private fun CityItem(
 fun GameZoneItem(
     gameZone: GameZone,
     onEditClick: (GameZone) -> Unit,
+    onDeleteClick: (GameZone) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -332,11 +406,20 @@ fun GameZoneItem(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = { onEditClick(gameZone) }) {
-            Icon(
-                Icons.Filled.Edit,
-                contentDescription = stringResource(R.string.edit_game_zone_content_description)
-            )
+        Row {
+            IconButton(onClick = { onEditClick(gameZone) }) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = stringResource(R.string.edit_game_zone_content_description)
+                )
+            }
+            IconButton(onClick = { onDeleteClick(gameZone) }) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.delete_game_zone_content_description),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

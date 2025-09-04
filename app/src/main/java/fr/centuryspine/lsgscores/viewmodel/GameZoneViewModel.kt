@@ -27,10 +27,8 @@ class GameZoneViewModel @Inject constructor(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _hasSelectedCity = MutableStateFlow(false)
-    val hasSelectedCity: StateFlow<Boolean> = _hasSelectedCity.asStateFlow()
 
     private val _selectedCityId = MutableStateFlow<Long?>(null)
-    val selectedCityId: StateFlow<Long?> = _selectedCityId.asStateFlow()
 
     init {
         loadGameZones()
@@ -83,5 +81,9 @@ class GameZoneViewModel @Inject constructor(
                 _error.value = e.message
             }
         }
+    }
+    
+    fun clearError() {
+        _error.value = null
     }
 }
