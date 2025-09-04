@@ -7,7 +7,6 @@ import fr.centuryspine.lsgscores.data.hole.Hole
 import fr.centuryspine.lsgscores.data.hole.HoleRepository
 import fr.centuryspine.lsgscores.data.holemode.HoleGameMode
 import fr.centuryspine.lsgscores.data.holemode.HoleGameModeRepository
-import fr.centuryspine.lsgscores.data.media.MediaRepository
 import fr.centuryspine.lsgscores.data.scoring.ScoringMode
 import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
 import fr.centuryspine.lsgscores.data.session.PlayedHole
@@ -58,7 +57,6 @@ class SessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val teamRepository: TeamRepository,
     private val holeRepository: HoleRepository,
-    private val mediaRepository: MediaRepository,
     scoringModeRepository: ScoringModeRepository,
     private val playedHoleRepository: PlayedHoleRepository,
     private val holeGameModeRepository: HoleGameModeRepository,
@@ -70,8 +68,7 @@ class SessionViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _selectedCityId = MutableStateFlow<Long?>(null)
-    val selectedCityId: StateFlow<Long?> = _selectedCityId.asStateFlow()
-    
+
     var scoringModeId: Int? = null
         private set
 
@@ -102,7 +99,7 @@ class SessionViewModel @Inject constructor(
 
             // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
             val unknownZone =
-                gameZoneDao.getGameZonesByCityId(selectedCity).first().firstOrNull { it.name == "Zone Inconnue" }
+                gameZoneDao.getGameZonesByCityId(selectedCity).first().firstOrNull { it.name == "Unknown Zone" }
             _sessionDraft.update { it.copy(gameZoneId = unknownZone?.id ?: 1L) }
 
             // Existing logic for ongoing session
@@ -278,6 +275,7 @@ class SessionViewModel @Inject constructor(
                 null
             }
         } catch (e: Exception) {
+            android.util.Log.w("SessionViewModel", "Failed to get current weather info: ${e.message}")
             null
         }
     }
@@ -310,6 +308,7 @@ class SessionViewModel @Inject constructor(
                 getCurrentWeatherInfo()
             } catch (e: Exception) {
                 // Log error but don't block session creation
+                android.util.Log.w("SessionViewModel", "Failed to get weather info: ${e.message}")
                 null
             }
 
@@ -407,7 +406,7 @@ class SessionViewModel @Inject constructor(
     }
 
     fun computeScoresForCurrentScoringMode(strokesByTeam: Map<Long, Int>): Map<Long, Int> {
-        // Vérifie que scoringModeId est bien défini
+
         val scoringId = scoringModeId ?: return emptyMap()
         val calculator: ScoringCalculator = ScoringCalculatorFactory.getCalculatorById(scoringId)
         return calculator.calculateScores(strokesByTeam)

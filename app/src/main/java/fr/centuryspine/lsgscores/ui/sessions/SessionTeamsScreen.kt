@@ -15,7 +15,7 @@ import fr.centuryspine.lsgscores.data.session.SessionType
 import fr.centuryspine.lsgscores.data.player.Player
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import fr.centuryspine.lsgscores.viewmodel.PlayerViewModel
-import com.google.accompanist.flowlayout.FlowRow
+import androidx.compose.foundation.layout.FlowRow
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.rememberScrollState
@@ -125,7 +125,7 @@ fun SessionTeamsScreen(
                         )
 
                         // Show error if odd number selected
-                        if (currentSelection.size > 0 && currentSelection.size % 2 != 0) {
+                        if (currentSelection.isNotEmpty() && currentSelection.size % 2 != 0) {
                             Text(
                                 text = stringResource(R.string.session_teams_error_odd_number),
                                 style = MaterialTheme.typography.bodySmall,
@@ -137,8 +137,8 @@ fun SessionTeamsScreen(
                 }
                 // Chips selector
                 FlowRow(
-                    mainAxisSpacing = 8.dp,
-                    crossAxisSpacing = 8.dp,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
                     allPlayers.forEach { player ->
