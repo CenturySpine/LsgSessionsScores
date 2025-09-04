@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +57,14 @@ fun AreasScreen(
     var showAddZoneDialog by remember { mutableStateOf(false) }
     var editingGameZone by remember { mutableStateOf<GameZone?>(null) }
     var newZoneName by remember { mutableStateOf("") }
+
+    // Observer les changements de ville sélectionnée
+    val selectedCityId by cityViewModel.selectedCityId.collectAsState()
+    
+    // Rafraîchir les GameZones quand la ville change
+    LaunchedEffect(selectedCityId) {
+        gameZoneViewModel.refreshGameZones()
+    }
 
     Scaffold(
         topBar = {
