@@ -3,12 +3,18 @@ package fr.centuryspine.lsgscores.data.preferences
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class AppPreferences(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
         "lsg_scores_prefs",
         Context.MODE_PRIVATE
     )
+
+    private val _selectedCityIdFlow = MutableStateFlow(getSelectedCityId())
+    val selectedCityIdFlow: StateFlow<Long?> = _selectedCityIdFlow.asStateFlow()
 
     companion object {
         private const val KEY_THEME = "selected_theme"
@@ -37,9 +43,7 @@ class AppPreferences(context: Context) {
 
     fun setSelectedCityId(cityId: Long) {
         prefs.edit { putLong(KEY_SELECTED_CITY, cityId) }
+        _selectedCityIdFlow.value = cityId
     }
 
-    fun clearSelectedCity() {
-        prefs.edit { remove(KEY_SELECTED_CITY) }
-    }
 }

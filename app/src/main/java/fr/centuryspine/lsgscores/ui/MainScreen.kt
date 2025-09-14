@@ -338,7 +338,7 @@ fun MainScreen(
                     PlayerListScreen(navController, playerViewModel, cityViewModel)
                 }
                 composable(DrawerNavItem.Holes.route) {
-                    HoleListScreen(navController, holeViewModel, cityViewModel)
+                    HoleListScreen(navController, holeViewModel)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
                     SessionHistoryScreen(sessionViewModel,cityViewModel)
