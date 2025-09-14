@@ -223,6 +223,7 @@
     <string name="add_button">Ajouter</string>
     <string name="cancel_button">Annuler</string>
     <string name="pdf_session_type_prefix">"Type : "</string>
+    <string name="pdf_scoring_mode_prefix">"Mode de scoring : "</string>
     <string name="pdf_comment_prefix">"Commentaires : "</string>
     <string name="share_session_pdf_title">Partager la session en  pdf</string>
     <string name="pdf_generation_failed_toast_message">Echec de la génération PDF</string>

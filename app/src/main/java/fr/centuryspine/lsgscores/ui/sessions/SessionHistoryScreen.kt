@@ -65,6 +65,8 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.viewModelScope
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.session.Session
+import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
+import fr.centuryspine.lsgscores.utils.getLocalizedName
 import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
 import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
 import fr.centuryspine.lsgscores.ui.components.WeatherIcon
@@ -555,6 +557,29 @@ private fun generateAndSharePdf(
             )
             canvas.drawText(
                 pdfData.session.sessionType.toString(),
+                leftColumnX + labelWidth,
+                currentY - textCenterOffsetYPaint,
+                paint
+            )
+            currentY += lineSpacing
+
+            // Scoring Mode
+            val scoringModeRepository = ScoringModeRepository()
+            val scoringMode = try {
+                scoringModeRepository.getAll().first().find { it.id == pdfData.session.scoringModeId }
+            } catch (_: Exception) {
+                null
+            }
+            labelText = "${context.getString(R.string.pdf_scoring_mode_prefix)} "
+            labelWidth = boldPaint.measureText(labelText)
+            canvas.drawText(
+                labelText,
+                leftColumnX,
+                currentY - textCenterOffsetYBoldPaint,
+                boldPaint
+            )
+            canvas.drawText(
+                scoringMode?.getLocalizedName(context) ?: "Unknown",
                 leftColumnX + labelWidth,
                 currentY - textCenterOffsetYPaint,
                 paint

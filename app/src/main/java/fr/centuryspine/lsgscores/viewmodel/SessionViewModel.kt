@@ -485,7 +485,7 @@ class SessionViewModel @Inject constructor(
                     drafts
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // If initialization fails, use default values
             _sessionDrafts.update { drafts ->
                 if (!drafts.containsKey(cityId)) {
@@ -605,4 +605,5 @@ class SessionViewModel @Inject constructor(
             )
         }
     }
+
 }

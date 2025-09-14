@@ -231,6 +231,7 @@ This action cannot be undone.</string>
     <string name="pdf_start_time_prefix" >Start:</string>
     <string name="pdf_end_time_prefix" >end:</string>
     <string name="pdf_session_type_prefix">Type:</string>
+    <string name="pdf_scoring_mode_prefix">Scoring Mode:</string>
     <string name="pdf_comment_prefix">Commentaire:</string>
     <string name="share_session_pdf_title" >Share session PDF</string>
     <string name="pdf_generation_failed_toast_message">PDF generation failed</string>
