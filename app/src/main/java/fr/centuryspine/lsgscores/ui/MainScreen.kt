@@ -104,7 +104,7 @@ fun MainScreen(
     themeViewModel: ThemeViewModel = hiltViewModel(),
     cityViewModel: CityViewModel = hiltViewModel()
 ) {
-    val ongoingSession by sessionViewModel.ongoingSession.collectAsState(initial = null)
+    val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -276,8 +276,8 @@ fun MainScreen(
 
                     bottomItems.forEach { item ->
                         val isEnabled = when (item) {
-                            is BottomNavItem.NewSession -> ongoingSession == null
-                            is BottomNavItem.OngoingSession -> ongoingSession != null
+                            is BottomNavItem.NewSession -> !hasOngoingSessionForCurrentCity
+                            is BottomNavItem.OngoingSession -> hasOngoingSessionForCurrentCity
                             else -> true
                         }
 

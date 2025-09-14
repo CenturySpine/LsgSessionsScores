@@ -1,12 +1,19 @@
 package fr.centuryspine.lsgscores.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lsgscores.data.weather.WeatherInfo
+import com.example.lsgscores.data.weather.WeatherRepository
+import com.example.lsgscores.utils.LocationHelper
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.hole.Hole
 import fr.centuryspine.lsgscores.data.hole.HoleRepository
 import fr.centuryspine.lsgscores.data.holemode.HoleGameMode
 import fr.centuryspine.lsgscores.data.holemode.HoleGameModeRepository
+import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import fr.centuryspine.lsgscores.data.scoring.ScoringMode
 import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
 import fr.centuryspine.lsgscores.data.session.PlayedHole
@@ -24,13 +31,11 @@ import fr.centuryspine.lsgscores.domain.scoring.ScoringCalculatorFactory
 import fr.centuryspine.lsgscores.ui.sessions.PdfScoreDisplayData
 import fr.centuryspine.lsgscores.ui.sessions.SessionPdfData
 import fr.centuryspine.lsgscores.ui.sessions.TeamPdfData
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -44,12 +49,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
-import android.content.Context
-import com.example.lsgscores.data.weather.WeatherRepository
-import com.example.lsgscores.data.weather.WeatherInfo
-import com.example.lsgscores.utils.LocationHelper
-import dagger.hilt.android.qualifiers.ApplicationContext
-import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 
 
 @HiltViewModel
@@ -68,22 +67,52 @@ class SessionViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _selectedCityId = MutableStateFlow<Long?>(null)
+    
+    // Expose the selected city ID as a StateFlow that observes changes from AppPreferences
+    val selectedCityId: StateFlow<Long?> = appPreferences.selectedCityIdFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     var scoringModeId: Int? = null
         private set
 
-    val ongoingSession: StateFlow<Session?> =
-        sessionRepository.getOngoingSessionFlow()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val ongoingSession: StateFlow<Session?> = selectedCityId.flatMapLatest { cityId ->
+        if (cityId != null) {
+            sessionRepository.getOngoingSessionFlowForCity(cityId)
+        } else {
+            // During app startup, selectedCityId might be null temporarily
+            // Return empty flow instead of crashing the app
+            flowOf(null)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    
+    // Check if there's an ongoing session for the currently selected city
+    val hasOngoingSessionForCurrentCity: StateFlow<Boolean> = combine(
+        ongoingSession,
+        selectedCityId
+    ) { session, cityId ->
+        session != null && cityId != null && session.cityId == cityId
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
     private val _error = MutableStateFlow<String?>(null)
 
 
     private val locationHelper by lazy { LocationHelper(context) }
 
-    // State for current session being created
-    private val _sessionDraft = MutableStateFlow(SessionDraft())
-    val sessionDraft: StateFlow<SessionDraft> = _sessionDraft.asStateFlow()
+    // State for session drafts per city
+    private val _sessionDrafts = MutableStateFlow<Map<Long, SessionDraft>>(emptyMap())
+    
+    // Current session draft for the selected city
+    val sessionDraft: StateFlow<SessionDraft> = combine(
+        _sessionDrafts,
+        selectedCityId
+    ) { drafts, cityId ->
+        if (cityId != null) {
+            drafts[cityId] ?: SessionDraft()
+        } else {
+            SessionDraft()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SessionDraft())
     val error: StateFlow<String?> = _error
     val holeGameModes: StateFlow<List<HoleGameMode>> =
         holeGameModeRepository.getAll()
@@ -100,9 +129,13 @@ class SessionViewModel @Inject constructor(
             // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
             val unknownZone =
                 gameZoneDao.getGameZonesByCityId(selectedCity).first().firstOrNull { it.name == "Unknown Zone" }
-            _sessionDraft.update { it.copy(gameZoneId = unknownZone?.id ?: 1L) }
-
-            // Existing logic for ongoing session
+            _sessionDrafts.update { drafts ->
+                drafts + (selectedCity to SessionDraft(gameZoneId = unknownZone?.id ?: 1L))
+            }
+        }
+        
+        // Observe ongoing session separately (non-blocking)
+        viewModelScope.launch {
             ongoingSession.filterNotNull().collect { session ->
                 scoringModeId = session.scoringModeId
             }
@@ -121,7 +154,7 @@ class SessionViewModel @Inject constructor(
                             combine(
                                 playedHoles.map { playedHole ->
                                     combine(
-                                        holeRepository.getHolesByCurrentCity().map { holes ->
+                                        holeRepository.getHolesByCityId(session.cityId).map { holes ->
                                             holes.find { it.id == playedHole.holeId }
                                         },
                                         holeGameModeRepository.getById(playedHole.gameModeId),
@@ -225,7 +258,7 @@ class SessionViewModel @Inject constructor(
     // Add this property to get all completed sessions filtered by selected city
     @OptIn(ExperimentalCoroutinesApi::class)
     val completedSessions: StateFlow<List<Session>> =
-        _selectedCityId.flatMapLatest { cityId ->
+        selectedCityId.flatMapLatest { cityId ->
             if (cityId != null) {
                 sessionRepository.getAll()
                     .map { sessions ->
@@ -239,22 +272,36 @@ class SessionViewModel @Inject constructor(
 
     // Update session type (individual or team)
     fun setSessionType(type: SessionType) {
-        _sessionDraft.update { it.copy(sessionType = type) }
+        val currentCityId = selectedCityId.value ?: return
+        _sessionDrafts.update { drafts ->
+            val currentDraft = drafts[currentCityId] ?: SessionDraft()
+            drafts + (currentCityId to currentDraft.copy(sessionType = type))
+        }
     }
 
     // Update scoring mode
     fun setScoringMode(id: Int) {
-        _sessionDraft.update { it.copy(scoringModeId = id) }
+        val currentCityId = selectedCityId.value ?: return
+        _sessionDrafts.update { drafts ->
+            val currentDraft = drafts[currentCityId] ?: SessionDraft()
+            drafts + (currentCityId to currentDraft.copy(scoringModeId = id))
+        }
     }
 
     // Update game zone
     fun setGameZoneId(id: Long) {
-        _sessionDraft.update { it.copy(gameZoneId = id) }
+        val currentCityId = selectedCityId.value ?: return
+        _sessionDrafts.update { drafts ->
+            val currentDraft = drafts[currentCityId] ?: SessionDraft()
+            drafts + (currentCityId to currentDraft.copy(gameZoneId = id))
+        }
     }
 
     fun validateOngoingSession(onValidated: () -> Unit = {}) {
         viewModelScope.launch {
-            val ongoing = sessionRepository.getOngoingSession()
+            val currentCityId = selectedCityId.value
+                ?: throw Exception("No city selected")
+            val ongoing = sessionRepository.getOngoingSessionForCity(currentCityId)
             if (ongoing != null) {
                 val validated = ongoing.copy(
                     isOngoing = false,
@@ -294,11 +341,13 @@ class SessionViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
 
-            // Check if there is already an ongoing session
-            val ongoing = sessionRepository.getOngoingSession()
+            // Check if there is already an ongoing session for the current city
+            val currentCityId = selectedCityId.value
+                ?: throw Exception("No city selected")
+            val ongoing = sessionRepository.getOngoingSessionForCity(currentCityId)
             if (ongoing != null) {
-                // Session is already ongoing: block creation
-                _error.value = "A session is already ongoing."
+                // Session is already ongoing for this city: block creation
+                _error.value = "A session is already ongoing for this city."
                 onSessionBlocked()
                 return@launch
             }
@@ -313,9 +362,7 @@ class SessionViewModel @Inject constructor(
             }
 
             // Insert new session
-            val draft = _sessionDraft.value
-            val currentCityId = _selectedCityId.value
-                ?: throw Exception("No city selected")
+            val draft = sessionDraft.value
             val session = Session(
                 dateTime = draft.dateTime,
                 sessionType = draft.sessionType,
@@ -441,8 +488,8 @@ class SessionViewModel @Inject constructor(
             // 3. Get PlayedHoles
             val playedHoles = playedHoleRepository.getPlayedHolesForSession(session.id).first()
 
-            // 4. Get HolesDetails
-            val allHolesFromRepo = holeRepository.getHolesByCurrentCity().first()
+            // 4. Get HolesDetails  
+            val allHolesFromRepo = holeRepository.getHolesByCityId(session.cityId).first()
             val holesDetailsMap = mutableMapOf<Long, Hole>()
             playedHoles.forEach { playedHole ->
                 allHolesFromRepo.find { it.id == playedHole.holeId }?.let { holeDetail ->

@@ -35,9 +35,9 @@ class SessionRepository(
 
     suspend fun delete(session: Session) = sessionDao.delete(session)
 
-    suspend fun getOngoingSession(): Session? = sessionDao.getOngoingSession()
+    suspend fun getOngoingSessionForCity(cityId: Long): Session? = sessionDao.getOngoingSessionForCity(cityId)
 
-    fun getOngoingSessionFlow(): Flow<Session?> = sessionDao.getOngoingSessionFlow()
+    fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?> = sessionDao.getOngoingSessionFlowForCity(cityId)
 
     @Transaction
     suspend fun deleteSessionCascade(session: Session) {

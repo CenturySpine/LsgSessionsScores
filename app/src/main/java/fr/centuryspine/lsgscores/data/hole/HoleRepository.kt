@@ -25,6 +25,10 @@ class HoleRepository @Inject constructor(
         }
     }
 
+    fun getHolesByCityId(cityId: Long): Flow<List<Hole>> {
+        return holeDao.getHolesByCityId(cityId)
+    }
+
     suspend fun insertHole(hole: Hole): Long {
         // Validate that GameZone exists
         val gameZone = gameZoneDao.getGameZoneById(hole.gameZoneId)
