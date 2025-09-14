@@ -87,34 +87,52 @@ fun SessionTeamsScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(16.dp)
                         ) {
-                            Text(
-                                text = if (isRandomMode) {
-                                    stringResource(R.string.session_teams_mode_random)
-                                } else {
-                                    stringResource(R.string.session_teams_mode_manual)
-                                },
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Switch(
-                                checked = isRandomMode,
-                                onCheckedChange = {
-                                    isRandomMode = it
-                                    currentSelection = emptySet() // Reset selection when switching modes
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isRandomMode) {
+                                        stringResource(R.string.session_teams_mode_random)
+                                    } else {
+                                        stringResource(R.string.session_teams_mode_manual)
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
-                            )
+                                Switch(
+                                    checked = isRandomMode,
+                                    onCheckedChange = {
+                                        isRandomMode = it
+                                        currentSelection = emptySet() // Reset selection when switching modes
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                        checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                        uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                )
+                            }
+                            
+                            // Error message integrated in the card (only in random mode)
+                            if (isRandomMode) {
+                                Text(
+                                    text = if (currentSelection.isNotEmpty() && currentSelection.size % 2 != 0) {
+                                        stringResource(R.string.session_teams_error_odd_number)
+                                    } else {
+                                        " " // Single space to maintain minimal space
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+
+                                )
+                            }
                         }
                     }
 
@@ -126,16 +144,6 @@ fun SessionTeamsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
-
-                        // Show error if odd number selected
-                        if (currentSelection.isNotEmpty() && currentSelection.size % 2 != 0) {
-                            Text(
-                                text = stringResource(R.string.session_teams_error_odd_number),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
                     }
                 }
                 // Chips selector
