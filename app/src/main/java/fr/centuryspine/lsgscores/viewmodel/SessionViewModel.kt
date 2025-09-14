@@ -63,11 +63,9 @@ class SessionViewModel @Inject constructor(
     private val gameZoneDao: GameZoneDao,
     private val weatherRepository: WeatherRepository,
     @ApplicationContext private val context: Context,
-    private val appPreferences: AppPreferences
+    appPreferences: AppPreferences
 ) : ViewModel() {
 
-    private val _selectedCityId = MutableStateFlow<Long?>(null)
-    
     // Expose the selected city ID as a StateFlow that observes changes from AppPreferences
     val selectedCityId: StateFlow<Long?> = appPreferences.selectedCityIdFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
@@ -108,7 +106,13 @@ class SessionViewModel @Inject constructor(
         selectedCityId
     ) { drafts, cityId ->
         if (cityId != null) {
-            drafts[cityId] ?: SessionDraft()
+            drafts[cityId] ?: run {
+                // If no draft exists for this city, trigger initialization
+                viewModelScope.launch {
+                    initializeDraftForCity(cityId)
+                }
+                SessionDraft() // Return default for now, will be updated when initialization completes
+            }
         } else {
             SessionDraft()
         }
@@ -119,25 +123,19 @@ class SessionViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        viewModelScope.launch {
-            val selectedCity = appPreferences.getSelectedCityId()
-            if(selectedCity == null)
-                throw Exception("No city selected")
-            
-            _selectedCityId.value = selectedCity
-
-            // Initialize sessionDraft with a default gameZoneId (e.g., the 'Unknown Zone')
-            val unknownZone =
-                gameZoneDao.getGameZonesByCityId(selectedCity).first().firstOrNull { it.name == "Unknown Zone" }
-            _sessionDrafts.update { drafts ->
-                drafts + (selectedCity to SessionDraft(gameZoneId = unknownZone?.id ?: 1L))
-            }
-        }
-        
         // Observe ongoing session separately (non-blocking)
         viewModelScope.launch {
             ongoingSession.filterNotNull().collect { session ->
                 scoringModeId = session.scoringModeId
+            }
+        }
+        
+        // Observe city changes and initialize drafts automatically
+        viewModelScope.launch {
+            selectedCityId.filterNotNull().collect { cityId ->
+                if (!_sessionDrafts.value.containsKey(cityId)) {
+                    initializeDraftForCity(cityId)
+                }
             }
         }
     }
@@ -473,8 +471,30 @@ class SessionViewModel @Inject constructor(
         }
     }
 
-    fun updateSelectedCity(cityId: Long?) {
-        _selectedCityId.value = cityId
+    private suspend fun initializeDraftForCity(cityId: Long) {
+        try {
+            val gameZones = gameZoneDao.getGameZonesByCityId(cityId).first()
+            val unknownZone = gameZones.firstOrNull { it.name == "Unknown Zone" }
+            val fallbackGameZoneId = gameZones.firstOrNull()?.id ?: 1L
+            
+            _sessionDrafts.update { drafts ->
+                if (!drafts.containsKey(cityId)) {
+                    val newDraft = SessionDraft(gameZoneId = unknownZone?.id ?: fallbackGameZoneId)
+                    drafts + (cityId to newDraft)
+                } else {
+                    drafts
+                }
+            }
+        } catch (e: Exception) {
+            // If initialization fails, use default values
+            _sessionDrafts.update { drafts ->
+                if (!drafts.containsKey(cityId)) {
+                    drafts + (cityId to SessionDraft(gameZoneId = 1L))
+                } else {
+                    drafts
+                }
+            }
+        }
     }
 
     fun loadSessionPdfData(session: Session): Flow<SessionPdfData> {

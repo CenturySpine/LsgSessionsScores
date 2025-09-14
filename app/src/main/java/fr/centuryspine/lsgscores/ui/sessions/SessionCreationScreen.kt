@@ -66,6 +66,7 @@ fun SessionCreationScreen(
     val sessionDraft by sessionViewModel.sessionDraft.collectAsState()
     val scoringModes by sessionViewModel.scoringModes.collectAsState()
     val gameZones by gameZoneViewModel.gameZones.collectAsState()
+    
 
     // For the dropdown scoring mode
     var showScoringModeInfo by remember { mutableStateOf(false) }

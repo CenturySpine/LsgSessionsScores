@@ -33,29 +33,41 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewModelScope
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.session.Session
-import fr.centuryspine.lsgscores.ui.common.CombinedPhotoPicker
+import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
+import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
+import fr.centuryspine.lsgscores.ui.components.WeatherIcon
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -65,47 +77,17 @@ import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.res.painterResource
-import fr.centuryspine.lsgscores.ui.common.GalleryPhotoPicker
-import fr.centuryspine.lsgscores.ui.common.PhotoPicker
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
-import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
-import fr.centuryspine.lsgscores.ui.components.WeatherIcon
-import fr.centuryspine.lsgscores.viewmodel.CityViewModel
+import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionHistoryScreen(
-    sessionViewModel: SessionViewModel,
-    cityViewModel: CityViewModel
+    sessionViewModel: SessionViewModel
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsState()
     val context = LocalContext.current
     var sessionToDelete by remember { mutableStateOf<Session?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    
-    val selectedCityId by cityViewModel.selectedCityId.collectAsState()
-    
-    LaunchedEffect(selectedCityId) {
-        sessionViewModel.updateSelectedCity(selectedCityId)
-    }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -827,7 +809,7 @@ private fun generateAndSharePdf(
             val footerPaint = Paint().apply {
                 textSize = defaultTextSize
                 textSkewX = -0.25f // Italic
-                color = Color.parseColor("#555555") // Dark gray
+                color = "#555555".toColorInt() // Dark gray
             }
             val footerTextWidth = footerPaint.measureText(footerText)
             val footerX = xMargin + availableWidthForTable - footerTextWidth

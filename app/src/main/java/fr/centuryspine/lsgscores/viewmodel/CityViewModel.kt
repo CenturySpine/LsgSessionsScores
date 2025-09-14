@@ -26,9 +26,13 @@ class CityViewModel @Inject constructor(
     val hasCitySelected: StateFlow<Boolean> = _hasCitySelected.asStateFlow()
 
     init {
-        val cityId = appPreferences.getSelectedCityId()
-        _selectedCityId.value = cityId
-        _hasCitySelected.value = cityId != null
+        // Observe changes to selectedCityIdFlow reactively
+        viewModelScope.launch {
+            appPreferences.selectedCityIdFlow.collect { cityId ->
+                _selectedCityId.value = cityId
+                _hasCitySelected.value = cityId != null
+            }
+        }
     }
 
     fun selectCity(cityId: Long) {

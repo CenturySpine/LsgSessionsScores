@@ -8,9 +8,14 @@ import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneRepository
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,47 +25,28 @@ class GameZoneViewModel @Inject constructor(
     private val appPreferences: AppPreferences
 ) : ViewModel() {
 
-    private val _gameZones = MutableStateFlow<List<GameZone>>(emptyList())
-    val gameZones: StateFlow<List<GameZone>> = _gameZones.asStateFlow()
+    // Reactive game zones that automatically update when city changes
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val gameZones: StateFlow<List<GameZone>> = appPreferences.selectedCityIdFlow
+        .flatMapLatest { cityId ->
+            if (cityId != null) {
+                repository.getGameZonesByCityId(cityId)
+            } else {
+                flowOf(emptyList())
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    private val _hasSelectedCity = MutableStateFlow(false)
-
-    private val _selectedCityId = MutableStateFlow<Long?>(null)
-
-    init {
-        loadGameZones()
-    }
-
-    private fun loadGameZones() {
-        viewModelScope.launch {
-            val cityId = appPreferences.getSelectedCityId()
-            _selectedCityId.value = cityId
-            _hasSelectedCity.value = cityId != null
-
-            if (cityId != null) {
-                repository.getGameZonesByCityId(cityId).collect { zones ->
-                    _gameZones.value = zones
-                }
-            } else {
-                _gameZones.value = emptyList()
-            }
-        }
-    }
-
-    fun refreshGameZones() {
-        loadGameZones()
-    }
-
     fun addGameZone(name: String) {
-        val cityId = appPreferences.getSelectedCityId()
-        if (name.isNotBlank() && cityId != null) {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            val cityId = appPreferences.selectedCityIdFlow.value
+                ?: throw Exception("No city selected")
+            if (name.isNotBlank()) {
                 val newGameZone = GameZone(
                     name = name,
-                    cityId = cityId  // Use selected city instead of default
+                    cityId = cityId
                 )
                 repository.insert(newGameZone)
             }

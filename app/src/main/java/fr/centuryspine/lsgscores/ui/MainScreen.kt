@@ -298,12 +298,23 @@ fun MainScreen(
                                     if (item == BottomNavItem.NewSession && !hasCitySelected) {
                                         showNoCityAlert = true
                                     } else {
-                                        navController.navigate(item.route) {
-                                            popUpTo(navController.graph.startDestinationId) {
-                                                saveState = true
+                                        // For NewSession, force navigation without launchSingleTop to avoid caching issues
+                                        if (item == BottomNavItem.NewSession) {
+                                            navController.navigate(item.route) {
+                                                popUpTo(navController.graph.startDestinationId) {
+                                                    saveState = true
+                                                }
+                                                // Remove launchSingleTop to force recreation
+                                                restoreState = false // Also disable state restoration
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
+                                        } else {
+                                            navController.navigate(item.route) {
+                                                popUpTo(navController.graph.startDestinationId) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
                                         }
                                     }
                                 }
@@ -335,13 +346,13 @@ fun MainScreen(
 
                 // Drawer routes
                 composable(DrawerNavItem.Players.route) {
-                    PlayerListScreen(navController, playerViewModel, cityViewModel)
+                    PlayerListScreen(navController, playerViewModel)
                 }
                 composable(DrawerNavItem.Holes.route) {
                     HoleListScreen(navController, holeViewModel)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
-                    SessionHistoryScreen(sessionViewModel,cityViewModel)
+                    SessionHistoryScreen(sessionViewModel)
                 }
 
                 // Other routes (unchanged)
@@ -349,7 +360,7 @@ fun MainScreen(
                     PlayerFormScreen(navController, playerViewModel)
                 }
                 composable("add_hole") {
-                    HoleFormScreen(navController, holeViewModel, gameZoneViewModel, cityViewModel)
+                    HoleFormScreen(navController, holeViewModel, gameZoneViewModel)
                 }
                 composable(
                     route = "user_detail/{userId}",
