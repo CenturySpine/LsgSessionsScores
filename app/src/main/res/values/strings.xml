@@ -211,12 +211,10 @@ This action cannot be undone.</string>
     <string name="photo_picker_gallery_description">Choose from gallery</string>
 
     <!-- Scoring Modes -->
-    <string name="scoring_mode_classic_name">Classic</string>
-    <string name="scoring_mode_classic_description">Each player\'s or team\'s score is the total number of strokes. The lowest total wins.</string>
-    <string name="scoring_mode_strict_name">Strict</string>
-    <string name="scoring_mode_strict_description">On each hole, the player or team with the lowest unique number of strokes scores 1 point. All others score 0 points.</string>
-    <string name="scoring_mode_no_second_place_name">No second place</string>
-    <string name="scoring_mode_no_second_place_description">If a single player or team has the lowest number of strokes, they get 3 points and others get 0. If multiple tie for lowest, each gets 2 points and others get 0.</string>
+    <string name="scoring_mode_stroke_play_name">Stroke Play</string>
+    <string name="scoring_mode_stroke_play_description">Each player\'s or team\'s score is the total number of strokes. The lowest total wins.</string>
+    <string name="scoring_mode_match_play_name">Match Play</string>
+    <string name="scoring_mode_match_play_description">On each hole, the player or team with the lowest unique number of strokes scores 1 point. All others score 0 points.</string>
     <string name="scoring_mode_redistribution_name">Redistribution</string>
     <string name="scoring_mode_redistribution_description">If a single player is first, they get 2 points and a solo second gets 1 point. If two tie for first, they get 1 point each and a solo second gets 1 point. Three or more tied for first: nobody gets any points.</string>
     <string name="scoring_mode_info_title">Scoring Mode Information</string>

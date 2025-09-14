@@ -8,21 +8,16 @@ class ScoringModeRepository {
     private val scoringModes = listOf(
         ScoringMode(
             id = 1,
-            name = "Classic (Fewest Strokes Wins)",
+            name = "Stroke Play",
             description = "Each player's or team's score is the total number of strokes. The lowest total wins."
         ),
         ScoringMode(
             id = 2,
-            name = "Strict",
+            name = "Match Play",
             description = "On each hole, the player or team with the lowest unique number of strokes scores 1 point. All others score 0 points."
         ),
         ScoringMode(
             id = 3,
-            name = "No second place",
-            description = "If a single player or team has the lowest number of strokes, they get 3 points and others get 0. If multiple tie for lowest, each gets 2 points and others get 0."
-        ),
-        ScoringMode(
-            id = 4,
             name = "Redistribution",
             description = "If a single player is first, they get 2 points and a solo second gets 1 point. If two tie for first, they get 1 point each and a solo second gets 1 point. Three or more tied for first: nobody gets any points."
         )

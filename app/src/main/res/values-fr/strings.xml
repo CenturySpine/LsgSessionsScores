@@ -195,12 +195,10 @@
     <string name="photo_picker_gallery_description">Choisir depuis la galerie</string>
 
     <!-- Scoring Modes -->
-    <string name="scoring_mode_classic_name">Classique</string>
-    <string name="scoring_mode_classic_description">Le score de chaque joueur ou équipe est le nombre total de coups. Le total le plus bas gagne.</string>
-    <string name="scoring_mode_strict_name">Strict</string>
-    <string name="scoring_mode_strict_description">Sur chaque trou, le joueur ou l\'équipe avec le nombre de coups le plus bas et unique marque 1 point. Tous les autres marquent 0 point.</string>
-    <string name="scoring_mode_no_second_place_name">Pas de seconde place</string>
-    <string name="scoring_mode_no_second_place_description">Si un seul joueur ou équipe a le nombre de coups le plus bas, il obtient 3 points et les autres 0. Si plusieurs sont à égalité pour le plus bas, chacun obtient 2 points et les autres 0.</string>
+    <string name="scoring_mode_stroke_play_name">Stroke Play</string>
+    <string name="scoring_mode_stroke_play_description">Le score de chaque joueur ou équipe est le nombre total de coups. Le total le plus bas gagne.</string>
+    <string name="scoring_mode_match_play_name">Match Play</string>
+    <string name="scoring_mode_match_play_description">Sur chaque trou, le joueur ou l\'équipe avec le nombre de coups le plus bas et unique marque 1 point. Tous les autres marquent 0 point.</string>
     <string name="scoring_mode_redistribution_name">Redistribution</string>
     <string name="scoring_mode_redistribution_description">Si un seul joueur est premier, il obtient 2 points et un second seul obtient 1 point. Si deux sont à égalité pour la première place, ils obtiennent 1 point chacun et un second seul obtient 1 point. Trois ou plus à égalité pour la première place : personne n\'obtient de points.</string>
     <string name="scoring_mode_info_title">Information sur le mode de scoring</string>
