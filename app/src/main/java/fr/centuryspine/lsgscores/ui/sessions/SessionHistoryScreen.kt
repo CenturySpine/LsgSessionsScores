@@ -641,8 +641,8 @@ private fun generateAndSharePdf(
 
             // Scores Table
 
-            val teamNameColWidth = availableWidthForTable * 0.25f
-            val totalColWidth = availableWidthForTable * 0.15f
+            val teamNameColWidth = availableWidthForTable * 0.22f
+            val totalColWidth = availableWidthForTable * 0.13f
             val scoreColWidth =
                 (availableWidthForTable - teamNameColWidth - totalColWidth) / numHoles.coerceAtLeast(
                     1
@@ -703,8 +703,10 @@ private fun generateAndSharePdf(
             }
             val maxNameLines = headerCols.maxOfOrNull { it.wrappedNameLines.size } ?: 1
 
-            // Compute dynamic header height: hole name lines + game mode line (smaller)
-            val tableHeaderHeight = lineSpacing * (maxNameLines + 1.2f)
+            // Compute dynamic header height considering both hole name lines + game mode and wrapped left header
+            val teamHeaderInnerWidth = teamNameColWidth - 2 * cellPadding
+            val teamHeaderLines = wrapText(context.getString(R.string.pdf_header_team_players), boldPaint, teamHeaderInnerWidth)
+            val tableHeaderHeight = lineSpacing * maxOf(maxNameLines + 1.2f, teamHeaderLines.size.toFloat())
 
             val tableTopY = yPosition + 4f
 
@@ -713,13 +715,16 @@ private fun generateAndSharePdf(
 
             // Table Headers
             var currentX = xMargin
-            // Leftmost header: Team / Players (centered vertically)
-            canvas.drawText(
-                context.getString(R.string.pdf_header_team_players),
-                currentX + cellPadding,
-                headerCenterY - textCenterOffsetYBoldPaint,
-                boldPaint
-            )
+            // Leftmost header: Team / Players (wrapped like hole names)
+            teamHeaderLines.forEachIndexed { idx, line ->
+                val baseY = tableTopY + lineSpacing * (idx + 1) - textCenterOffsetYBoldPaint
+                canvas.drawText(
+                    line,
+                    currentX + cellPadding,
+                    baseY,
+                    boldPaint
+                )
+            }
             currentX += teamNameColWidth
 
             // Hole columns: draw wrapped hole name lines, then game mode
@@ -748,26 +753,36 @@ private fun generateAndSharePdf(
                 boldPaint
             )
 
-            yPosition = tableTopY + tableHeaderHeight - 4f
+            yPosition = tableTopY + tableHeaderHeight
+            // Draw header bottom line (top border of first row)
             canvas.drawLine(
                 xMargin,
-                yPosition + lineSpacing / 2f,
+                yPosition,
                 xMargin + availableWidthForTable,
-                yPosition + lineSpacing / 2f,
+                yPosition,
                 paint
             )
-            yPosition += lineSpacing
 
             // Table Rows
+            var lastRowHeight = lineSpacing
             pdfData.teams.forEach { teamData ->
                 currentX = xMargin
                 val teamDisplayText = "${teamData.position}. ${teamData.teamName}"
-                canvas.drawText(
-                    teamDisplayText,
-                    currentX + cellPadding,
-                    yPosition - textCenterOffsetYPaint,
-                    paint
-                )
+                val teamCellInnerWidth = teamNameColWidth - 2 * cellPadding
+                val teamLines = wrapText(teamDisplayText, paint, teamCellInnerWidth)
+                val rowHeight = (teamLines.size.coerceAtLeast(1)) * lineSpacing
+                val rowCenterY = yPosition + rowHeight / 2f
+                // Draw team cell as multi-line, vertically centered like scores
+                teamLines.forEachIndexed { idx, line ->
+                    val lineCenterY = rowCenterY + (idx - (teamLines.size - 1) / 2f) * lineSpacing
+                    val baseY = lineCenterY - textCenterOffsetYPaint
+                    canvas.drawText(
+                        line,
+                        currentX + cellPadding,
+                        baseY,
+                        paint
+                    )
+                }
                 currentX += teamNameColWidth
 
                 // Draw scores for each hole
@@ -788,16 +803,16 @@ private fun generateAndSharePdf(
                         canvas.drawText(
                             scoreString,
                             textX,
-                            yPosition - textCenterOffsetYBoldPaint,
+                            rowCenterY - textCenterOffsetYBoldPaint,
                             boldPaint
                         )
                         textX += scoreWidth
-                        canvas.drawText(separator, textX, yPosition - textCenterOffsetYPaint, paint)
+                        canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
                         textX += separatorWidth
                         canvas.drawText(
                             strokesString,
                             textX,
-                            yPosition - textCenterOffsetYItalicPaint,
+                            rowCenterY - textCenterOffsetYItalicPaint,
                             italicPaint
                         )
                     } else {
@@ -806,7 +821,7 @@ private fun generateAndSharePdf(
                         canvas.drawText(
                             scoreText,
                             currentX + (scoreColWidth - textWidth) / 2,
-                            yPosition - textCenterOffsetYPaint,
+                            rowCenterY - textCenterOffsetYPaint,
                             paint
                         )
                     }
@@ -827,30 +842,30 @@ private fun generateAndSharePdf(
                 canvas.drawText(
                     totalScoreString,
                     textX,
-                    yPosition - textCenterOffsetYBoldPaint,
+                    rowCenterY - textCenterOffsetYBoldPaint,
                     boldPaint
                 )
                 textX += totalScoreWidth
-                canvas.drawText(separator, textX, yPosition - textCenterOffsetYPaint, paint)
+                canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
                 textX += separatorWidth
                 canvas.drawText(
                     totalStrokesString,
                     textX,
-                    yPosition - textCenterOffsetYItalicPaint,
+                    rowCenterY - textCenterOffsetYItalicPaint,
                     italicPaint
                 )
 
                 canvas.drawLine(
                     xMargin,
-                    yPosition + lineSpacing / 2f,
+                    yPosition + rowHeight,
                     xMargin + availableWidthForTable,
-                    yPosition + lineSpacing / 2f,
+                    yPosition + rowHeight,
                     paint
                 )
-                yPosition += lineSpacing
+                yPosition += rowHeight
             }
 
-            val tableBottomY = yPosition - lineSpacing / 2f
+            val tableBottomY = yPosition
             var lineX = xMargin + teamNameColWidth
             canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
             (0 until numHoles).forEach { i ->
