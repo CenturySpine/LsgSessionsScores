@@ -706,7 +706,7 @@ private fun generateAndSharePdf(
             // Compute dynamic header height: hole name lines + game mode line (smaller)
             val tableHeaderHeight = lineSpacing * (maxNameLines + 1.2f)
 
-            val tableTopY = yPosition - tableHeaderHeight / 2f + 4f
+            val tableTopY = yPosition + 4f
 
             val headerCenterY = tableTopY + tableHeaderHeight / 2f
             val textCenterOffsetYGameModePaint = (gameModePaint.ascent() + gameModePaint.descent()) / 2f
