@@ -238,7 +238,10 @@ class SessionViewModel @Inject constructor(
                 // Sort based on current scoring mode
                 val sortedStandings = when (scoringModeId) {
                     1 -> standings.sortedBy { it.totalStrokes } // Classic mode: ascending by strokes
-                    else -> standings.sortedByDescending { it.totalScore } // Point modes: descending by score
+                    else -> standings.sortedWith(
+                        compareByDescending<TeamStanding> { it.totalScore }
+                            .thenBy { it.totalStrokes }
+                    ) // Point modes: descending by score, tie-breaker: fewer strokes
                 }
 
                 // Assign positions
@@ -585,8 +588,12 @@ class SessionViewModel @Inject constructor(
                 }
                 else -> {
                     // Point-based modes: sort by total calculated score (descending - highest is best)
+                    // Tie-breaker: team with fewer total strokes ranks higher when points are equal
                     teamDataList
-                        .sortedByDescending { it.totalCalculatedScore }
+                        .sortedWith(
+                            compareByDescending<TeamPdfData> { it.totalCalculatedScore }
+                                .thenBy { it.totalStrokes }
+                        )
                         .mapIndexed { index, teamData ->
                             teamData.copy(position = index + 1)
                         }
