@@ -648,14 +648,72 @@ private fun generateAndSharePdf(
                     1
                 )
 
-            val tableHeaderHeight = lineSpacing * 1.5f // Increased height for two lines
+            // Helper to wrap text within a max width
+            fun wrapText(text: String, p: Paint, maxWidth: Float): List<String> {
+                if (text.isBlank()) return listOf("")
+                val words = text.trim().split(" ")
+                val lines = mutableListOf<String>()
+                var current = StringBuilder()
+                for (word in words) {
+                    val candidate = if (current.isEmpty()) word else current.toString() + " " + word
+                    if (p.measureText(candidate) <= maxWidth) {
+                        if (current.isEmpty()) current.append(word) else { current.append(" "); current.append(word) }
+                    } else {
+                        if (current.isNotEmpty()) {
+                            lines.add(current.toString())
+                            current = StringBuilder(word)
+                        } else {
+                            // Single very long word: break by characters
+                            var start = 0
+                            while (start < word.length) {
+                                var end = word.length
+                                var found = false
+                                while (end > start) {
+                                    if (p.measureText(word.substring(start, end)) <= maxWidth) {
+                                        lines.add(word.substring(start, end))
+                                        start = end
+                                        found = true
+                                        break
+                                    }
+                                    end--
+                                }
+                                if (!found) {
+                                    // Fallback to ensure progress
+                                    val next = (start + 1).coerceAtMost(word.length)
+                                    lines.add(word.substring(start, next))
+                                    start = next
+                                }
+                            }
+                            current = StringBuilder()
+                        }
+                    }
+                }
+                if (current.isNotEmpty()) lines.add(current.toString())
+                return lines
+            }
+
+            // Pre-compute wrapped hole name lines to know header height
+            val headerCellInnerWidth = scoreColWidth - 2 * cellPadding
+            data class HeaderCol(val wrappedNameLines: List<String>, val gameMode: String)
+            val headerCols = pdfData.playedHoles.map { playedHole ->
+                val holeDetail = pdfData.holesDetails[playedHole.holeId]
+                val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
+                val gameModeName = pdfData.holeGameModes[playedHole.gameModeId.toLong()] ?: ""
+                HeaderCol(wrapText(holeName, boldPaint, headerCellInnerWidth), gameModeName)
+            }
+            val maxNameLines = headerCols.maxOfOrNull { it.wrappedNameLines.size } ?: 1
+
+            // Compute dynamic header height: hole name lines + game mode line (smaller)
+            val tableHeaderHeight = lineSpacing * (maxNameLines + 1.2f)
 
             val tableTopY = yPosition - tableHeaderHeight / 2f + 4f
 
+            val headerCenterY = tableTopY + tableHeaderHeight / 2f
+            val textCenterOffsetYGameModePaint = (gameModePaint.ascent() + gameModePaint.descent()) / 2f
 
             // Table Headers
             var currentX = xMargin
-            val headerCenterY = tableTopY + tableHeaderHeight / 2f
+            // Leftmost header: Team / Players (centered vertically)
             canvas.drawText(
                 context.getString(R.string.pdf_header_team_players),
                 currentX + cellPadding,
@@ -664,35 +722,25 @@ private fun generateAndSharePdf(
             )
             currentX += teamNameColWidth
 
-            pdfData.playedHoles.forEach { playedHole ->
-                val holeDetail = pdfData.holesDetails[playedHole.holeId]
-                val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${
-                    context.getString(
-                        R.string.pdf_hole_prefix
-                    )
-                } ${playedHole.position}"
-                val gameModeName = pdfData.holeGameModes[playedHole.gameModeId.toLong()] ?: ""
-
-                val holeNameWidth = boldPaint.measureText(holeName)
-                val gameModeNameWidth = gameModePaint.measureText(gameModeName)
-
-                // Draw Hole Name (top part of the cell)
-                canvas.drawText(
-                    holeName,
-                    currentX + (scoreColWidth - holeNameWidth) / 2,
-                    headerCenterY - (lineSpacing / 4) - textCenterOffsetYBoldPaint,
-                    boldPaint
-                )
-                // Draw Game Mode Name (bottom part of the cell)
-                canvas.drawText(
-                    gameModeName,
-                    currentX + (scoreColWidth - gameModeNameWidth) / 2,
-                    headerCenterY + (lineSpacing / 2) - textCenterOffsetYBoldPaint,
-                    gameModePaint
-                )
-
+            // Hole columns: draw wrapped hole name lines, then game mode
+            headerCols.forEach { col ->
+                // Draw each wrapped line, centered horizontally
+                col.wrappedNameLines.forEachIndexed { idx, line ->
+                    val w = boldPaint.measureText(line)
+                    val baseY = tableTopY + lineSpacing * (idx + 1) - textCenterOffsetYBoldPaint
+                    canvas.drawText(line, currentX + (scoreColWidth - w) / 2f, baseY, boldPaint)
+                }
+                // Draw game mode below the name block
+                val gameModeName = col.gameMode
+                if (gameModeName.isNotBlank()) {
+                    val w2 = gameModePaint.measureText(gameModeName)
+                    val baseY2 = tableTopY + lineSpacing * (maxNameLines + 0.9f) - textCenterOffsetYGameModePaint
+                    canvas.drawText(gameModeName, currentX + (scoreColWidth - w2) / 2f, baseY2, gameModePaint)
+                }
                 currentX += scoreColWidth
             }
+
+            // Total header
             canvas.drawText(
                 context.getString(R.string.pdf_header_total),
                 currentX + (totalColWidth - boldPaint.measureText(context.getString(R.string.pdf_header_total))) / 2,
