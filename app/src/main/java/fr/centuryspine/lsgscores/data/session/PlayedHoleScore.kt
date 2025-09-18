@@ -2,8 +2,10 @@ package fr.centuryspine.lsgscores.data.session
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "played_hole_scores")
+@Serializable
 data class PlayedHoleScore(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

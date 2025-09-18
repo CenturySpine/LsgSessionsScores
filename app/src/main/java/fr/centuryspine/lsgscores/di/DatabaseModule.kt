@@ -20,6 +20,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import fr.centuryspine.lsgscores.data.Migrations
 import fr.centuryspine.lsgscores.data.city.CityDao
+import io.github.jan.supabase.SupabaseClient
 
 
 @Module
@@ -41,30 +42,30 @@ object DatabaseModule {
     }
 
     @Provides
-    fun providePlayerDao(database: AppDatabase): PlayerDao = database.userDao()
+    fun providePlayerDao(supabase: SupabaseClient): PlayerDao = fr.centuryspine.lsgscores.data.player.PlayerDaoSupabase(supabase)
 
     @Provides
-    fun provideHoleDao(database: AppDatabase): HoleDao = database.holeDao()
+    fun provideHoleDao(supabase: SupabaseClient): HoleDao = fr.centuryspine.lsgscores.data.hole.HoleDaoSupabase(supabase)
 
     @Provides
-    fun provideSessionDao(database: AppDatabase): SessionDao = database.sessionDao()
+    fun provideSessionDao(supabase: SupabaseClient): SessionDao = fr.centuryspine.lsgscores.data.session.SessionDaoSupabase(supabase)
 
     @Provides
-    fun provideScoringModeDao(database: AppDatabase): ScoringModeDao = database.scoringModeDao()
+    fun provideScoringModeDao(supabase: SupabaseClient): ScoringModeDao = fr.centuryspine.lsgscores.data.scoring.ScoringModeDaoSupabase(supabase)
 
 
     @Provides
-    fun provideTeamDao(database: AppDatabase): TeamDao = database.teamDao()
+    fun provideTeamDao(supabase: SupabaseClient): TeamDao = fr.centuryspine.lsgscores.data.session.TeamDaoSupabase(supabase)
 
     @Provides
-    fun providePlayedHoleDao(database: AppDatabase): PlayedHoleDao = database.playedHoleDao()
+    fun providePlayedHoleDao(supabase: SupabaseClient): PlayedHoleDao = fr.centuryspine.lsgscores.data.session.PlayedHoleDaoSupabase(supabase)
 
     @Provides
-    fun providePlayedHoleScoreDao(database: AppDatabase): PlayedHoleScoreDao = database.playedHoleScoreDao()
+    fun providePlayedHoleScoreDao(supabase: SupabaseClient): PlayedHoleScoreDao = fr.centuryspine.lsgscores.data.session.PlayedHoleScoreDaoSupabase(supabase)
 
     @Provides
-    fun provideGameZoneDao(database: AppDatabase): GameZoneDao = database.gameZoneDao()
+    fun provideGameZoneDao(supabase: SupabaseClient): GameZoneDao = fr.centuryspine.lsgscores.data.gamezone.GameZoneDaoSupabase(supabase)
 
     @Provides
-    fun provideCityDao(database: AppDatabase): CityDao = database.cityDao()
+    fun provideCityDao(supabase: SupabaseClient): CityDao = fr.centuryspine.lsgscores.data.city.CityDaoSupabase(supabase)
 }
