@@ -23,9 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -50,10 +52,35 @@ fun PlayerListScreen(
         lifecycle = LocalLifecycleOwner.current.lifecycle,
         initialValue = emptyList()
     )
-    val sortedPlayers = remember(users) { users.sortedBy { it.name } }
+
+    // Local list that mirrors the Flow and can be updated optimistically after deletions
+    val localPlayers = remember { mutableStateListOf<Player>() }
+
+    // Keep local list in sync with source whenever source changes (e.g., city switch)
+    androidx.compose.runtime.LaunchedEffect(users) {
+        localPlayers.clear()
+        localPlayers.addAll(users.sortedBy { it.name })
+    }
+
     var playerToDelete by remember { mutableStateOf<Player?>(null) }
     var showDialog by remember { mutableStateOf(false) }
-        
+
+    // Handle return from detail screen: remove deleted player id if provided
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val deletedIdFlow = remember(savedStateHandle) {
+        savedStateHandle?.getStateFlow("deletedPlayerId", -1L)
+    }
+    val deletedPlayerId = deletedIdFlow?.collectAsStateWithLifecycle(
+        lifecycle = LocalLifecycleOwner.current.lifecycle,
+        initialValue = -1L
+    )?.value ?: -1L
+
+    androidx.compose.runtime.LaunchedEffect(deletedPlayerId) {
+        if (deletedPlayerId > 0) {
+            localPlayers.removeAll { it.id == deletedPlayerId }
+            savedStateHandle?.set("deletedPlayerId", -1L)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -69,7 +96,7 @@ fun PlayerListScreen(
             contentPadding = padding,
             modifier = Modifier.fillMaxSize()
         ) {
-            items(sortedPlayers) { player ->
+            items(localPlayers, key = { it.id }) { player ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -121,7 +148,11 @@ fun PlayerListScreen(
             text = { Text(stringResource(R.string.player_list_dialog_message, playerToDelete!!.name)) },
             confirmButton = {
                 TextButton(onClick = {
-                    playerViewModel.deletePlayer(playerToDelete!!)
+                    val toRemove = playerToDelete!!
+                    playerViewModel.deletePlayer(toRemove) {
+                        // Remove locally only on successful deletion
+                        localPlayers.removeAll { it.id == toRemove.id }
+                    }
                     showDialog = false
                 }) { Text(stringResource(R.string.player_list_dialog_button_delete)) }
             },

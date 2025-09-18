@@ -28,9 +28,9 @@ class PlayerViewModel @Inject constructor(
             repository.updatePlayer(player)
         }
     }
-    fun deletePlayer(player: Player) {
+    fun deletePlayer(player: Player, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            // Delete the photo file if the path is not null or empty
+            // Delete the local photo file if the path is not null or empty
             player.photoUri?.let { photoPath ->
                 try {
                     val file = File(photoPath)
@@ -38,10 +38,15 @@ class PlayerViewModel @Inject constructor(
                         file.delete()
                     }
                 } catch (_: Exception) {
-                    // Log or handle error if needed
+                    // Ignore local file delete errors
                 }
             }
-            repository.deletePlayer(player)
+            try {
+                repository.deletePlayer(player)
+                onSuccess()
+            } catch (_: Exception) {
+                // Swallow for now; could expose error callback in the future
+            }
         }
     }
 

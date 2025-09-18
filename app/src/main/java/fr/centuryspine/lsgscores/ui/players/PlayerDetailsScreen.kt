@@ -327,9 +327,12 @@ fun PlayerDetailScreen(
             text = { Text(stringResource(R.string.player_detail_dialog_message)) },
             confirmButton = {
                 TextButton(onClick = {
-                    playerViewModel.deletePlayer(user)
                     showDeleteDialog = false
-                    navController.popBackStack()
+                    playerViewModel.deletePlayer(user) {
+                        // Notify list screen to refresh/remove locally and navigate back
+                        navController.previousBackStackEntry?.savedStateHandle?.set("deletedPlayerId", user.id)
+                        navController.popBackStack()
+                    }
                 }) { Text(stringResource(R.string.player_detail_dialog_button_delete)) }
             },
             dismissButton = {
