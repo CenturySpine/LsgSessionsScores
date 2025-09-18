@@ -176,8 +176,8 @@ fun PlayerDetailScreen(
                         // Show edited photo or current photo
                         val photoToShow = editedPhotoPath ?: user.photoUri
                         if (!photoToShow.isNullOrBlank()) {
-                            AsyncImage(
-                                model = photoToShow,
+                            fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                url = photoToShow!!,
                                 contentDescription = stringResource(R.string.player_detail_photo_description),
                                 modifier = Modifier
                                     .size(400.dp)
@@ -269,8 +269,8 @@ fun PlayerDetailScreen(
 
                     // Photo below the name
                     if (!user.photoUri.isNullOrBlank()) {
-                        AsyncImage(
-                            model = user.photoUri,
+                        fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                            url = user.photoUri!!,
                             contentDescription = stringResource(R.string.player_detail_photo_description),
                             modifier = Modifier
                                 .size(400.dp)

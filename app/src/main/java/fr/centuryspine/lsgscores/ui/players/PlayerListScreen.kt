@@ -81,8 +81,8 @@ fun PlayerListScreen(
                 ) {
 
                     if (!player.photoUri.isNullOrBlank()) {
-                        AsyncImage(
-                            model = player.photoUri,
+                        fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                            url = player.photoUri!!,
                             contentDescription = stringResource(R.string.player_list_photo_description),
                             modifier = Modifier.size(48.dp)
                         )

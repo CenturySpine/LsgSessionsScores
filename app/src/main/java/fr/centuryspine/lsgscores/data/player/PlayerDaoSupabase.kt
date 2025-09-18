@@ -26,6 +26,10 @@ class PlayerDaoSupabase @Inject constructor(
         return supabase.postgrest["players"].select().decodeList<Player>()
     }
 
+    override suspend fun getById(id: Long): Player? {
+        return supabase.postgrest["players"].select { filter { eq("id", id) } }.decodeList<Player>().firstOrNull()
+    }
+
     override fun insert(player: Player): Long = runBlocking {
         val inserted = supabase.postgrest["players"].insert(player).decodeSingle<Player>()
         inserted.id

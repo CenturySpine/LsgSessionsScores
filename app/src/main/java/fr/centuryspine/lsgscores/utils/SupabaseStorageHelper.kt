@@ -11,8 +11,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import fr.centuryspine.lsgscores.BuildConfig
 import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
 import java.util.UUID
 
 @Singleton
@@ -23,17 +21,53 @@ class SupabaseStorageHelper @Inject constructor(
     private val playersBucket: String = BuildConfig.SUPABASE_BUCKET_PLAYERS
     private val holesBucket: String = BuildConfig.SUPABASE_BUCKET_HOLES
 
+    // Normalize bucket names to lowercase to match Supabase REST endpoints (case-sensitive)
+    private val playersBucketName = playersBucket.lowercase()
+    private val holesBucketName = holesBucket.lowercase()
+
     suspend fun uploadPlayerPhoto(playerId: Long, uri: Uri): String {
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
         val path = "player_${UUID.randomUUID()}.$ext"
-        return uploadToBucket(uri, playersBucket, path)
+        return uploadToBucket(uri, playersBucketName, path)
     }
 
     suspend fun uploadHolePhoto(holeId: Long, type: PhotoType, uri: Uri): String {
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
         val segment = when (type) { PhotoType.START -> "start"; PhotoType.END -> "end" }
         val path = "hole_${segment}_${UUID.randomUUID()}.$ext"
-        return uploadToBucket(uri, holesBucket, path)
+        return uploadToBucket(uri, holesBucketName, path)
+    }
+
+    suspend fun deletePlayerPhotoByUrl(publicUrl: String): Boolean {
+        return deleteByPublicUrl(publicUrl, playersBucketName)
+    }
+
+    suspend fun deleteHolePhotoByUrl(publicUrl: String): Boolean {
+        return deleteByPublicUrl(publicUrl, holesBucketName)
+    }
+
+    private suspend fun deleteByPublicUrl(publicUrl: String, expectedBucket: String): Boolean {
+        // Supabase public URL format: <base>/storage/v1/object/public/<bucket>/<path>
+        // We only delete if URL clearly targets our expected bucket.
+        return try {
+            val uri = Uri.parse(publicUrl)
+            val path = uri.path ?: return false
+            val marker = "/storage/v1/object/public/"
+            val idx = path.indexOf(marker)
+            if (idx == -1) return false
+            val after = path.substring(idx + marker.length) // <bucket>/<path>
+            val firstSlash = after.indexOf('/')
+            if (firstSlash <= 0) return false
+            val bucketInUrl = after.substring(0, firstSlash)
+            val objectPath = after.substring(firstSlash + 1)
+            if (!bucketInUrl.equals(expectedBucket, ignoreCase = true) || objectPath.isBlank()) return false
+            val bucketRef = client.storage.from(expectedBucket) // always use normalized expected bucket
+            // Try delete single path; if unsupported, this will throw and we return false
+            bucketRef.delete(objectPath)
+            true
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     private suspend fun uploadToBucket(uri: Uri, bucket: String, path: String): String {

@@ -11,12 +11,15 @@ interface PlayerDao {
     @Query("SELECT * FROM players")
     suspend fun getAll(): List<Player>
 
+    @Query("SELECT * FROM players WHERE id = :id")
+    suspend fun getById(id: Long): Player?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-     fun insert(player: Player): Long
+    fun insert(player: Player): Long
 
     @Update
-     fun update(player: Player)
+    fun update(player: Player)
 
     @Delete
-     fun delete(player: Player)
+    fun delete(player: Player)
 }

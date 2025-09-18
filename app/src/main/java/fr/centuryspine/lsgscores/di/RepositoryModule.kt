@@ -21,6 +21,7 @@ import dagger.hilt.components.SingletonComponent
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneRepository
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
+import fr.centuryspine.lsgscores.utils.SupabaseStorageHelper
 import javax.inject.Singleton
 
 @Module
@@ -31,9 +32,10 @@ object RepositoryModule {
     @Singleton
     fun providePlayerRepository(
         playerDao: PlayerDao,
-        appPreferences: AppPreferences
+        appPreferences: AppPreferences,
+        storageHelper: SupabaseStorageHelper
     ): PlayerRepository {
-        return PlayerRepository(playerDao, appPreferences)
+        return PlayerRepository(playerDao, appPreferences, storageHelper)
     }
 
     @Provides
@@ -41,9 +43,10 @@ object RepositoryModule {
     fun provideHoleRepository(
         holeDao: HoleDao,
         gameZoneDao: GameZoneDao,
-        appPreferences: AppPreferences
+        appPreferences: AppPreferences,
+        storageHelper: SupabaseStorageHelper
     ): HoleRepository {
-        return HoleRepository(holeDao, gameZoneDao, appPreferences)
+        return HoleRepository(holeDao, gameZoneDao, appPreferences, storageHelper)
     }
 
     @Provides

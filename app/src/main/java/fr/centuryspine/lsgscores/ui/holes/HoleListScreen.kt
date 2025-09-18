@@ -80,8 +80,8 @@ fun HoleListScreen(
                     Spacer(modifier = Modifier.weight(1f))
 
                     if (!holeItem.startPhotoUri.isNullOrBlank()) {
-                        AsyncImage(
-                            model = holeItem.startPhotoUri,
+                        fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                            url = holeItem.startPhotoUri!!,
                             contentDescription = stringResource(R.string.hole_list_photo_description),
                             modifier = Modifier.size(48.dp)
                         )
@@ -93,8 +93,8 @@ fun HoleListScreen(
                         )
                     }
                     if (!holeItem.endPhotoUri.isNullOrBlank()) {
-                        AsyncImage(
-                            model = holeItem.endPhotoUri,
+                        fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                            url = holeItem.endPhotoUri!!,
                             contentDescription = stringResource(R.string.hole_list_photo_description),
                             modifier = Modifier.size(48.dp)
                         )

@@ -171,8 +171,8 @@ fun SessionTeamsScreen(
                             label = { Text(player.name) },
                             leadingIcon = {
                                 if (player.photoUri != null) {
-                                    AsyncImage(
-                                        model = player.photoUri,
+                                    fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                        url = player.photoUri!!,
                                         contentDescription = player.name,
                                         modifier = Modifier.size(24.dp)
                                     )
@@ -274,8 +274,8 @@ fun SessionTeamsScreen(
                                                 label = { Text(player.name) },
                                                 leadingIcon = {
                                                     if (player.photoUri != null) {
-                                                        AsyncImage(
-                                                            model = player.photoUri,
+                                                        fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                                            url = player.photoUri!!,
                                                             contentDescription = player.name,
                                                             modifier = Modifier.size(20.dp)
                                                         )

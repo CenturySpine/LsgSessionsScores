@@ -155,8 +155,8 @@ fun HoleDetailScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 if (!editedStartPhoto.isNullOrBlank()) {
-                                    AsyncImage(
-                                        model = editedStartPhoto,
+                                    fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                        url = editedStartPhoto!!,
                                         contentDescription = stringResource(R.string.hole_list_photo_description),
                                         modifier = Modifier.fillMaxWidth()
                                     )
@@ -173,8 +173,8 @@ fun HoleDetailScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 if (!editedEndPhoto.isNullOrBlank()) {
-                                    AsyncImage(
-                                        model = editedEndPhoto,
+                                    fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                        url = editedEndPhoto!!,
                                         contentDescription = stringResource(R.string.hole_list_photo_description),
                                         modifier = Modifier.fillMaxWidth()
                                     )
@@ -287,8 +287,8 @@ fun HoleDetailScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             if (!currentHole.startPhotoUri.isNullOrBlank()) {
-                                AsyncImage(
-                                    model = currentHole.startPhotoUri,
+                                fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                    url = currentHole.startPhotoUri!!,
                                     contentDescription = stringResource(R.string.hole_list_photo_description),
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -302,8 +302,8 @@ fun HoleDetailScreen(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             if (!currentHole.endPhotoUri.isNullOrBlank()) {
-                                AsyncImage(
-                                    model = currentHole.endPhotoUri,
+                                fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                    url = currentHole.endPhotoUri!!,
                                     contentDescription = stringResource(R.string.hole_list_photo_description),
                                     modifier = Modifier.fillMaxWidth()
                                 )
