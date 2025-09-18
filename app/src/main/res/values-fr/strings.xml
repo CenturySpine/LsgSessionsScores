@@ -56,7 +56,7 @@
     <string name="player_detail_photo_description">Photo du joueur</string>
     <string name="player_detail_default_icon_description">Icône de joueur par défaut</string>
     <string name="player_detail_label_name">Nom</string>
-    <string name="player_detail_button_save">Enregistrer</string>
+    <string name="player_detail_button_save">Sauvegarder</string>
     <string name="player_detail_button_cancel">Annuler</string>
     <string name="player_detail_button_back">Retour</string>
     <string name="player_detail_button_edit">Modifier</string>
@@ -65,6 +65,13 @@
     <string name="player_detail_dialog_message">Êtes-vous sûr de vouloir supprimer ce joueur ?</string>
     <string name="player_detail_dialog_button_delete">Supprimer</string>
     <string name="player_detail_dialog_button_cancel">Annuler</string>
+
+    <!-- HoleDetailScreen (Delete) -->
+    <string name="hole_detail_button_delete">Supprimer</string>
+    <string name="hole_detail_dialog_title">Supprimer le trou</string>
+    <string name="hole_detail_dialog_message">Êtes-vous sûr de vouloir supprimer ce trou ?</string>
+    <string name="hole_detail_dialog_button_delete">Supprimer</string>
+    <string name="hole_detail_dialog_button_cancel">Annuler</string>
 
     <!-- HoleListScreen -->
     <string name="hole_list_fab_add">+</string>

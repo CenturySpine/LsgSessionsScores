@@ -2,7 +2,9 @@
 
 package fr.centuryspine.lsgscores.ui.holes
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.GolfCourse
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,6 +56,8 @@ fun HoleDetailScreen(
     holeViewModel: HoleViewModel = hiltViewModel()
 ) {
     val hole by holeViewModel.getHoleById(holeId ?: 0).collectAsState(initial = null)
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     // Edit state
     var isEditing by remember { mutableStateOf(false) }
@@ -72,137 +80,115 @@ fun HoleDetailScreen(
     }
 
     Scaffold { padding ->
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            hole?.let { currentHole ->
-                // Name
-                if (isEditing) {
-                    OutlinedTextField(
-                        value = editedName,
-                        onValueChange = { editedName = it },
-                        label = { Text(stringResource(R.string.hole_form_label_name)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    Text(text = currentHole.name, style = MaterialTheme.typography.headlineMedium)
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Photos row with pickers in edit mode
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+        hole?.let { currentHole ->
+            if (isEditing) {
+                // Edit mode with sticky Save/Cancel, like PlayerDetailsScreen
+                Box(
+                    Modifier
+                        .padding(padding)
+                        .fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        if (!editedStartPhoto.isNullOrBlank()) {
-                            AsyncImage(
-                                model = editedStartPhoto,
-                                contentDescription = stringResource(R.string.hole_list_photo_description),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Rounded.GolfCourse,
-                                contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
-                                modifier = Modifier
-                                    .size(128.dp)
-                            )
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
+                            .padding(bottom = 88.dp) // room for sticky buttons
+                    ) {
+                        // Name
+                        OutlinedTextField(
+                            value = editedName,
+                            onValueChange = { editedName = it },
+                            label = { Text(stringResource(R.string.hole_form_label_name)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Photos + pickers
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                if (!editedStartPhoto.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = editedStartPhoto,
+                                        contentDescription = stringResource(R.string.hole_list_photo_description),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Rounded.GolfCourse,
+                                        contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
+                                        modifier = Modifier.size(128.dp)
+                                    )
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                CombinedPhotoPicker(onImagePicked = { path -> editedStartPhoto = path })
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                if (!editedEndPhoto.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = editedEndPhoto,
+                                        contentDescription = stringResource(R.string.hole_list_photo_description),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Rounded.GolfCourse,
+                                        contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
+                                        modifier = Modifier.size(128.dp)
+                                    )
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                CombinedPhotoPicker(onImagePicked = { path -> editedEndPhoto = path })
+                            }
                         }
-                        if (isEditing) {
-                            Spacer(Modifier.height(8.dp))
-                            CombinedPhotoPicker(
-                                onImagePicked = { path -> editedStartPhoto = path }
-                            )
-                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Description
+                        OutlinedTextField(
+                            value = editedDescription,
+                            onValueChange = { editedDescription = it },
+                            label = { Text(stringResource(R.string.hole_form_label_description)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 4
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Distance
+                        OutlinedTextField(
+                            value = editedDistance,
+                            onValueChange = { editedDistance = it.filter { c -> c.isDigit() } },
+                            label = { Text(stringResource(R.string.hole_form_label_distance)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Par
+                        OutlinedTextField(
+                            value = editedPar,
+                            onValueChange = { editedPar = it.filter { c -> c.isDigit() } },
+                            label = { Text(stringResource(R.string.hole_form_label_par)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
                     }
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        if (!editedEndPhoto.isNullOrBlank()) {
-                            AsyncImage(
-                                model = editedEndPhoto,
-                                contentDescription = stringResource(R.string.hole_list_photo_description),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Rounded.GolfCourse,
-                                contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
-                                modifier = Modifier
-                                    .size(128.dp)
-                            )
-                        }
-                        if (isEditing) {
-                            Spacer(Modifier.height(8.dp))
-                            CombinedPhotoPicker(
-                                onImagePicked = { path -> editedEndPhoto = path }
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Description
-                if (isEditing) {
-                    OutlinedTextField(
-                        value = editedDescription,
-                        onValueChange = { editedDescription = it },
-                        label = { Text(stringResource(R.string.hole_form_label_description)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 4
-                    )
-                } else {
-                    currentHole.description?.let {
-                        Text(text = it, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Distance
-                if (isEditing) {
-                    OutlinedTextField(
-                        value = editedDistance,
-                        onValueChange = { editedDistance = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.hole_form_label_distance)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                } else {
-                    currentHole.distance?.let {
-                        Text(text = "Distance: $it m", style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Par
-                if (isEditing) {
-                    OutlinedTextField(
-                        value = editedPar,
-                        onValueChange = { editedPar = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.hole_form_label_par)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                } else {
-                    Text(text = "Par: ${currentHole.par}", style = MaterialTheme.typography.bodyLarge)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    OutlinedButton(onClick = { navController.popBackStack() }) {
-                        Text(stringResource(R.string.hole_details_back))
-                    }
-                    if (isEditing) {
-                        Row {
-                            Button(onClick = {
+                    // Sticky Save/Cancel row (centered)
+                    Row(
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Button(
+                            onClick = {
                                 val updatedHole = currentHole.copy(
                                     name = editedName.ifBlank { currentHole.name },
                                     description = editedDescription.takeIf { it.isNotBlank() },
@@ -214,12 +200,15 @@ fun HoleDetailScreen(
                                 holeViewModel.updateHole(updatedHole) {
                                     isEditing = false
                                 }
-                            }) {
-                                Text(stringResource(R.string.hole_details_save))
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(onClick = {
-                                // Revert changes
+                            },
+                            enabled = editedName.isNotBlank()
+                        ) {
+                            Text(stringResource(R.string.hole_details_save))
+                        }
+                        Spacer(Modifier.width(16.dp))
+                        OutlinedButton(
+                            onClick = {
+                                // Revert and exit edit mode
                                 editedName = currentHole.name
                                 editedDescription = currentHole.description ?: ""
                                 editedDistance = currentHole.distance?.toString() ?: ""
@@ -227,19 +216,134 @@ fun HoleDetailScreen(
                                 editedStartPhoto = currentHole.startPhotoUri
                                 editedEndPhoto = currentHole.endPhotoUri
                                 isEditing = false
-                            }) {
-                                Text(stringResource(R.string.hole_details_cancel))
                             }
-                        }
-                    } else {
-                        Button(onClick = { isEditing = true }) {
-                            Text(stringResource(R.string.hole_details_edit))
+                        ) {
+                            Text(stringResource(R.string.hole_details_cancel))
                         }
                     }
                 }
-            } ?: run {
-                Text(text = "Aucun trou sélectionné")
+            } else {
+                // Read-only mode with centered buttons like PlayerDetailsScreen
+                Column(
+                    Modifier
+                        .padding(padding)
+                        .padding(horizontal = 24.dp, vertical = 8.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Name
+                    Text(text = currentHole.name, style = MaterialTheme.typography.headlineMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Photos (no pickers)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            if (!currentHole.startPhotoUri.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = currentHole.startPhotoUri,
+                                    contentDescription = stringResource(R.string.hole_list_photo_description),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Rounded.GolfCourse,
+                                    contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
+                                    modifier = Modifier.size(128.dp)
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            if (!currentHole.endPhotoUri.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = currentHole.endPhotoUri,
+                                    contentDescription = stringResource(R.string.hole_list_photo_description),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Rounded.GolfCourse,
+                                    contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
+                                    modifier = Modifier.size(128.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Description (always shown)
+                    Text(
+                        text = "Description: " + (currentHole.description?.takeIf { it.isNotBlank() }
+                            ?: stringResource(R.string.pdf_not_applicable)),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Distance (always show value or N/A)
+                    Text(
+                        text = "Distance: " + (currentHole.distance?.let { "$it m" }
+                            ?: stringResource(R.string.pdf_not_applicable)),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Par
+                    Text(text = "Par: ${currentHole.par}", style = MaterialTheme.typography.bodyLarge)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Buttons row centered: Back + Edit + Delete
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        OutlinedButton(onClick = { navController.popBackStack() }) {
+                            Text(stringResource(R.string.hole_details_back))
+                        }
+                        Button(onClick = {
+                            // Initialize edited values and enter edit mode
+                            editedName = currentHole.name
+                            editedDescription = currentHole.description ?: ""
+                            editedDistance = currentHole.distance?.toString() ?: ""
+                            editedPar = currentHole.par.toString()
+                            editedStartPhoto = currentHole.startPhotoUri
+                            editedEndPhoto = currentHole.endPhotoUri
+                            isEditing = true
+                        }) {
+                            Text(stringResource(R.string.hole_details_edit))
+                        }
+                        Button(
+                            onClick = { showDeleteDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text(stringResource(R.string.hole_detail_button_delete))
+                        }
+                    }
+                }
             }
+        } ?: run {
+            Text(text = "Aucun trou sélectionné")
         }
+    }
+
+    // Confirmation dialog before deleting the hole
+    if (showDeleteDialog && hole != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.hole_detail_dialog_title)) },
+            text = { Text(stringResource(R.string.hole_detail_dialog_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    hole?.let {
+                        holeViewModel.deleteHole(it)
+                    }
+                    showDeleteDialog = false
+                    navController.popBackStack()
+                }) { Text(stringResource(R.string.hole_detail_dialog_button_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.hole_detail_dialog_button_cancel)) }
+            }
+        )
     }
 }

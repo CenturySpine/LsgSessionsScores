@@ -66,6 +66,13 @@
     <string name="player_detail_dialog_button_delete">Delete</string>
     <string name="player_detail_dialog_button_cancel">Cancel</string>
 
+    <!-- HoleDetailScreen (Delete) -->
+    <string name="hole_detail_button_delete">Delete</string>
+    <string name="hole_detail_dialog_title">Delete Hole</string>
+    <string name="hole_detail_dialog_message">Are you sure you want to delete this hole?</string>
+    <string name="hole_detail_dialog_button_delete">Delete</string>
+    <string name="hole_detail_dialog_button_cancel">Cancel</string>
+
     <!-- HoleListScreen -->
     <string name="hole_list_fab_add">+</string>
     <string name="hole_list_photo_description">Hole photo</string>

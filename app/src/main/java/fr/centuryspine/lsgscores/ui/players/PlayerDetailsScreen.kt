@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -158,14 +159,14 @@ fun PlayerDetailScreen(
                         )
                     }
 
-                    // Sticky Save/Cancel Row
+                    // Sticky Save/Cancel Row (centered)
                     Row(
                         Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
                             .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.Center
                     ) {
                         Button(
                             onClick = {
@@ -183,6 +184,7 @@ fun PlayerDetailScreen(
                         ) {
                             Text(stringResource(R.string.player_detail_button_save))
                         }
+                        Spacer(Modifier.width(16.dp))
                         OutlinedButton(
                             onClick = {
                                 isEditing = false
