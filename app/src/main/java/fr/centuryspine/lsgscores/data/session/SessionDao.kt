@@ -15,6 +15,9 @@ interface SessionDao {
     @Query("SELECT * FROM sessions")
     fun getAll(): Flow<List<Session>>
 
+    @Query("SELECT * FROM sessions")
+    suspend fun getAllList(): List<Session>
+
     @Query("SELECT * FROM sessions WHERE id = :id")
     fun getById(id: Int): Flow<Session?>
 

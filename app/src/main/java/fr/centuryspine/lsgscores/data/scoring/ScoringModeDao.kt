@@ -12,6 +12,9 @@ interface ScoringModeDao {
     @Query("SELECT * FROM scoring_modes")
     fun getAll(): Flow<List<ScoringMode>>
 
+    @Query("SELECT * FROM scoring_modes")
+    suspend fun getAllList(): List<ScoringMode>
+
     @Query("SELECT * FROM scoring_modes WHERE id = :id")
     fun getById(id: Int): Flow<ScoringMode?>
 }

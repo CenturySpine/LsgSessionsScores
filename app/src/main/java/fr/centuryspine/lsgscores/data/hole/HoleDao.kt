@@ -12,6 +12,9 @@ interface HoleDao {
     """)
     fun getHolesByCityId(cityId: Long): Flow<List<Hole>>
 
+    @Query("SELECT * FROM holes")
+    suspend fun getAll(): List<Hole>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(hole: Hole): Long
 

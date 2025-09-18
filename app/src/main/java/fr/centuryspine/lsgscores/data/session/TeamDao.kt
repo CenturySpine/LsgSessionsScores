@@ -23,6 +23,9 @@ interface TeamDao {
     @Query("SELECT * FROM teams WHERE id = :id")
     suspend fun getById(id: Long): Team?
 
+    @Query("SELECT * FROM teams")
+    suspend fun getAll(): List<Team>
+
     /**
      * Delete all teams for a given session.
      */

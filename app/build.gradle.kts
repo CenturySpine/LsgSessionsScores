@@ -1,10 +1,24 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+// Load Supabase config from local.properties
+val localProps = Properties()
+val localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) {
+    localProps.load(localPropsFile.inputStream())
+}
+val supabaseUrl = (localProps.getProperty("supabase.url") ?: "")
+val supabaseAnonKey = (localProps.getProperty("supabase.anonKey") ?: "")
+val supabaseBucketPlayers = (localProps.getProperty("supabase.bucket.players") ?: "players")
+val supabaseBucketHoles = (localProps.getProperty("supabase.bucket.holes") ?: "holes")
 
 android {
     namespace = "fr.centuryspine.lsgscores"
@@ -18,6 +32,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Expose Supabase config to BuildConfig
+        buildConfigField("String", "SUPABASE_URL", "\"${supabaseUrl}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseAnonKey}\"")
+        buildConfigField("String", "SUPABASE_BUCKET_PLAYERS", "\"${supabaseBucketPlayers}\"")
+        buildConfigField("String", "SUPABASE_BUCKET_HOLES", "\"${supabaseBucketHoles}\"")
     }
 
     buildTypes {
@@ -38,6 +58,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
@@ -84,4 +105,11 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // Supabase and Ktor client
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.storage)
+    implementation(libs.supabase.gotrue)
+    implementation(libs.ktor.client.android)
 }

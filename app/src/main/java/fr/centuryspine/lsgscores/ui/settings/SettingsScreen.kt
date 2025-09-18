@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import fr.centuryspine.lsgscores.BuildConfig
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import fr.centuryspine.lsgscores.ui.theme.availableThemes
@@ -58,6 +60,7 @@ import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
 import fr.centuryspine.lsgscores.viewmodel.LanguageOption
 import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
 import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
+import fr.centuryspine.lsgscores.viewmodel.MigrationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,6 +151,14 @@ fun SettingsScreen(
                 }
             }
 
+            if (BuildConfig.DEBUG) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Migration (debug)",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                MigrationDebugSection()
+            }
 
         }
     }
@@ -282,3 +293,42 @@ private fun ColorCircle(
             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
     )
 }
+
+@Composable
+private fun MigrationDebugSection(
+    viewModel: MigrationViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(text = state.lastMessage ?: "Prêt à migrer vos données locales vers Supabase.")
+
+            state.error?.let { err ->
+                Text(text = err, color = Color.Red)
+            }
+
+            state.report?.let { r ->
+                Text(text = "Résultat:")
+                Text(text = "- Villes: ${r.cities}")
+                Text(text = "- Zones de jeu: ${r.gameZones}")
+                Text(text = "- Modes de score: ${r.scoringModes}")
+                Text(text = "- Joueurs: ${r.players}")
+                Text(text = "- Trous: ${r.holes}")
+                Text(text = "- Sessions: ${r.sessions}")
+                Text(text = "- Équipes: ${r.teams}")
+                Text(text = "- Trous joués: ${r.playedHoles}")
+                Text(text = "- Scores: ${r.playedHoleScores}")
+            }
+
+            Button(onClick = { viewModel.runMigration() }, enabled = !state.isRunning) {
+                Text(if (state.isRunning) "Migration en cours…" else "Lancer la migration")
+            }
+
+        }
+    }
+}
+
