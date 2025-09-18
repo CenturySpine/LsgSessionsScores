@@ -47,6 +47,8 @@ import coil.compose.AsyncImage
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.common.CombinedPhotoPicker
 import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +69,48 @@ fun HoleDetailScreen(
     var editedPar by remember { mutableStateOf("") }
     var editedStartPhoto by remember { mutableStateOf<String?>(null) }
     var editedEndPhoto by remember { mutableStateOf<String?>(null) }
+
+    // For swipe navigation between holes (readonly mode only)
+    val holes by holeViewModel.holes.collectAsState(initial = emptyList())
+    val sortedHoles = remember(holes) { holes.sortedBy { it.name } }
+    val currentHoleIndex = remember(sortedHoles, holeId) { sortedHoles.indexOfFirst { it.id == (holeId ?: 0L) } }
+
+    val swipeModifier = if (!isEditing && sortedHoles.size > 1 && currentHoleIndex != -1) {
+        Modifier.pointerInput(currentHoleIndex, sortedHoles.size, isEditing) {
+            var totalDrag = 0f
+            var didNavigate = false
+            detectHorizontalDragGestures(
+                onDragStart = {
+                    totalDrag = 0f
+                    didNavigate = false
+                },
+                onHorizontalDrag = { _, dragAmount ->
+                    totalDrag += dragAmount
+                },
+                onDragEnd = {
+                    if (!didNavigate) {
+                        if (totalDrag > 150f) {
+                            val prevIndex = if (currentHoleIndex == 0) sortedHoles.lastIndex else currentHoleIndex - 1
+                            didNavigate = true
+                            navController.navigate("hole_detail/${sortedHoles[prevIndex].id}") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                            }
+                        } else if (totalDrag < -150f) {
+                            val nextIndex = if (currentHoleIndex == sortedHoles.lastIndex) 0 else currentHoleIndex + 1
+                            didNavigate = true
+                            navController.navigate("hole_detail/${sortedHoles[nextIndex].id}") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                }
+            )
+        }
+    } else {
+        Modifier
+    }
 
     LaunchedEffect(hole) {
         hole?.let {
@@ -228,7 +272,8 @@ fun HoleDetailScreen(
                     Modifier
                         .padding(padding)
                         .padding(horizontal = 24.dp, vertical = 8.dp)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .then(swipeModifier),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Name
