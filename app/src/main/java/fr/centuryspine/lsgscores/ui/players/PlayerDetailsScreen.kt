@@ -47,6 +47,13 @@ import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.common.CombinedPhotoPicker
 import fr.centuryspine.lsgscores.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +72,9 @@ fun PlayerDetailScreen(
     var editedPhotoPath by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
+    // Remember last swipe direction (-1 = left/next, 1 = right/prev, 0 = none)
+    var lastSwipeDirection by remember { mutableStateOf(0) }
+
     // For swipe navigation
     // Sort users by id (or whatever ordering you want)
     val sortedUsers = remember(users) { users.sortedBy { it.name } }
@@ -73,29 +83,71 @@ fun PlayerDetailScreen(
     // Detect swipe gesture only in read-only mode
     val swipeModifier = if (!isEditing && sortedUsers.size > 1 && currentIndex != -1) {
         Modifier.pointerInput(currentIndex, sortedUsers.size, isEditing) {
-            detectHorizontalDragGestures { _, dragAmount ->
-                if (dragAmount > 40) { // Swipe right (previous)
-                    val prevIndex =
-                        if (currentIndex == 0) sortedUsers.lastIndex else currentIndex - 1
-                    navController.navigate("user_detail/${sortedUsers[prevIndex].id}") {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                    }
-                } else if (dragAmount < -40) { // Swipe left (next)
-                    val nextIndex =
-                        if (currentIndex == sortedUsers.lastIndex) 0 else currentIndex + 1
-                    navController.navigate("user_detail/${sortedUsers[nextIndex].id}") {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
+            var totalDrag = 0f
+            var didNavigate = false
+            detectHorizontalDragGestures(
+                onDragStart = {
+                    totalDrag = 0f
+                    didNavigate = false
+                },
+                onHorizontalDrag = { _, dragAmount ->
+                    totalDrag += dragAmount
+                },
+                onDragEnd = {
+                    if (!didNavigate) {
+                        if (totalDrag > 150f) { // Swipe right (previous)
+                            val prevIndex = if (currentIndex == 0) sortedUsers.lastIndex else currentIndex - 1
+                            // Moving to previous: new content should enter from left
+                            lastSwipeDirection = 1
+                            didNavigate = true
+                            navController.navigate("user_detail/${sortedUsers[prevIndex].id}") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                            }
+                        } else if (totalDrag < -150f) { // Swipe left (next)
+                            val nextIndex = if (currentIndex == sortedUsers.lastIndex) 0 else currentIndex + 1
+                            // Moving to next: new content should enter from right
+                            lastSwipeDirection = -1
+                            didNavigate = true
+                            navController.navigate("user_detail/${sortedUsers[nextIndex].id}") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                            }
+                        }
                     }
                 }
-            }
+            )
         }
     } else {
         Modifier
     }
 
     Scaffold { padding ->
+        AnimatedContent(
+            targetState = userId,
+            transitionSpec = {
+                val duration = 260
+                when {
+                    lastSwipeDirection < 0 -> {
+                        (slideInHorizontally(animationSpec = tween(duration)) { it } +
+                                fadeIn(animationSpec = tween(duration))) togetherWith
+                                (slideOutHorizontally(animationSpec = tween(duration)) { -it } +
+                                        fadeOut(animationSpec = tween(duration)))
+                    }
+                    lastSwipeDirection > 0 -> {
+                        (slideInHorizontally(animationSpec = tween(duration)) { -it } +
+                                fadeIn(animationSpec = tween(duration))) togetherWith
+                                (slideOutHorizontally(animationSpec = tween(duration)) { it } +
+                                        fadeOut(animationSpec = tween(duration)))
+                    }
+                    else -> {
+                        fadeIn(animationSpec = tween(duration)) togetherWith fadeOut(animationSpec = tween(duration))
+                    }
+                }
+            },
+            label = "PlayerDetailTransition"
+        ) { targetUserId ->
+        val user = users.find { it.id == targetUserId }
         if (user == null) {
             Box(
                 Modifier
@@ -264,6 +316,7 @@ fun PlayerDetailScreen(
                 }
             }
         }
+    }
     }
 
     // Confirmation dialog before deleting the user
