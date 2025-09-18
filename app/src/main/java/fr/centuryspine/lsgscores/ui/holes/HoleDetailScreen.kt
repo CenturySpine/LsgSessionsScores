@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.GolfCourse
 import androidx.compose.material3.Button
@@ -30,11 +33,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import fr.centuryspine.lsgscores.R
+import fr.centuryspine.lsgscores.ui.common.CombinedPhotoPicker
 import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,81 +50,149 @@ fun HoleDetailScreen(
     holeViewModel: HoleViewModel = hiltViewModel()
 ) {
     val hole by holeViewModel.getHoleById(holeId ?: 0).collectAsState(initial = null)
-    var editedName by remember { mutableStateOf("") }
+
+    // Edit state
     var isEditing by remember { mutableStateOf(false) }
+    var editedName by remember { mutableStateOf("") }
+    var editedDescription by remember { mutableStateOf("") }
+    var editedDistance by remember { mutableStateOf("") }
+    var editedPar by remember { mutableStateOf("") }
+    var editedStartPhoto by remember { mutableStateOf<String?>(null) }
+    var editedEndPhoto by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(hole) {
         hole?.let {
             editedName = it.name
+            editedDescription = it.description ?: ""
+            editedDistance = it.distance?.toString() ?: ""
+            editedPar = it.par.toString()
+            editedStartPhoto = it.startPhotoUri
+            editedEndPhoto = it.endPhotoUri
         }
     }
 
     Scaffold { padding ->
         Column(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            hole?.let {
+            hole?.let { currentHole ->
+                // Name
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedName,
                         onValueChange = { editedName = it },
-                        label = { Text("Nom du trou") },
+                        label = { Text(stringResource(R.string.hole_form_label_name)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
-                    Text(text = it.name, style = MaterialTheme.typography.headlineMedium)
+                    Text(text = currentHole.name, style = MaterialTheme.typography.headlineMedium)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Photos row with pickers in edit mode
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (!it.startPhotoUri.isNullOrBlank()) {
-                        AsyncImage(
-                            model = it.startPhotoUri,
-                            contentDescription = stringResource(R.string.hole_list_photo_description),
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.GolfCourse,
-                            contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
-                            modifier = Modifier
-                                .size(128.dp)
-                                .weight(1f)
-                        )
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (!editedStartPhoto.isNullOrBlank()) {
+                            AsyncImage(
+                                model = editedStartPhoto,
+                                contentDescription = stringResource(R.string.hole_list_photo_description),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.GolfCourse,
+                                contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
+                                modifier = Modifier
+                                    .size(128.dp)
+                            )
+                        }
+                        if (isEditing) {
+                            Spacer(Modifier.height(8.dp))
+                            CombinedPhotoPicker(
+                                onImagePicked = { path -> editedStartPhoto = path }
+                            )
+                        }
                     }
 
-                    if (!it.endPhotoUri.isNullOrBlank()) {
-                        AsyncImage(
-                            model = it.endPhotoUri,
-                            contentDescription = stringResource(R.string.hole_list_photo_description),
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.GolfCourse,
-                            contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
-                            modifier = Modifier
-                                .size(128.dp)
-                                .weight(1f)
-                        )
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (!editedEndPhoto.isNullOrBlank()) {
+                            AsyncImage(
+                                model = editedEndPhoto,
+                                contentDescription = stringResource(R.string.hole_list_photo_description),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.GolfCourse,
+                                contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
+                                modifier = Modifier
+                                    .size(128.dp)
+                            )
+                        }
+                        if (isEditing) {
+                            Spacer(Modifier.height(8.dp))
+                            CombinedPhotoPicker(
+                                onImagePicked = { path -> editedEndPhoto = path }
+                            )
+                        }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
-                it.description?.let {
-                    Text(text = it, style = MaterialTheme.typography.bodyLarge)
-                    Spacer(modifier = Modifier.height(8.dp))
+
+                // Description
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = editedDescription,
+                        onValueChange = { editedDescription = it },
+                        label = { Text(stringResource(R.string.hole_form_label_description)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 4
+                    )
+                } else {
+                    currentHole.description?.let {
+                        Text(text = it, style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
-                it.distance?.let {
-                    Text(text = "Distance: $it m", style = MaterialTheme.typography.bodyLarge)
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Distance
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = editedDistance,
+                        onValueChange = { editedDistance = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.hole_form_label_distance)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                } else {
+                    currentHole.distance?.let {
+                        Text(text = "Distance: $it m", style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
-                Text(text = "Par: ${it.par}", style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Par
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = editedPar,
+                        onValueChange = { editedPar = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.hole_form_label_par)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                } else {
+                    Text(text = "Par: ${currentHole.par}", style = MaterialTheme.typography.bodyLarge)
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -130,17 +203,31 @@ fun HoleDetailScreen(
                     if (isEditing) {
                         Row {
                             Button(onClick = {
-                                hole?.let {
-                                    val updatedHole = it.copy(name = editedName)
-                                    holeViewModel.updateHole(updatedHole) {
-                                        isEditing = false
-                                    }
+                                val updatedHole = currentHole.copy(
+                                    name = editedName.ifBlank { currentHole.name },
+                                    description = editedDescription.takeIf { it.isNotBlank() },
+                                    distance = editedDistance.toIntOrNull(),
+                                    par = editedPar.toIntOrNull() ?: currentHole.par,
+                                    startPhotoUri = editedStartPhoto,
+                                    endPhotoUri = editedEndPhoto
+                                )
+                                holeViewModel.updateHole(updatedHole) {
+                                    isEditing = false
                                 }
                             }) {
                                 Text(stringResource(R.string.hole_details_save))
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Button(onClick = { isEditing = false }) {
+                            Button(onClick = {
+                                // Revert changes
+                                editedName = currentHole.name
+                                editedDescription = currentHole.description ?: ""
+                                editedDistance = currentHole.distance?.toString() ?: ""
+                                editedPar = currentHole.par.toString()
+                                editedStartPhoto = currentHole.startPhotoUri
+                                editedEndPhoto = currentHole.endPhotoUri
+                                isEditing = false
+                            }) {
                                 Text(stringResource(R.string.hole_details_cancel))
                             }
                         }
