@@ -12,18 +12,15 @@ import javax.inject.Singleton
 import fr.centuryspine.lsgscores.BuildConfig
 import java.io.File
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 class SupabaseStorageHelper @Inject constructor(
     private val client: SupabaseClient,
     @ApplicationContext private val context: Context
 ) {
-    private val playersBucket: String = BuildConfig.SUPABASE_BUCKET_PLAYERS
-    private val holesBucket: String = BuildConfig.SUPABASE_BUCKET_HOLES
-
-    // Normalize bucket names to lowercase to match Supabase REST endpoints (case-sensitive)
-    private val playersBucketName = playersBucket.lowercase()
-    private val holesBucketName = holesBucket.lowercase()
+    private val playersBucketName: String = BuildConfig.SUPABASE_BUCKET_PLAYERS
+    private val holesBucketName: String = BuildConfig.SUPABASE_BUCKET_HOLES
 
     suspend fun uploadPlayerPhoto(playerId: Long, uri: Uri): String {
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
@@ -61,7 +58,7 @@ class SupabaseStorageHelper @Inject constructor(
             val bucketInUrl = after.substring(0, firstSlash)
             val objectPath = after.substring(firstSlash + 1)
             if (!bucketInUrl.equals(expectedBucket, ignoreCase = true) || objectPath.isBlank()) return false
-            val bucketRef = client.storage.from(expectedBucket) // always use normalized expected bucket
+            val bucketRef = client.storage.from(expectedBucket)
             // Try delete single path; if unsupported, this will throw and we return false
             bucketRef.delete(objectPath)
             true
@@ -77,7 +74,39 @@ class SupabaseStorageHelper @Inject constructor(
         val bucketRef = client.storage.from(bucket)
         // Upsert to avoid failures if we retry
         bucketRef.upload(path, bytes, upsert = true)
+        // Return a "public" URL; if bucket is private, the UI will generate a signed URL at render time.
         return bucketRef.publicUrl(path)
+    }
+
+    suspend fun getSignedUrlForPublicUrl(url: String, expiresInSeconds: Int = 604800): String? {
+        // Accepts URLs like:
+        // - .../storage/v1/object/public/<bucket>/<path>
+        // - .../storage/v1/object/authenticated/<bucket>/<path>
+        // If URL is already signed (contains "/object/sign/" or token param), returns it as-is.
+        return try {
+            val uri = Uri.parse(url)
+            if ((uri.path ?: "").contains("/storage/v1/object/sign/") || (uri.query ?: "").contains("token=")) {
+                return url
+            }
+            val path = uri.path ?: return null
+            val marker = "/storage/v1/object/"
+            val idx = path.indexOf(marker)
+            if (idx == -1) return null
+            val after = path.substring(idx + marker.length) // e.g., "public/<bucket>/<object>"
+            val firstSlash = after.indexOf('/')
+            if (firstSlash <= 0) return null
+            // visibility segment (public/authenticated) is not needed for signing
+            val afterVisibility = after.substring(firstSlash + 1) // "<bucket>/<object>"
+            val secondSlash = afterVisibility.indexOf('/')
+            if (secondSlash <= 0) return null
+            val bucket = afterVisibility.substring(0, secondSlash)
+            val objectPath = afterVisibility.substring(secondSlash + 1)
+            if (objectPath.isBlank()) return null
+            val bucketRef = client.storage.from(bucket)
+            bucketRef.createSignedUrl(objectPath, expiresInSeconds.seconds)
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     private fun readBytesFromUri(uri: Uri): ByteArray? {

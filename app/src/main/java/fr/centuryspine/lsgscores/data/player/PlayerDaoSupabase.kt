@@ -15,11 +15,15 @@ class PlayerDaoSupabase @Inject constructor(
 ) : PlayerDao {
 
     override fun getPlayersByCityId(cityId: Long): Flow<List<Player>> = flow {
-        val list = supabase.postgrest["players"].select {
-            filter { eq("cityid", cityId) }
-            order("name", Order.ASCENDING)
-        }.decodeList<Player>()
-        emit(list)
+        try {
+            val list = supabase.postgrest["players"].select {
+                filter { eq("cityid", cityId) }
+                order("name", Order.ASCENDING)
+            }.decodeList<Player>()
+            emit(list)
+        } catch (_: Throwable) {
+            emit(emptyList())
+        }
     }
 
     override suspend fun getAll(): List<Player> {
@@ -31,8 +35,19 @@ class PlayerDaoSupabase @Inject constructor(
     }
 
     override fun insert(player: Player): Long = runBlocking {
-        val inserted = supabase.postgrest["players"].insert(player).decodeSingle<Player>()
-        inserted.id
+        try {
+            // Perform insert; ignore body to avoid decode issues when server returns 204 or array
+            supabase.postgrest["players"].insert(player)
+        } catch (_: Throwable) {
+            // Ignore and proceed to fetch by SELECT; network error will surface below if no row found
+        }
+        // Fetch the most recent matching player in this city by name
+        val list = supabase.postgrest["players"].select {
+            filter { eq("name", player.name); eq("cityid", player.cityId) }
+            order("id", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
+        }.decodeList<Player>()
+        val found = list.firstOrNull()
+        found?.id ?: 0L
     }
 
     override fun update(player: Player) {

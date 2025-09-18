@@ -2,17 +2,27 @@ package fr.centuryspine.lsgscores.ui.common
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import fr.centuryspine.lsgscores.utils.SupabaseStorageHelper
 
 /**
  * Small helper to load remote images robustly (crossfade, placeholders).
- * Also normalizes Supabase public URL bucket names to lowercase to avoid 404 when
- * the stored URL contains a capitalized bucket segment (endpoints are case-sensitive).
+ * If the URL points to Supabase Storage and is not already signed, we generate
+ * a signed URL at render time so that private buckets work too.
  */
 @Composable
 fun RemoteImage(
@@ -22,10 +32,34 @@ fun RemoteImage(
     contentScale: ContentScale = ContentScale.Crop,
 ) {
     val context = LocalContext.current
-    val normalized = normalizeSupabasePublicUrl(url)
+
+    var targetUrl by remember(url) { mutableStateOf(url) }
+
+    // If it's a Supabase Storage URL and not yet signed, generate a signed URL
+    LaunchedEffect(url) {
+        val uri = runCatching { Uri.parse(url) }.getOrNull()
+        val path = uri?.path.orEmpty()
+        val isSupabaseStorage = path.contains("/storage/v1/object/")
+        val isAlreadySigned = path.contains("/storage/v1/object/sign/") || (uri?.query.orEmpty().contains("token="))
+        if (isSupabaseStorage && !isAlreadySigned) {
+            val entryPoint = EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                RemoteImageEntryPoint::class.java
+            )
+            val signed = entryPoint.supabaseStorageHelper().getSignedUrlForPublicUrl(url)
+            if (!signed.isNullOrBlank()) {
+                targetUrl = signed
+            } else {
+                targetUrl = url // fallback
+            }
+        } else {
+            targetUrl = url
+        }
+    }
+
     AsyncImage(
         model = ImageRequest.Builder(context)
-            .data(normalized)
+            .data(targetUrl)
             .crossfade(true)
             .build(),
         contentDescription = contentDescription,
@@ -36,29 +70,8 @@ fun RemoteImage(
     )
 }
 
-private fun normalizeSupabasePublicUrl(url: String): String {
-    return try {
-        val uri = Uri.parse(url)
-        val path = uri.path ?: return url
-        val marker = "/storage/v1/object/public/"
-        val idx = path.indexOf(marker)
-        if (idx == -1) return url
-        val prefix = path.substring(0, idx + marker.length)
-        val after = path.substring(idx + marker.length)
-        val firstSlash = after.indexOf('/')
-        if (firstSlash <= 0) return url
-        val bucket = after.substring(0, firstSlash)
-        val objectPath = after.substring(firstSlash + 1)
-        val fixedPath = prefix + bucket.lowercase() + "/" + objectPath
-        Uri.Builder()
-            .scheme(uri.scheme)
-            .authority(uri.authority)
-            .path(fixedPath)
-            .query(uri.query)
-            .fragment(uri.fragment)
-            .build()
-            .toString()
-    } catch (_: Throwable) {
-        url
-    }
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface RemoteImageEntryPoint {
+    fun supabaseStorageHelper(): SupabaseStorageHelper
 }
