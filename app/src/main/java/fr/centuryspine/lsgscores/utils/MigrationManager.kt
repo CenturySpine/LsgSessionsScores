@@ -294,7 +294,7 @@ class MigrationManager @Inject constructor(
                 uriStr
             } else {
                 // Local content/file path: upload to Supabase bucket and return the public URL
-                val remote = storageHelper.uploadPlayerPhoto(playerId, uri)
+                val remote = storageHelper.uploadPlayerPhoto(uri)
                 Log.d(TAG, "[DLOG] player=$playerId photo local -> uploaded: $uriStr -> $remote")
                 remote
             }
@@ -312,7 +312,7 @@ class MigrationManager @Inject constructor(
                 // Already a remote URL: keep as-is
                 uriStr
             } else {
-                storageHelper.uploadHolePhoto(holeId, type, uri)
+                storageHelper.uploadHolePhoto(type, uri)
             }
         } catch (e: Throwable) {
             Log.w(TAG, "Failed to handle hole image from $uriStr: ${e.message}")

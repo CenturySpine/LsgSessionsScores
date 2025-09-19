@@ -3,6 +3,7 @@ package fr.centuryspine.lsgscores.data.player
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -19,6 +20,7 @@ class PlayerDaoSupabase @Inject constructor(
 
     private val refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getPlayersByCityId(cityId: Long): Flow<List<Player>> =
         refreshTrigger
             .onStart { emit(Unit) }
@@ -54,7 +56,7 @@ class PlayerDaoSupabase @Inject constructor(
         // Fetch the most recent matching player in this city by name
         val list = supabase.postgrest["players"].select {
             filter { eq("name", player.name); eq("cityid", player.cityId) }
-            order("id", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
+            order("id", Order.DESCENDING)
         }.decodeList<Player>()
         val found = list.firstOrNull()
         refreshTrigger.tryEmit(Unit)

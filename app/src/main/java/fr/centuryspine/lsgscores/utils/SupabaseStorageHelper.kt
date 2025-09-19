@@ -14,6 +14,7 @@ import fr.centuryspine.lsgscores.BuildConfig
 import java.io.File
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
+import androidx.core.net.toUri
 
 @Singleton
 class SupabaseStorageHelper @Inject constructor(
@@ -23,13 +24,13 @@ class SupabaseStorageHelper @Inject constructor(
     private val playersBucketName: String = BuildConfig.SUPABASE_BUCKET_PLAYERS
     private val holesBucketName: String = BuildConfig.SUPABASE_BUCKET_HOLES
 
-    suspend fun uploadPlayerPhoto(playerId: Long, uri: Uri): String {
+    suspend fun uploadPlayerPhoto(uri: Uri): String {
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
         val path = "player_${UUID.randomUUID()}.$ext"
         return uploadToBucket(uri, playersBucketName, path)
     }
 
-    suspend fun uploadHolePhoto(holeId: Long, type: PhotoType, uri: Uri): String {
+    suspend fun uploadHolePhoto(type: PhotoType, uri: Uri): String {
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
         val segment = when (type) { PhotoType.START -> "start"; PhotoType.END -> "end" }
         val path = "hole_${segment}_${UUID.randomUUID()}.$ext"
@@ -48,24 +49,23 @@ class SupabaseStorageHelper @Inject constructor(
         // Supabase URL format: <base>/storage/v1/object/<visibility>/<bucket>/<path>[?query]
         // Handle both public and authenticated URLs; be robust to query params and case differences.
         return try {
-            val full = publicUrl
             val marker = "/storage/v1/object/"
-            val start = full.indexOf(marker)
+            val start = publicUrl.indexOf(marker)
             if (start == -1) return false
-            val after = full.substring(start + marker.length) // "<visibility>/<bucket>/<object>[?...]"
+            val after = publicUrl.substring(start + marker.length) // "<visibility>/<bucket>/<object>[?...]"
             val firstSlash = after.indexOf('/')
             if (firstSlash <= 0) return false
             val afterVisibility = after.substring(firstSlash + 1) // "<bucket>/<object>[?...]"
             val secondSlash = afterVisibility.indexOf('/')
             if (secondSlash <= 0) return false
-            val bucketInUrl = afterVisibility.substring(0, secondSlash)
+            val bucketInUrl = afterVisibility.take(secondSlash)
             var objectPath = afterVisibility.substring(secondSlash + 1)
             val q = objectPath.indexOf('?')
-            if (q != -1) objectPath = objectPath.substring(0, q)
+            if (q != -1) objectPath = objectPath.take(q)
             objectPath = Uri.decode(objectPath)
             if (!bucketInUrl.equals(expectedBucket, ignoreCase = true) || objectPath.isBlank()) return false
             val bucketRef = client.storage.from(bucketInUrl) // use exact bucket from URL
-            // Try delete single path; if unsupported, this will throw and we return false
+            // Try to delete a single path; if unsupported, this will throw, and we return false
             bucketRef.delete(objectPath)
             true
         } catch (t: Throwable) {
@@ -81,7 +81,7 @@ class SupabaseStorageHelper @Inject constructor(
         val bucketRef = client.storage.from(bucket)
         // Upsert to avoid failures if we retry
         bucketRef.upload(path, bytes, upsert = true)
-        // Return a "public" URL; if bucket is private, the UI will generate a signed URL at render time.
+        // Return a "public" URL; if the bucket is private, the UI will generate a signed URL at render time.
         return bucketRef.publicUrl(path)
     }
 
@@ -91,7 +91,7 @@ class SupabaseStorageHelper @Inject constructor(
         // - .../storage/v1/object/authenticated/<bucket>/<path>
         // If URL is already signed (contains "/object/sign/" or token param), returns it as-is.
         return try {
-            val uri = Uri.parse(url)
+            val uri = url.toUri()
             if ((uri.path ?: "").contains("/storage/v1/object/sign/") || (uri.query ?: "").contains("token=")) {
                 return url
             }
@@ -106,7 +106,7 @@ class SupabaseStorageHelper @Inject constructor(
             val afterVisibility = after.substring(firstSlash + 1) // "<bucket>/<object>"
             val secondSlash = afterVisibility.indexOf('/')
             if (secondSlash <= 0) return null
-            val bucket = afterVisibility.substring(0, secondSlash)
+            val bucket = afterVisibility.take(secondSlash)
             val objectPath = afterVisibility.substring(secondSlash + 1)
             if (objectPath.isBlank()) return null
             val bucketRef = client.storage.from(bucket)
@@ -125,7 +125,7 @@ class SupabaseStorageHelper @Inject constructor(
                 null -> uri.path?.let { p -> File(p).takeIf { it.exists() }?.readBytes() }
                 else -> context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

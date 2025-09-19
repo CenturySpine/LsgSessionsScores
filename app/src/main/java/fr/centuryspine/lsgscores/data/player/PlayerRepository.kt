@@ -40,7 +40,7 @@ class PlayerRepository @Inject constructor(
         val finalPhotoUrl = when {
             player.photoUri.isNullOrBlank() -> null
             isRemoteUrl(player.photoUri) -> player.photoUri
-            else -> storageHelper.uploadPlayerPhoto(0L, Uri.parse(player.photoUri))
+            else -> storageHelper.uploadPlayerPhoto(Uri.parse(player.photoUri))
         }
         playerDao.insert(player.copy(cityId = cityId, photoUri = finalPhotoUrl))
     }
@@ -50,7 +50,7 @@ class PlayerRepository @Inject constructor(
         val newPhotoUrl = when {
             player.photoUri.isNullOrBlank() -> null
             isRemoteUrl(player.photoUri) -> player.photoUri
-            else -> storageHelper.uploadPlayerPhoto(player.id, Uri.parse(player.photoUri))
+            else -> storageHelper.uploadPlayerPhoto(Uri.parse(player.photoUri))
         }
         // Update DB first
         playerDao.update(player.copy(photoUri = newPhotoUrl))

@@ -56,14 +56,14 @@ class HoleRepository @Inject constructor(
                 when {
                     startUri.isNullOrBlank() -> null
                     isRemoteUrl(startUri) -> startUri
-                    else -> storageHelper.uploadHolePhoto(0L, SupabaseStorageHelper.PhotoType.START, Uri.parse(startUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.START, Uri.parse(startUri))
                 }
             }
             val endDeferred = async {
                 when {
                     endUri.isNullOrBlank() -> null
                     isRemoteUrl(endUri) -> endUri
-                    else -> storageHelper.uploadHolePhoto(0L, SupabaseStorageHelper.PhotoType.END, Uri.parse(endUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.END, Uri.parse(endUri))
                 }
             }
             val finalStart = startDeferred.await()
@@ -86,14 +86,14 @@ class HoleRepository @Inject constructor(
                 when {
                     hole.startPhotoUri.isNullOrBlank() -> null
                     isRemoteUrl(hole.startPhotoUri) -> hole.startPhotoUri
-                    else -> storageHelper.uploadHolePhoto(hole.id, SupabaseStorageHelper.PhotoType.START, Uri.parse(hole.startPhotoUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.START, Uri.parse(hole.startPhotoUri))
                 }
             }
             val endDeferred = async {
                 when {
                     hole.endPhotoUri.isNullOrBlank() -> null
                     isRemoteUrl(hole.endPhotoUri) -> hole.endPhotoUri
-                    else -> storageHelper.uploadHolePhoto(hole.id, SupabaseStorageHelper.PhotoType.END, Uri.parse(hole.endPhotoUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.END, Uri.parse(hole.endPhotoUri))
                 }
             }
             Pair(startDeferred.await(), endDeferred.await())
