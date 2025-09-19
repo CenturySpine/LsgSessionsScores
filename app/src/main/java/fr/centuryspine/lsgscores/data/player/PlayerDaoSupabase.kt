@@ -4,7 +4,10 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,17 +17,24 @@ class PlayerDaoSupabase @Inject constructor(
     private val supabase: SupabaseClient
 ) : PlayerDao {
 
-    override fun getPlayersByCityId(cityId: Long): Flow<List<Player>> = flow {
-        try {
-            val list = supabase.postgrest["players"].select {
-                filter { eq("cityid", cityId) }
-                order("name", Order.ASCENDING)
-            }.decodeList<Player>()
-            emit(list)
-        } catch (_: Throwable) {
-            emit(emptyList())
-        }
-    }
+    private val refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    override fun getPlayersByCityId(cityId: Long): Flow<List<Player>> =
+        refreshTrigger
+            .onStart { emit(Unit) }
+            .flatMapLatest {
+                flow {
+                    try {
+                        val list = supabase.postgrest["players"].select {
+                            filter { eq("cityid", cityId) }
+                            order("name", Order.ASCENDING)
+                        }.decodeList<Player>()
+                        emit(list)
+                    } catch (_: Throwable) {
+                        emit(emptyList())
+                    }
+                }
+            }
 
     override suspend fun getAll(): List<Player> {
         return supabase.postgrest["players"].select().decodeList<Player>()
@@ -47,6 +57,7 @@ class PlayerDaoSupabase @Inject constructor(
             order("id", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
         }.decodeList<Player>()
         val found = list.firstOrNull()
+        refreshTrigger.tryEmit(Unit)
         found?.id ?: 0L
     }
 
@@ -56,6 +67,7 @@ class PlayerDaoSupabase @Inject constructor(
                 filter { eq("id", player.id) }
             }
         }
+        refreshTrigger.tryEmit(Unit)
     }
 
     override fun delete(player: Player) {
@@ -64,5 +76,6 @@ class PlayerDaoSupabase @Inject constructor(
                 filter { eq("id", player.id) }
             }
         }
+        refreshTrigger.tryEmit(Unit)
     }
 }
