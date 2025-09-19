@@ -28,8 +28,8 @@ for update to anon
 using (bucket_id in ('Players','Holes'))
 with check (bucket_id in ('Players','Holes'));
 
--- Optional: if you need deletes during migration
--- drop policy if exists "anon can delete players/holes" on storage.objects;
--- create policy "anon can delete players/holes" on storage.objects
--- for delete to anon
--- using (bucket_id in ('Players','Holes'));
+-- Allow anonymous deletions in Players and Holes buckets (requested)
+drop policy if exists "anon can delete players/holes" on storage.objects;
+create policy "anon can delete players/holes" on storage.objects
+for delete to anon
+using (bucket_id in ('Players','Holes'));

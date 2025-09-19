@@ -3,6 +3,7 @@ package fr.centuryspine.lsgscores.utils
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.webkit.MimeTypeMap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
@@ -44,25 +45,31 @@ class SupabaseStorageHelper @Inject constructor(
     }
 
     private suspend fun deleteByPublicUrl(publicUrl: String, expectedBucket: String): Boolean {
-        // Supabase public URL format: <base>/storage/v1/object/public/<bucket>/<path>
-        // We only delete if URL clearly targets our expected bucket.
+        // Supabase URL format: <base>/storage/v1/object/<visibility>/<bucket>/<path>[?query]
+        // Handle both public and authenticated URLs; be robust to query params and case differences.
         return try {
-            val uri = Uri.parse(publicUrl)
-            val path = uri.path ?: return false
-            val marker = "/storage/v1/object/public/"
-            val idx = path.indexOf(marker)
-            if (idx == -1) return false
-            val after = path.substring(idx + marker.length) // <bucket>/<path>
+            val full = publicUrl
+            val marker = "/storage/v1/object/"
+            val start = full.indexOf(marker)
+            if (start == -1) return false
+            val after = full.substring(start + marker.length) // "<visibility>/<bucket>/<object>[?...]"
             val firstSlash = after.indexOf('/')
             if (firstSlash <= 0) return false
-            val bucketInUrl = after.substring(0, firstSlash)
-            val objectPath = after.substring(firstSlash + 1)
+            val afterVisibility = after.substring(firstSlash + 1) // "<bucket>/<object>[?...]"
+            val secondSlash = afterVisibility.indexOf('/')
+            if (secondSlash <= 0) return false
+            val bucketInUrl = afterVisibility.substring(0, secondSlash)
+            var objectPath = afterVisibility.substring(secondSlash + 1)
+            val q = objectPath.indexOf('?')
+            if (q != -1) objectPath = objectPath.substring(0, q)
+            objectPath = Uri.decode(objectPath)
             if (!bucketInUrl.equals(expectedBucket, ignoreCase = true) || objectPath.isBlank()) return false
-            val bucketRef = client.storage.from(expectedBucket)
+            val bucketRef = client.storage.from(bucketInUrl) // use exact bucket from URL
             // Try delete single path; if unsupported, this will throw and we return false
             bucketRef.delete(objectPath)
             true
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
+            Log.w("Storage", "Delete failed for $publicUrl", t)
             false
         }
     }

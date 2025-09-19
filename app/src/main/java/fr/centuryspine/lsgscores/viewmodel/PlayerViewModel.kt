@@ -7,7 +7,6 @@ import fr.centuryspine.lsgscores.data.player.PlayerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,17 +29,6 @@ class PlayerViewModel @Inject constructor(
     }
     fun deletePlayer(player: Player, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            // Delete the local photo file if the path is not null or empty
-            player.photoUri?.let { photoPath ->
-                try {
-                    val file = File(photoPath)
-                    if (file.exists()) {
-                        file.delete()
-                    }
-                } catch (_: Exception) {
-                    // Ignore local file delete errors
-                }
-            }
             try {
                 repository.deletePlayer(player)
                 onSuccess()
