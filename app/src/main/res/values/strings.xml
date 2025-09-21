@@ -329,4 +329,8 @@ This action cannot be undone.</string>
     <string name="settings_account_section_title">Account</string>
     <string name="settings_sign_out_button">Sign out</string>
 
+    <!-- Player linking -->
+    <string name="player_link_this_is_me">This is me</string>
+    <string name="player_linked_to_you">Linked to your account</string>
+
 </resources>

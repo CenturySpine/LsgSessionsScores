@@ -2,39 +2,15 @@
 
 package fr.centuryspine.lsgscores.ui.players
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -42,18 +18,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.common.CombinedPhotoPicker
 import fr.centuryspine.lsgscores.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,8 +40,8 @@ fun PlayerDetailScreen(
     var editedPhotoPath by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    // Remember last swipe direction (-1 = left/next, 1 = right/prev, 0 = none)
-    var lastSwipeDirection by remember { mutableStateOf(0) }
+    // Remember the last swipe direction (-1 = left/next, 1 = right/prev, 0 = none)
+    var lastSwipeDirection by remember { mutableIntStateOf(0) }
 
     // For swipe navigation
     // Sort users by id (or whatever ordering you want)
@@ -173,11 +141,11 @@ fun PlayerDetailScreen(
                             .padding(bottom = 88.dp), // Room for sticky buttons
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Show edited photo or current photo
+                        // Show an edited photo or current photo
                         val photoToShow = editedPhotoPath ?: user.photoUri
                         if (!photoToShow.isNullOrBlank()) {
                             fr.centuryspine.lsgscores.ui.common.RemoteImage(
-                                url = photoToShow!!,
+                                url = photoToShow,
                                 contentDescription = stringResource(R.string.player_detail_photo_description),
                                 modifier = Modifier
                                     .size(400.dp)
@@ -270,7 +238,7 @@ fun PlayerDetailScreen(
                     // Photo below the name
                     if (!user.photoUri.isNullOrBlank()) {
                         fr.centuryspine.lsgscores.ui.common.RemoteImage(
-                            url = user.photoUri!!,
+                            url = user.photoUri,
                             contentDescription = stringResource(R.string.player_detail_photo_description),
                             modifier = Modifier
                                 .size(400.dp)
@@ -289,8 +257,9 @@ fun PlayerDetailScreen(
 
                     Spacer(Modifier.height(32.dp))
 
-                    // Three buttons: Cancel, Edit, Delete
+                    // Action buttons row
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+
                         OutlinedButton(
                             onClick = { navController.popBackStack() }
                         ) {
@@ -313,6 +282,29 @@ fun PlayerDetailScreen(
                             Text(stringResource(R.string.player_detail_button_delete))
                         }
                     }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // Link the current authenticated user to this player
+                    run {
+                        val authViewModel: fr.centuryspine.lsgscores.viewmodel.AuthViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+                        val currentUser by authViewModel.user.collectAsState()
+                        val linkedId by authViewModel.linkedPlayerId.collectAsState()
+                        if (currentUser != null) {
+                            val isLinkedToThis = linkedId == user.id
+                            Button(
+                                onClick = { authViewModel.linkCurrentUserToPlayer(user.id) },
+                                enabled = !isLinkedToThis
+                            ) {
+                                Text(
+                                    text = if (isLinkedToThis)
+                                        stringResource(id = R.string.player_linked_to_you)
+                                    else
+                                        stringResource(id = R.string.player_link_this_is_me)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -329,7 +321,7 @@ fun PlayerDetailScreen(
                 TextButton(onClick = {
                     showDeleteDialog = false
                     playerViewModel.deletePlayer(user) {
-                        // Notify list screen to refresh/remove locally and navigate back
+                        // Notify the list screen to refresh/remove locally and navigate back
                         navController.previousBackStackEntry?.savedStateHandle?.set("deletedPlayerId", user.id)
                         navController.popBackStack()
                     }

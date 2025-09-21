@@ -18,19 +18,32 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val appUserDao: fr.centuryspine.lsgscores.data.authuser.AppUserDaoSupabase
 ) : ViewModel() {
 
+    // Linked player (if any) for the current authenticated user
+    private val _linkedPlayerId = kotlinx.coroutines.flow.MutableStateFlow<Long?>(null)
+    val linkedPlayerId: StateFlow<Long?> = _linkedPlayerId
+
     init {
-        // Trace session status changes for debugging
+        // Trace session status changes for debugging and ensure app_user row exists
         viewModelScope.launch {
             supabase.auth.sessionStatus.collect { status ->
                 when (status) {
                     is SessionStatus.Authenticated -> {
                         Log.d("AuthVM", "SessionStatus=Authenticated userId=${status.session.user?.id}")
+                        try {
+                            appUserDao.ensureUserRow()
+                            // Warm linked state as well
+                            _linkedPlayerId.value = appUserDao.getLinkedPlayerId()
+                        } catch (t: Throwable) {
+                            Log.w("AuthVM", "ensureUserRow/getLinked failed: ${t.message}")
+                        }
                     }
                     is SessionStatus.NotAuthenticated -> {
                         Log.d("AuthVM", "SessionStatus=NotAuthenticated")
+                        _linkedPlayerId.value = null
                     }
                     is SessionStatus.LoadingFromStorage -> {
                         Log.d("AuthVM", "SessionStatus=LoadingFromStorage")
@@ -53,6 +66,19 @@ class AuthViewModel @Inject constructor(
                 }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun linkCurrentUserToPlayer(playerId: Long) {
+        viewModelScope.launch {
+            try {
+                val ok = appUserDao.linkToPlayer(playerId)
+                if (ok) {
+                    _linkedPlayerId.value = playerId
+                }
+            } catch (t: Throwable) {
+                Log.w("AuthVM", "linkCurrentUserToPlayer failed: ${t.message}")
+            }
+        }
+    }
 
     fun signInWithGoogle() {
         Log.d("AuthVM", "signInWithGoogle() called")

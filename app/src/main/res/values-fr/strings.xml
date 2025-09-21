@@ -322,4 +322,8 @@
     <!-- Paramètres - Compte (Auth) -->
     <string name="settings_account_section_title">Compte</string>
     <string name="settings_sign_out_button">Se déconnecter</string>
+
+    <!-- Liaison joueur/utilisateur -->
+    <string name="player_link_this_is_me">C’est moi</string>
+    <string name="player_linked_to_you">Associé à votre compte</string>
 </resources>
