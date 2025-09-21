@@ -33,9 +33,10 @@ object RepositoryModule {
     fun providePlayerRepository(
         playerDao: PlayerDao,
         appPreferences: AppPreferences,
-        storageHelper: SupabaseStorageHelper
+        storageHelper: SupabaseStorageHelper,
+        imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
     ): PlayerRepository {
-        return PlayerRepository(playerDao, appPreferences, storageHelper)
+        return PlayerRepository(playerDao, appPreferences, storageHelper, imageCacheManager)
     }
 
     @Provides
@@ -44,9 +45,10 @@ object RepositoryModule {
         holeDao: HoleDao,
         gameZoneDao: GameZoneDao,
         appPreferences: AppPreferences,
-        storageHelper: SupabaseStorageHelper
+        storageHelper: SupabaseStorageHelper,
+        imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
     ): HoleRepository {
-        return HoleRepository(holeDao, gameZoneDao, appPreferences, storageHelper)
+        return HoleRepository(holeDao, gameZoneDao, appPreferences, storageHelper, imageCacheManager)
     }
 
     @Provides

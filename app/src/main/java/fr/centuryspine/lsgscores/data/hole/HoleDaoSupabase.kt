@@ -59,6 +59,26 @@ class HoleDaoSupabase @Inject constructor(
         return supabase.postgrest["holes"].select().decodeList<Hole>()
     }
 
+    override suspend fun getHolesByCityIdList(cityId: Long): List<Hole> {
+        return try {
+            val zones = supabase.postgrest["game_zones"].select {
+                filter { eq("cityid", cityId) }
+                order("name", Order.ASCENDING)
+            }.decodeList<GameZone>()
+            val result = mutableListOf<Hole>()
+            for (gz in zones) {
+                val holes = supabase.postgrest["holes"].select {
+                    filter { eq("gamezoneid", gz.id) }
+                    order("name", Order.ASCENDING)
+                }.decodeList<Hole>()
+                result += holes
+            }
+            result
+        } catch (_: Throwable) {
+            emptyList()
+        }
+    }
+
     override suspend fun insert(hole: Hole): Long {
         // Insert without assuming the server returns the inserted row in the body.
         // Some PostgREST setups use return=minimal which yields an empty body, causing decode errors.

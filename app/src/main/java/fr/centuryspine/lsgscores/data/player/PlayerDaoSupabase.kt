@@ -42,6 +42,17 @@ class PlayerDaoSupabase @Inject constructor(
         return supabase.postgrest["players"].select().decodeList<Player>()
     }
 
+    override suspend fun getPlayersByCityIdList(cityId: Long): List<Player> {
+        return try {
+            supabase.postgrest["players"].select {
+                filter { eq("cityid", cityId) }
+                order("name", Order.ASCENDING)
+            }.decodeList()
+        } catch (_: Throwable) {
+            emptyList()
+        }
+    }
+
     override suspend fun getById(id: Long): Player? {
         return supabase.postgrest["players"].select { filter { eq("id", id) } }.decodeList<Player>().firstOrNull()
     }

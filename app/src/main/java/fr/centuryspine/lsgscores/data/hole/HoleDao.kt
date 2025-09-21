@@ -12,6 +12,13 @@ interface HoleDao {
     """)
     fun getHolesByCityId(cityId: Long): Flow<List<Hole>>
 
+    @Query("""
+        SELECT h.* FROM holes h 
+        INNER JOIN game_zones gz ON h.gameZoneId = gz.id 
+        WHERE gz.cityId = :cityId
+    """)
+    suspend fun getHolesByCityIdList(cityId: Long): List<Hole>
+
     @Query("SELECT * FROM holes")
     suspend fun getAll(): List<Hole>
 

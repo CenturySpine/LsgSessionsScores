@@ -18,11 +18,14 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import fr.centuryspine.lsgscores.utils.SupabaseStorageHelper
+import androidx.core.net.toUri
 
 /**
- * Small helper to load remote images robustly (crossfade, placeholders).
- * If the URL points to Supabase Storage and is not already signed, we generate
- * a signed URL at render time so that private buckets work too.
+ * Remote image composable that prefers local cache.
+ *
+ * Key change: we set a stable custom cache key derived from the Supabase bucket/object path
+ * so that prefetch (warm) requests and UI requests map to the same cache entries even if
+ * the signed URL tokens differ. For non-Supabase URLs we fall back to the URL itself.
  */
 @Composable
 fun RemoteImage(
@@ -34,10 +37,11 @@ fun RemoteImage(
     val context = LocalContext.current
 
     var targetUrl by remember(url) { mutableStateOf(url) }
+    val cacheKey = remember(url) { stableCacheKey(url) }
 
     // If it's a Supabase Storage URL and not yet signed, generate a signed URL
     LaunchedEffect(url) {
-        val uri = runCatching { Uri.parse(url) }.getOrNull()
+        val uri = runCatching { url.toUri() }.getOrNull()
         val path = uri?.path.orEmpty()
         val isSupabaseStorage = path.contains("/storage/v1/object/")
         val isAlreadySigned = path.contains("/storage/v1/object/sign/") || (uri?.query.orEmpty().contains("token="))
@@ -47,11 +51,7 @@ fun RemoteImage(
                 RemoteImageEntryPoint::class.java
             )
             val signed = entryPoint.supabaseStorageHelper().getSignedUrlForPublicUrl(url)
-            if (!signed.isNullOrBlank()) {
-                targetUrl = signed
-            } else {
-                targetUrl = url // fallback
-            }
+            targetUrl = if (!signed.isNullOrBlank()) signed else url
         } else {
             targetUrl = url
         }
@@ -60,6 +60,8 @@ fun RemoteImage(
     AsyncImage(
         model = ImageRequest.Builder(context)
             .data(targetUrl)
+            .memoryCacheKey(cacheKey)
+            .diskCacheKey(cacheKey)
             .crossfade(true)
             .build(),
         contentDescription = contentDescription,
@@ -68,6 +70,34 @@ fun RemoteImage(
         placeholder = painterResource(id = android.R.drawable.ic_menu_report_image),
         error = painterResource(id = android.R.drawable.ic_menu_report_image)
     )
+}
+
+private fun stableCacheKey(inputUrl: String): String {
+    return try {
+        val uri = inputUrl.toUri()
+        val path = uri.path ?: return inputUrl
+        val marker = "/storage/v1/object/"
+        val idx = path.indexOf(marker)
+        if (idx == -1) return inputUrl
+        val after = path.substring(idx + marker.length) // e.g., "public/<bucket>/<object>" or "sign/<bucket>/<object>"
+        val parts = after.trimStart('/').split('/').filter { it.isNotEmpty() }
+        if (parts.size < 2) return inputUrl
+        val bucket: String
+        val objectPath: String
+        if (parts[0] == "sign") {
+            if (parts.size < 3) return inputUrl
+            bucket = parts[1]
+            objectPath = parts.drop(2).joinToString("/")
+        } else {
+            // parts[0] = visibility (public/authenticated), then bucket + object
+            if (parts.size < 3) return inputUrl
+            bucket = parts[1]
+            objectPath = parts.drop(2).joinToString("/")
+        }
+        "supabase:${bucket.lowercase()}/${Uri.decode(objectPath)}"
+    } catch (_: Throwable) {
+        inputUrl
+    }
 }
 
 @EntryPoint

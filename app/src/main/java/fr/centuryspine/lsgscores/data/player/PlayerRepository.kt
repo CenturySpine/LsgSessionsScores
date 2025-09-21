@@ -1,6 +1,6 @@
 package fr.centuryspine.lsgscores.data.player
 
-import android.net.Uri
+import androidx.core.net.toUri
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import fr.centuryspine.lsgscores.utils.SupabaseStorageHelper
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +14,8 @@ import javax.inject.Inject
 class PlayerRepository @Inject constructor(
     private val playerDao: PlayerDao,
     private val appPreferences: AppPreferences,
-    private val storageHelper: SupabaseStorageHelper
+    private val storageHelper: SupabaseStorageHelper,
+    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getPlayersByCurrentCity(): Flow<List<Player>> {
@@ -40,9 +41,13 @@ class PlayerRepository @Inject constructor(
         val finalPhotoUrl = when {
             player.photoUri.isNullOrBlank() -> null
             isRemoteUrl(player.photoUri) -> player.photoUri
-            else -> storageHelper.uploadPlayerPhoto(Uri.parse(player.photoUri))
+            else -> storageHelper.uploadPlayerPhoto(player.photoUri.toUri())
         }
-        playerDao.insert(player.copy(cityId = cityId, photoUri = finalPhotoUrl))
+        val id = playerDao.insert(player.copy(cityId = cityId, photoUri = finalPhotoUrl))
+        if (!finalPhotoUrl.isNullOrBlank() && isRemoteUrl(finalPhotoUrl)) {
+            imageCacheManager.warmPlayerPhoto(finalPhotoUrl)
+        }
+        id
     }
 
     suspend fun updatePlayer(player: Player) = withContext(Dispatchers.IO) {
@@ -50,7 +55,7 @@ class PlayerRepository @Inject constructor(
         val newPhotoUrl = when {
             player.photoUri.isNullOrBlank() -> null
             isRemoteUrl(player.photoUri) -> player.photoUri
-            else -> storageHelper.uploadPlayerPhoto(Uri.parse(player.photoUri))
+            else -> storageHelper.uploadPlayerPhoto(player.photoUri.toUri())
         }
         // Update DB first
         playerDao.update(player.copy(photoUri = newPhotoUrl))
@@ -58,6 +63,9 @@ class PlayerRepository @Inject constructor(
         val oldUrl = existing?.photoUri
         if (!oldUrl.isNullOrBlank() && oldUrl != newPhotoUrl && isRemoteUrl(oldUrl)) {
             storageHelper.deletePlayerPhotoByUrl(oldUrl)
+        }
+        if (!newPhotoUrl.isNullOrBlank() && isRemoteUrl(newPhotoUrl)) {
+            imageCacheManager.warmPlayerPhoto(newPhotoUrl)
         }
     }
 

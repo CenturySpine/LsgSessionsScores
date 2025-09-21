@@ -15,7 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CityViewModel @Inject constructor(
     private val cityRepository: CityRepository,
-    private val appPreferences: AppPreferences
+    private val appPreferences: AppPreferences,
+    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
 ) : ViewModel() {
 
     val cities = cityRepository.getAllCities()
@@ -38,7 +39,11 @@ class CityViewModel @Inject constructor(
     fun selectCity(cityId: Long) {
         appPreferences.setSelectedCityId(cityId)
         _selectedCityId.value = cityId
-        _hasCitySelected.value = true  // Ajouter cette ligne
+        _hasCitySelected.value = true
+        // Clear previous cache and warm new city's images in background
+        viewModelScope.launch {
+            imageCacheManager.clearAndWarmForCity(cityId)
+        }
     }
 
     fun addCity(name: String) {

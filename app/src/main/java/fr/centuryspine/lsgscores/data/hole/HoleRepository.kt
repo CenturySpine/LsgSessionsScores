@@ -1,25 +1,22 @@
 package fr.centuryspine.lsgscores.data.hole
 
-import android.net.Uri
+import androidx.core.net.toUri
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import fr.centuryspine.lsgscores.utils.SupabaseStorageHelper
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class HoleRepository @Inject constructor(
     private val holeDao: HoleDao,
     private val gameZoneDao: GameZoneDao,
     private val appPreferences: AppPreferences,
-    private val storageHelper: SupabaseStorageHelper
+    private val storageHelper: SupabaseStorageHelper,
+    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -56,19 +53,21 @@ class HoleRepository @Inject constructor(
                 when {
                     startUri.isNullOrBlank() -> null
                     isRemoteUrl(startUri) -> startUri
-                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.START, Uri.parse(startUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.START, startUri.toUri())
                 }
             }
             val endDeferred = async {
                 when {
                     endUri.isNullOrBlank() -> null
                     isRemoteUrl(endUri) -> endUri
-                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.END, Uri.parse(endUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.END, endUri.toUri())
                 }
             }
             val finalStart = startDeferred.await()
             val finalEnd = endDeferred.await()
-            holeDao.insert(hole.copy(startPhotoUri = finalStart, endPhotoUri = finalEnd))
+            val id = holeDao.insert(hole.copy(startPhotoUri = finalStart, endPhotoUri = finalEnd))
+            imageCacheManager.warmHolePhotos(finalStart, finalEnd)
+            id
         }
         result
     }
@@ -86,14 +85,15 @@ class HoleRepository @Inject constructor(
                 when {
                     hole.startPhotoUri.isNullOrBlank() -> null
                     isRemoteUrl(hole.startPhotoUri) -> hole.startPhotoUri
-                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.START, Uri.parse(hole.startPhotoUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.START,
+                        hole.startPhotoUri.toUri())
                 }
             }
             val endDeferred = async {
                 when {
                     hole.endPhotoUri.isNullOrBlank() -> null
                     isRemoteUrl(hole.endPhotoUri) -> hole.endPhotoUri
-                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.END, Uri.parse(hole.endPhotoUri))
+                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.END, hole.endPhotoUri.toUri())
                 }
             }
             Pair(startDeferred.await(), endDeferred.await())
@@ -101,6 +101,8 @@ class HoleRepository @Inject constructor(
         val updated = hole.copy(startPhotoUri = newStartEnd.first, endPhotoUri = newStartEnd.second)
         // Update DB first
         holeDao.update(updated)
+        // Warm new photos in cache
+        imageCacheManager.warmHolePhotos(updated.startPhotoUri, updated.endPhotoUri)
         // Best-effort deletions for changed URLs
         val oldStart = existing?.startPhotoUri
         val oldEnd = existing?.endPhotoUri

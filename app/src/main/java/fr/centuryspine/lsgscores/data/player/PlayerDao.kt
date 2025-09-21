@@ -8,6 +8,9 @@ interface PlayerDao {
     @Query("SELECT * FROM players WHERE cityId = :cityId")
     fun getPlayersByCityId(cityId: Long): Flow<List<Player>>
 
+    @Query("SELECT * FROM players WHERE cityId = :cityId")
+    suspend fun getPlayersByCityIdList(cityId: Long): List<Player>
+
     @Query("SELECT * FROM players")
     suspend fun getAll(): List<Player>
 
