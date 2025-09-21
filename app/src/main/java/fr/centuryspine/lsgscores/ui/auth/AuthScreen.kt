@@ -13,7 +13,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import fr.centuryspine.lsgscores.R
 
 @Composable
 fun AuthScreen(
@@ -29,7 +31,7 @@ fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Connexion requise",
+                text = stringResource(id = R.string.auth_required_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -38,7 +40,7 @@ fun AuthScreen(
                 Log.d("AuthScreen", "Google button clicked")
                 onGoogle()
             }) {
-                Text("Se connecter avec Google")
+                Text(stringResource(id = R.string.auth_sign_in_google))
             }
             if (onFacebook != null) {
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(12.dp))
@@ -46,7 +48,7 @@ fun AuthScreen(
                     Log.d("AuthScreen", "Facebook button clicked")
                     onFacebook()
                 }, enabled = false) {
-                    Text("Se connecter avec Facebook (à venir)")
+                    Text(stringResource(id = R.string.auth_sign_in_facebook_coming_soon))
                 }
             }
         }

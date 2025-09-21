@@ -313,4 +313,13 @@
     <string name="delete_game_zone_error_title">Impossible de supprimer la zone de jeu</string>
     <string name="delete_game_zone_error_has_holes">Cette zone de jeu ne peut pas être supprimée car elle contient des trous associés. Veuillez d\'abord supprimer tous les trous.</string>
     <string name="delete_game_zone_error_has_sessions">Cette zone de jeu ne peut pas être supprimée car elle contient des sessions associées. Veuillez d\'abord supprimer toutes les sessions.</string>
+
+    <!-- Authentication -->
+    <string name="auth_required_title">Connexion requise</string>
+    <string name="auth_sign_in_google">Se connecter avec Google</string>
+    <string name="auth_sign_in_facebook_coming_soon">Se connecter avec Facebook (à venir)</string>
+
+    <!-- Paramètres - Compte (Auth) -->
+    <string name="settings_account_section_title">Compte</string>
+    <string name="settings_sign_out_button">Se déconnecter</string>
 </resources>

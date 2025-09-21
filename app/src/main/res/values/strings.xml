@@ -319,4 +319,14 @@ This action cannot be undone.</string>
     <string name="delete_game_zone_error_title">Cannot Delete Game Zone</string>
     <string name="delete_game_zone_error_has_holes">This game zone cannot be deleted because it has associated holes. Please delete all holes first.</string>
     <string name="delete_game_zone_error_has_sessions">This game zone cannot be deleted because it has associated sessions. Please delete all sessions first.</string>
+
+    <!-- Authentication -->
+    <string name="auth_required_title">Sign-in required</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_sign_in_facebook_coming_soon">Sign in with Facebook (coming soon)</string>
+
+    <!-- Settings - Account (Auth) -->
+    <string name="settings_account_section_title">Account</string>
+    <string name="settings_sign_out_button">Sign out</string>
+
 </resources>
