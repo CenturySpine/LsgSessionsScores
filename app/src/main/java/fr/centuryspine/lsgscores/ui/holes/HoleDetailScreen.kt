@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -158,7 +159,7 @@ fun HoleDetailScreen(
                                     fr.centuryspine.lsgscores.ui.common.RemoteImage(
                                         url = editedStartPhoto!!,
                                         contentDescription = stringResource(R.string.hole_list_photo_description),
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp)
                                     )
                                 } else {
                                     Icon(
@@ -176,7 +177,7 @@ fun HoleDetailScreen(
                                     fr.centuryspine.lsgscores.ui.common.RemoteImage(
                                         url = editedEndPhoto!!,
                                         contentDescription = stringResource(R.string.hole_list_photo_description),
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp)
                                     )
                                 } else {
                                     Icon(
@@ -273,6 +274,7 @@ fun HoleDetailScreen(
                         .padding(padding)
                         .padding(horizontal = 24.dp, vertical = 8.dp)
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                         .then(swipeModifier),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -290,7 +292,7 @@ fun HoleDetailScreen(
                                 fr.centuryspine.lsgscores.ui.common.RemoteImage(
                                     url = currentHole.startPhotoUri!!,
                                     contentDescription = stringResource(R.string.hole_list_photo_description),
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp)
                                 )
                             } else {
                                 Icon(
@@ -305,7 +307,7 @@ fun HoleDetailScreen(
                                 fr.centuryspine.lsgscores.ui.common.RemoteImage(
                                     url = currentHole.endPhotoUri!!,
                                     contentDescription = stringResource(R.string.hole_list_photo_description),
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp)
                                 )
                             } else {
                                 Icon(
