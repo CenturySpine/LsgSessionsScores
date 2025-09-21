@@ -160,6 +160,20 @@ fun SettingsScreen(
                 MigrationDebugSection()
             }
 
+            // Sign out section (for testing Google Auth)
+            val authViewModel: fr.centuryspine.lsgscores.viewmodel.AuthViewModel = hiltViewModel()
+            val currentUser by authViewModel.user.collectAsState()
+            if (currentUser != null) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Compte",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Button(onClick = { authViewModel.signOut() }) {
+                    Text("Se déconnecter")
+                }
+            }
+
         }
     }
 

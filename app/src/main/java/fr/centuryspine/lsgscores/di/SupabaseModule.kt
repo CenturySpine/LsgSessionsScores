@@ -1,5 +1,6 @@
 package fr.centuryspine.lsgscores.di
 
+import android.util.Log
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -10,6 +11,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.storage.Storage
+import io.github.jan.supabase.gotrue.Auth
 import io.ktor.client.engine.android.Android
 
 @Module
@@ -24,10 +26,16 @@ object SupabaseModule {
         require(url.isNotBlank()) { "SUPABASE_URL is not set. Define supabase.url in local.properties." }
         require(anonKey.isNotBlank()) { "SUPABASE_ANON_KEY is not set. Define supabase.anonKey in local.properties." }
 
+        Log.d("SupabaseModule", "Initializing SupabaseClient with url=$url and redirectUrl=lsgscores://auth-callback")
         return createSupabaseClient(supabaseUrl = url, supabaseKey = anonKey) {
             httpEngine = Android.create()
             install(Postgrest)
             install(Storage)
+            install(Auth) {
+                // Deep link configuration for OAuth callback
+                scheme = "lsgscores"
+                host = "auth-callback"
+            }
         }
     }
 }

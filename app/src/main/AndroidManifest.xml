@@ -40,9 +40,16 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Supabase OAuth redirect handler -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="lsgscores" android:host="auth-callback" />
+            </intent-filter>
         </activity>
 
-                <activity
+        <activity
             android:name="com.canhub.cropper.CropImageActivity"
             android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar" />
         <!-- Or any other Theme.AppCompat.* theme that suits your app -->
