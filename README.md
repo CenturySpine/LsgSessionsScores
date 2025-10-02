@@ -11,7 +11,7 @@ Application Android (Kotlin/Jetpack Compose) pour gérer et suivre des scores de
 - Configuration (clés/API)
 - Lancer les tests
 - Structure du projet
-- Captures d’écran (placeholder)
+- Captures d’écran
 - Contribution
 - Licence
 
@@ -89,13 +89,22 @@ Les tests unitaires se trouvent dans `app/src/test/java/...`.
 - `supabase/` — Scripts/SQL liés au backend Supabase
 - Fichiers Gradle: `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`
 
-## Captures d’écran (placeholder)
-Ajoutez ici des captures d’écran pour illustrer l’application:
-- Écran d’accueil
-- Saisie d’un score de trou
-- Historique des sessions
+## Captures d’écran
+Les captures d’écran ci-dessous sont disponibles dans `app/src/doc`.
 
-Vous pouvez placer les images dans un dossier `docs/` ou ajouter des URLs vers des images hébergées.
+<p align="center">
+  <img src="app/src/doc/Screenshot_20251002-192330.png" alt="Capture 192330" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192500.png" alt="Capture 192500" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192512.png" alt="Capture 192512" width="260" />
+  <br/>
+  <img src="app/src/doc/Screenshot_20251002-192541.png" alt="Capture 192541" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192556.png" alt="Capture 192556" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192612.png" alt="Capture 192612" width="260" />
+  <br/>
+  <img src="app/src/doc/Screenshot_20251002-192628.png" alt="Capture 192628" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192721.png" alt="Capture 192721" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192907.png" alt="Capture 192907" width="260" />
+</p>
 
 ## Contribution
 Les contributions sont les bienvenues!
