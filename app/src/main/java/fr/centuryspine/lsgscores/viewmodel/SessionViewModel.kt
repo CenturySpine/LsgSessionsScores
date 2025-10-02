@@ -73,16 +73,21 @@ class SessionViewModel @Inject constructor(
     var scoringModeId: Int? = null
         private set
 
+    // Trigger to force refresh of ongoing session after mutations (start/validate/delete)
+    private val refreshCounter = MutableStateFlow(0)
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val ongoingSession: StateFlow<Session?> = selectedCityId.flatMapLatest { cityId ->
-        if (cityId != null) {
-            sessionRepository.getOngoingSessionFlowForCity(cityId)
-        } else {
-            // During app startup, selectedCityId might be null temporarily
-            // Return empty flow instead of crashing the app
-            flowOf(null)
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    val ongoingSession: StateFlow<Session?> = combine(selectedCityId, refreshCounter) { cityId, _ -> cityId }
+        .flatMapLatest { cityId ->
+            if (cityId != null) {
+                // Re-query whenever selected city changes or a mutation bumps the counter
+                sessionRepository.getOngoingSessionFlowForCity(cityId)
+            } else {
+                // During app startup, selectedCityId might be null temporarily
+                // Return empty flow instead of crashing the app
+                flowOf(null)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     
     // Check if there's an ongoing session for the currently selected city
     val hasOngoingSessionForCurrentCity: StateFlow<Boolean> = combine(
@@ -309,6 +314,8 @@ class SessionViewModel @Inject constructor(
                     endDateTime = LocalDateTime.now()
                 )
                 sessionRepository.update(validated)
+                // Refresh reactive state so UI (including bottom bar) updates immediately
+                refreshCounter.update { it + 1 }
                 onValidated()
             }
         }
@@ -390,7 +397,9 @@ class SessionViewModel @Inject constructor(
                     )
                 }
             }
-
+            
+            // Bump refresh trigger so OngoingSession screen and bottom bar update immediately
+            refreshCounter.update { it + 1 }
             onSessionCreated(sessionId)
         }
     }
@@ -463,6 +472,8 @@ class SessionViewModel @Inject constructor(
     fun deleteSessionAndAllData(session: Session, onSessionDeleted: () -> Unit = {}) {
         viewModelScope.launch {
             sessionRepository.deleteSessionCascade(session)
+            // Refresh reactive state so UI (including bottom bar) updates immediately
+            refreshCounter.update { it + 1 }
             onSessionDeleted()
         }
     }
