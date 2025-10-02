@@ -34,7 +34,18 @@ class SessionDaoSupabase @Inject constructor(
     }
 
     override suspend fun update(session: Session) {
-        supabase.postgrest["sessions"].update(session) { filter { eq("id", session.id) } }
+        // Use a partial update to ensure fields with default values (like isOngoing=false)
+        // are explicitly written, as kotlinx.serialization may omit default values otherwise.
+        val body = buildJsonObject {
+            // Always include isongoing to reflect the current state
+            put("isongoing", JsonPrimitive(session.isOngoing))
+            // Include enddatetime if present
+            val end = fr.centuryspine.lsgscores.data.DateTimeConverters.fromLocalDateTime(session.endDateTime)
+            if (end != null) put("enddatetime", JsonPrimitive(end))
+            // Optionally include comment if provided (safe no-op if unchanged)
+            session.comment?.let { put("comment", JsonPrimitive(it)) }
+        }
+        supabase.postgrest["sessions"].update(body) { filter { eq("id", session.id) } }
     }
 
     override suspend fun delete(session: Session) {
