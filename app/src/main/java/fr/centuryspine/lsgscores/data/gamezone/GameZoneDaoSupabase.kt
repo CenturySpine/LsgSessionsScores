@@ -36,7 +36,7 @@ class GameZoneDaoSupabase @Inject constructor(
     }
 
     override suspend fun insert(gameZone: GameZone): Long {
-        val inserted = supabase.postgrest["game_zones"].insert(gameZone).decodeSingle<GameZone>()
+        val inserted = supabase.postgrest["game_zones"].insert(gameZone) { select() }.decodeSingle<GameZone>()
         return inserted.id
     }
 

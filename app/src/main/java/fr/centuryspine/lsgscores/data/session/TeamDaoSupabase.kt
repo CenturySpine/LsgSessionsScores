@@ -14,7 +14,7 @@ class TeamDaoSupabase @Inject constructor(
 ) : TeamDao {
 
     override suspend fun insert(team: Team): Long {
-        val inserted = supabase.postgrest["teams"].insert(team).decodeSingle<Team>()
+        val inserted = supabase.postgrest["teams"].insert(team) { select() }.decodeSingle<Team>()
         return inserted.id
     }
 

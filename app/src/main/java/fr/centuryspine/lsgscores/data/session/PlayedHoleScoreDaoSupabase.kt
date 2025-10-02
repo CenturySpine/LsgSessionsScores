@@ -13,7 +13,7 @@ class PlayedHoleScoreDaoSupabase @Inject constructor(
 ) : PlayedHoleScoreDao {
 
     override suspend fun insert(score: PlayedHoleScore): Long {
-        val inserted = supabase.postgrest["played_hole_scores"].insert(score).decodeSingle<PlayedHoleScore>()
+        val inserted = supabase.postgrest["played_hole_scores"].insert(score) { select() }.decodeSingle<PlayedHoleScore>()
         return inserted.id
     }
 

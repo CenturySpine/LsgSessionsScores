@@ -29,7 +29,7 @@ class SessionDaoSupabase @Inject constructor(
     }
 
     override suspend fun insert(session: Session): Long {
-        val inserted = supabase.postgrest["sessions"].insert(session).decodeSingle<Session>()
+        val inserted = supabase.postgrest["sessions"].insert(session) { select() }.decodeSingle<Session>()
         return inserted.id
     }
 
