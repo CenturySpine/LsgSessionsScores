@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -36,11 +37,11 @@ fun PlayerFormScreen(
     navController: NavController,
     playerViewModel: PlayerViewModel
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
 
     // State for the cropped photo URI
     var croppedPhotoUri by remember { mutableStateOf<Uri?>(null) }
-    var photoPath by remember { mutableStateOf<String?>(null) }
+    var photoPath by rememberSaveable { mutableStateOf<String?>(null) }
 
 
     Scaffold { padding ->

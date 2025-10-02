@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -35,9 +36,9 @@ fun PlayerDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     // State for editing
-    var isEditing by remember { mutableStateOf(false) }
-    var editedName by remember { mutableStateOf("") }
-    var editedPhotoPath by remember { mutableStateOf<String?>(null) }
+    var isEditing by rememberSaveable { mutableStateOf(false) }
+    var editedName by rememberSaveable { mutableStateOf("") }
+    var editedPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     // Remember the last swipe direction (-1 = left/next, 1 = right/prev, 0 = none)
