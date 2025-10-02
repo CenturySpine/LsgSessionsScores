@@ -171,7 +171,6 @@ This action cannot be undone.</string>
     <string name="played_hole_score_title">Enter the strokes for each team</string>
     <string name="played_hole_score_button_cancel">Cancel</string>
     <string name="played_hole_score_button_save">Save scores</string>
-    <string name="played_hole_score_players_separator"> &amp; </string>
 
     <!-- StandingsTable -->
     <string name="standings_table_title">Current Standings</string>

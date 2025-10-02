@@ -75,23 +75,23 @@ fun PlayedHoleScoreScreen(
         teamsWithPlayers.forEach { teamWithPlayers ->
             val playerNames =
                 listOfNotNull(teamWithPlayers.player1?.name, teamWithPlayers.player2?.name)
-                    .joinToString(stringResource(R.string.played_hole_score_players_separator))
+                    .joinToString(" & ")
 
             val selectedLabel = strokesByTeam[teamWithPlayers.team.id]
             val liveScore = calculatedScores[teamWithPlayers.team.id] ?: 0
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(playerNames, style = MaterialTheme.typography.bodyLarge)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(playerNames, style = MaterialTheme.typography.bodyLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     androidx.compose.runtime.CompositionLocalProvider(
                         androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement provides false
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             options.forEach { option ->
@@ -108,16 +108,16 @@ fun PlayedHoleScoreScreen(
                             }
                         }
                     }
-                }
-                AssistChip(
-                    onClick = { /* Read-only chip */ },
-                    label = { Text(liveScore.toString()) },
-                    enabled = false,
-                    colors = AssistChipDefaults.assistChipColors(
-                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    AssistChip(
+                        onClick = { /* Read-only chip */ },
+                        label = { Text(liveScore.toString()) },
+                        enabled = false,
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     )
-                )
+                }
             }
         }
 

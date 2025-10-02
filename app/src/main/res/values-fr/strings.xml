@@ -163,7 +163,6 @@
     <string name="played_hole_score_title">Entrez les coups pour chaque équipe</string>
     <string name="played_hole_score_button_cancel">Annuler</string>
     <string name="played_hole_score_button_save">Enregistrer les scores</string>
-    <string name="played_hole_score_players_separator"> et </string>
 
     <!-- StandingsTable -->
     <string name="standings_table_title">Classement actuel</string>
