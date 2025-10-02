@@ -1,49 +1,55 @@
--- Storage buckets and temporary RLS policies for LsgScores image migration
--- Buckets set to public read; anonymous INSERT/UPDATE enabled temporarily for migration
-
+-- Storage buckets and RLS policies for LsgScores images
+-- Public READ; authenticated users can WRITE within Players and Holes buckets.
 -- Buckets are managed separately in storage_buckets.sql
 
--- 2) Public read policies (separate per bucket)
-drop policy if exists "public read Players" on storage.objects;
-create policy "public read Players" on storage.objects
-for select
-using (bucket_id = 'Players');
+-- 1) Public read policies (per bucket)
+DROP POLICY IF EXISTS "public read Players" ON storage.objects;
+CREATE POLICY "public read Players" ON storage.objects
+FOR SELECT
+USING (bucket_id = 'Players');
 
-drop policy if exists "public read Holes" on storage.objects;
-create policy "public read Holes" on storage.objects
-for select
-using (bucket_id = 'Holes');
+DROP POLICY IF EXISTS "public read Holes" ON storage.objects;
+CREATE POLICY "public read Holes" ON storage.objects
+FOR SELECT
+USING (bucket_id = 'Holes');
 
--- 3) Temporary anonymous upload policies (to be removed after migration)
-drop policy if exists "anon can insert Players" on storage.objects;
-create policy "anon can insert Players" on storage.objects
-for insert to anon
-with check (bucket_id = 'Players');
+-- 2) Authenticated INSERT policies (per bucket)
+DROP POLICY IF EXISTS "anon can insert Players" ON storage.objects;
+DROP POLICY IF EXISTS "authenticated can insert Players" ON storage.objects;
+CREATE POLICY "authenticated can insert Players" ON storage.objects
+FOR INSERT TO public
+WITH CHECK (bucket_id = 'Players' AND auth.role() = 'authenticated');
 
-drop policy if exists "anon can insert Holes" on storage.objects;
-create policy "anon can insert Holes" on storage.objects
-for insert to anon
-with check (bucket_id = 'Holes');
+DROP POLICY IF EXISTS "anon can insert Holes" ON storage.objects;
+DROP POLICY IF EXISTS "authenticated can insert Holes" ON storage.objects;
+CREATE POLICY "authenticated can insert Holes" ON storage.objects
+FOR INSERT TO public
+WITH CHECK (bucket_id = 'Holes' AND auth.role() = 'authenticated');
 
-drop policy if exists "anon can update Players" on storage.objects;
-create policy "anon can update Players" on storage.objects
-for update to anon
-using (bucket_id = 'Players')
-with check (bucket_id = 'Players');
+-- 3) Authenticated UPDATE policies (owner-only, per bucket)
+DROP POLICY IF EXISTS "anon can update Players" ON storage.objects;
+DROP POLICY IF EXISTS "owner can update Players" ON storage.objects;
+CREATE POLICY "owner can update Players" ON storage.objects
+FOR UPDATE TO public
+USING (bucket_id = 'Players' AND owner = auth.uid() AND auth.role() = 'authenticated')
+WITH CHECK (bucket_id = 'Players' AND owner = auth.uid() AND auth.role() = 'authenticated');
 
-drop policy if exists "anon can update Holes" on storage.objects;
-create policy "anon can update Holes" on storage.objects
-for update to anon
-using (bucket_id = 'Holes')
-with check (bucket_id = 'Holes');
+DROP POLICY IF EXISTS "anon can update Holes" ON storage.objects;
+DROP POLICY IF EXISTS "owner can update Holes" ON storage.objects;
+CREATE POLICY "owner can update Holes" ON storage.objects
+FOR UPDATE TO public
+USING (bucket_id = 'Holes' AND owner = auth.uid() AND auth.role() = 'authenticated')
+WITH CHECK (bucket_id = 'Holes' AND owner = auth.uid() AND auth.role() = 'authenticated');
 
--- Allow anonymous deletions in Players and Holes buckets (separate policies)
-drop policy if exists "anon can delete Players" on storage.objects;
-create policy "anon can delete Players" on storage.objects
-for delete to anon
-using (bucket_id = 'Players');
+-- 4) Authenticated DELETE policies (owner-only, per bucket)
+DROP POLICY IF EXISTS "anon can delete Players" ON storage.objects;
+DROP POLICY IF EXISTS "owner can delete Players" ON storage.objects;
+CREATE POLICY "owner can delete Players" ON storage.objects
+FOR DELETE TO public
+USING (bucket_id = 'Players' AND owner = auth.uid() AND auth.role() = 'authenticated');
 
-drop policy if exists "anon can delete Holes" on storage.objects;
-create policy "anon can delete Holes" on storage.objects
-for delete to anon
-using (bucket_id = 'Holes');
+DROP POLICY IF EXISTS "anon can delete Holes" ON storage.objects;
+DROP POLICY IF EXISTS "owner can delete Holes" ON storage.objects;
+CREATE POLICY "owner can delete Holes" ON storage.objects
+FOR DELETE TO public
+USING (bucket_id = 'Holes' AND owner = auth.uid() AND auth.role() = 'authenticated');
