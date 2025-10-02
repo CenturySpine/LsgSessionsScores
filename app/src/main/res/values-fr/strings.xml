@@ -325,4 +325,22 @@
     <!-- Liaison joueur/utilisateur -->
     <string name="player_link_this_is_me">C’est moi</string>
     <string name="player_linked_to_you">Associé à votre compte</string>
+    
+    <!-- SessionHistory - Edit session -->
+    <string name="session_history_edit_icon_description">Modifier la session</string>
+    <string name="edit_session_title">Modifier la session</string>
+    <string name="edit_session_start_label">Début (yyyy-MM-dd HH:mm)</string>
+    <string name="edit_session_end_label">Fin (optionnel) (yyyy-MM-dd HH:mm)</string>
+    <string name="edit_session_button_save">Enregistrer</string>
+    <string name="edit_session_button_cancel">Annuler</string>
+    <string name="edit_session_error_invalid_format">Format de date/heure invalide. Utilisez yyyy-MM-dd HH:mm.</string>
+    <string name="edit_session_error_future_start">La date/heure de début ne peut pas être dans le futur.</string>
+    <string name="edit_session_error_future_end">La date/heure de fin ne peut pas être dans le futur.</string>
+    <string name="edit_session_error_end_before_start">La fin doit être après le début.</string>
+
+    <!-- Boîte d'édition : champs séparés date/heure -->
+    <string name="edit_session_date_label">Date</string>
+    <string name="edit_session_start_time_label">Heure de début</string>
+    <string name="edit_session_end_time_label">Heure de fin (optionnel)</string>
+    <string name="edit_session_clear_end_time">Effacer</string>
 </resources>

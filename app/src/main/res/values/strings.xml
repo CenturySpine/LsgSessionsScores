@@ -332,4 +332,22 @@ This action cannot be undone.</string>
     <string name="player_link_this_is_me">This is me</string>
     <string name="player_linked_to_you">Linked to your account</string>
 
+    
+    <!-- SessionHistory - Edit session -->
+    <string name="session_history_edit_icon_description">Edit session</string>
+    <string name="edit_session_title">Edit session</string>
+    <string name="edit_session_start_label">Start (yyyy-MM-dd HH:mm)</string>
+    <string name="edit_session_end_label">End (optional) (yyyy-MM-dd HH:mm)</string>
+    <string name="edit_session_button_save">Save</string>
+    <string name="edit_session_button_cancel">Cancel</string>
+    <string name="edit_session_error_invalid_format">Invalid date/time format. Use yyyy-MM-dd HH:mm.</string>
+    <string name="edit_session_error_future_start">Start date/time cannot be in the future.</string>
+    <string name="edit_session_error_future_end">End date/time cannot be in the future.</string>
+    <string name="edit_session_error_end_before_start">End must be after start.</string>
+
+    <!-- Edit dialog: separated date/time fields -->
+    <string name="edit_session_date_label">Date</string>
+    <string name="edit_session_start_time_label">Start time</string>
+    <string name="edit_session_end_time_label">End time (optional)</string>
+    <string name="edit_session_clear_end_time">Clear</string>
 </resources>

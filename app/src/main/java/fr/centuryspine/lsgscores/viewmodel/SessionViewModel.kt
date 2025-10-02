@@ -261,20 +261,21 @@ class SessionViewModel @Inject constructor(
         scoringModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Add this property to get all completed sessions filtered by selected city
+    // All completed sessions filtered by selected city; re-collect on refreshCounter to force refresh with Supabase-backed DAO
     @OptIn(ExperimentalCoroutinesApi::class)
     val completedSessions: StateFlow<List<Session>> =
-        selectedCityId.flatMapLatest { cityId ->
-            if (cityId != null) {
-                sessionRepository.getAll()
-                    .map { sessions ->
-                        sessions.filter { !it.isOngoing && it.cityId == cityId }
-                            .sortedByDescending { it.dateTime }
-                    }
-            } else {
-                throw Exception("No city selected")
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        combine(selectedCityId, refreshCounter) { cityId, _ -> cityId }
+            .flatMapLatest { cityId ->
+                if (cityId != null) {
+                    sessionRepository.getAll()
+                        .map { sessions ->
+                            sessions.filter { !it.isOngoing && it.cityId == cityId }
+                                .sortedByDescending { it.dateTime }
+                        }
+                } else {
+                    throw Exception("No city selected")
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Update session type (individual or team)
     fun setSessionType(type: SessionType) {
@@ -623,5 +624,59 @@ class SessionViewModel @Inject constructor(
             )
         }
     }
+
+    // region Editing Session Times
+    fun updateSessionDateTimes(
+        sessionId: Long,
+        newStart: LocalDateTime,
+        newEnd: LocalDateTime?,
+        onResult: (Boolean, String?) -> Unit = { _, _ -> }
+    ) {
+        viewModelScope.launch {
+            try {
+                val now = LocalDateTime.now()
+                if (newStart.isAfter(now)) {
+                    onResult(false, "future_start")
+                    return@launch
+                }
+                if (newEnd != null) {
+                    if (newEnd.isAfter(now)) {
+                        onResult(false, "future_end")
+                        return@launch
+                    }
+                    if (newEnd.isBefore(newStart)) {
+                        onResult(false, "end_before_start")
+                        return@launch
+                    }
+                }
+
+                val session = sessionRepository.getById(sessionId).first()
+                    ?: run {
+                        onResult(false, "not_found")
+                        return@launch
+                    }
+
+                // Refresh weather info best-effort (current weather at current location)
+                val updatedWeather = try {
+                    getCurrentWeatherInfo()
+                } catch (_: Exception) {
+                    session.weatherData // fallback to previous
+                }
+
+                val updated = session.copy(
+                    dateTime = newStart,
+                    endDateTime = newEnd,
+                    weatherData = updatedWeather
+                )
+                sessionRepository.update(updated)
+                // bump refresh so any observers update quickly
+                refreshCounter.update { it + 1 }
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.message)
+            }
+        }
+    }
+    // endregion
 
 }

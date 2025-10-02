@@ -13,7 +13,7 @@ class SessionRepository(
 
     fun getAll(): Flow<List<Session>> = sessionDao.getAll()
 
-    fun getById(id: Int): Flow<Session?> = sessionDao.getById(id)
+    fun getById(id: Long): Flow<Session?> = sessionDao.getById(id)
 
     suspend fun insert(session: Session): Long {
         // Validate that GameZone exists

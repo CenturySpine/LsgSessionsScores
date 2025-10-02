@@ -14,6 +14,8 @@ import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -30,10 +32,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,6 +52,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -77,6 +83,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.time.Duration
+import java.time.LocalDateTime
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.core.graphics.toColorInt
@@ -90,6 +99,7 @@ fun SessionHistoryScreen(
     val context = LocalContext.current
     var sessionToDelete by remember { mutableStateOf<Session?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var sessionToEdit by remember { mutableStateOf<Session?>(null) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -134,13 +144,12 @@ fun SessionHistoryScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(completedSessions) { session ->
+                items(completedSessions, key = { it.id }) { session ->
                     SessionHistoryCard(
                         session = session,
                         onExportClick = { selectedSession ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             generateAndSharePdf(context, selectedSession, sessionViewModel)
-
                         },
                         onExportPhoto = { selectedSession, photoPath ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -154,6 +163,9 @@ fun SessionHistoryScreen(
                         onDeleteClick = { selectedSession ->
                             sessionToDelete = selectedSession
                             showDeleteDialog = true
+                        },
+                        onEditClick = { selectedSession ->
+                            sessionToEdit = selectedSession
                         }
                     )
                 }
@@ -198,6 +210,198 @@ fun SessionHistoryScreen(
             }
         )
     }
+
+    // Edit Session dialog
+    sessionToEdit?.let { editing ->
+        val context = LocalContext.current
+        var errorText by remember { mutableStateOf<String?>(null) }
+
+        // States for date and times
+        var selectedDate by remember { mutableStateOf(editing.dateTime.toLocalDate()) }
+        var selectedStartTime by remember { mutableStateOf(editing.dateTime.toLocalTime()) }
+        var selectedEndTime by remember { mutableStateOf(editing.endDateTime?.toLocalTime()) }
+
+        val dateFormatterUi = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
+        val timeFormatterUi = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+
+        // Helpers to format
+        fun formatDate() = selectedDate.format(dateFormatterUi)
+        fun formatStartTime() = selectedStartTime.format(timeFormatterUi)
+        fun formatEndTime() = selectedEndTime?.format(timeFormatterUi) ?: ""
+
+        AlertDialog(
+            onDismissRequest = { sessionToEdit = null },
+            title = { Text(stringResource(R.string.edit_session_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Date field (opens a DatePicker)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = formatDate(),
+                            onValueChange = {},
+                            label = { Text(stringResource(R.string.edit_session_date_label)) },
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .clickable {
+                                    val y = selectedDate.year
+                                    val m = selectedDate.monthValue - 1
+                                    val d = selectedDate.dayOfMonth
+                                    DatePickerDialog(
+                                        context,
+                                        { _, year, month, dayOfMonth ->
+                                            val picked = LocalDate.of(year, month + 1, dayOfMonth)
+                                            // Disallow future date
+                                            if (picked.isAfter(LocalDate.now())) {
+                                                errorText = context.getString(R.string.edit_session_error_future_start)
+                                            } else {
+                                                errorText = null
+                                                selectedDate = picked
+                                                // If end exists and is before start after date change, clear end
+                                                selectedEndTime?.let {
+                                                    val tentativeEnd = LocalDateTime.of(picked, it)
+                                                    val tentativeStart = LocalDateTime.of(picked, selectedStartTime)
+                                                    if (tentativeEnd.isBefore(tentativeStart)) {
+                                                        selectedEndTime = null
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        y, m, d
+                                    ).apply {
+                                        datePicker.maxDate = System.currentTimeMillis()
+                                    }.show()
+                                }
+                        )
+                    }
+
+                    // Start time field
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = formatStartTime(),
+                            onValueChange = {},
+                            label = { Text(stringResource(R.string.edit_session_start_time_label)) },
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable {
+                                    val hour = selectedStartTime.hour
+                                    val minute = selectedStartTime.minute
+                                    TimePickerDialog(
+                                        context,
+                                        { _, h, min ->
+                                            errorText = null
+                                            selectedStartTime = LocalTime.of(h, min)
+                                        },
+                                        hour, minute, true
+                                    ).show()
+                                }
+                        )
+                    }
+
+                    // End time field (optional)
+                    OutlinedTextField(
+                        value = formatEndTime(),
+                        onValueChange = {},
+                        label = { Text(stringResource(R.string.edit_session_end_time_label)) },
+                        readOnly = true,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        leadingIcon = {
+                            IconButton(onClick = {
+                                val hour = selectedEndTime?.hour ?: selectedStartTime.hour
+                                val minute = selectedEndTime?.minute ?: selectedStartTime.minute
+                                TimePickerDialog(
+                                    context,
+                                    { _, h, min ->
+                                        errorText = null
+                                        selectedEndTime = LocalTime.of(h, min)
+                                    },
+                                    hour, minute, true
+                                ).show()
+                            }) {
+                                Icon(imageVector = Icons.Default.AccessTime, contentDescription = null)
+                            }
+                        },
+                        trailingIcon = {
+                            TextButton(onClick = { selectedEndTime = null }) {
+                                Text(text = stringResource(R.string.edit_session_clear_end_time))
+                            }
+                        }
+                    )
+
+                    if (errorText != null) {
+                        Text(
+                            text = errorText!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    try {
+                        val newStart = LocalDateTime.of(selectedDate, selectedStartTime)
+                        val newEnd = selectedEndTime?.let { LocalDateTime.of(selectedDate, it) }
+
+                        val now = LocalDateTime.now()
+                        if (newStart.isAfter(now)) {
+                            errorText = context.getString(R.string.edit_session_error_future_start)
+                            return@TextButton
+                        }
+                        if (newEnd != null) {
+                            if (newEnd.isAfter(now)) {
+                                errorText = context.getString(R.string.edit_session_error_future_end)
+                                return@TextButton
+                            }
+                            if (newEnd.isBefore(newStart)) {
+                                errorText = context.getString(R.string.edit_session_error_end_before_start)
+                                return@TextButton
+                            }
+                        }
+
+                        sessionViewModel.updateSessionDateTimes(editing.id, newStart, newEnd) { ok, code ->
+                            if (ok) {
+                                sessionToEdit = null
+                                errorText = null
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.player_detail_button_save),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                errorText = when (code) {
+                                    "future_start" -> context.getString(R.string.edit_session_error_future_start)
+                                    "future_end" -> context.getString(R.string.edit_session_error_future_end)
+                                    "end_before_start" -> context.getString(R.string.edit_session_error_end_before_start)
+                                    else -> code ?: "Unknown error"
+                                }
+                            }
+                        }
+                    } catch (_: Exception) {
+                        errorText = context.getString(R.string.edit_session_error_invalid_format)
+                    }
+                }) {
+                    Text(stringResource(R.string.edit_session_button_save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { sessionToEdit = null }) {
+                    Text(stringResource(R.string.edit_session_button_cancel))
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -206,6 +410,7 @@ private fun SessionHistoryCard(
     onExportClick: (Session) -> Unit,
     onExportPhoto: (Session, String) -> Unit,
     onDeleteClick: (Session) -> Unit,
+    onEditClick: (Session) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -384,6 +589,14 @@ private fun SessionHistoryCard(
                         }
                     )
                 }
+            }
+
+            // Edit button
+            IconButton(onClick = { onEditClick(session) }) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.session_history_edit_icon_description)
+                )
             }
 
             // Delete button

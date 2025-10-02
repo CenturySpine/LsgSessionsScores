@@ -4,6 +4,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import javax.inject.Inject
@@ -23,7 +24,7 @@ class SessionDaoSupabase @Inject constructor(
         return supabase.postgrest["sessions"].select().decodeList<Session>()
     }
 
-    override fun getById(id: Int): Flow<Session?> = flow {
+    override fun getById(id: Long): Flow<Session?> = flow {
         val list = supabase.postgrest["sessions"].select { filter { eq("id", id) } }.decodeList<Session>()
         emit(list.firstOrNull())
     }
@@ -34,14 +35,33 @@ class SessionDaoSupabase @Inject constructor(
     }
 
     override suspend fun update(session: Session) {
-        // Use a partial update to ensure fields with default values (like isOngoing=false)
-        // are explicitly written, as kotlinx.serialization may omit default values otherwise.
+        // Use a partial update but include key fields we modify from the app (datetime/enddatetime/weatherdata/isongoing/comment)
+        val start = fr.centuryspine.lsgscores.data.DateTimeConverters.fromLocalDateTime(session.dateTime)
+        val end = fr.centuryspine.lsgscores.data.DateTimeConverters.fromLocalDateTime(session.endDateTime)
+        val weatherConv = fr.centuryspine.lsgscores.data.WeatherConverters()
+        val weather = weatherConv.fromWeatherInfo(session.weatherData)
+
         val body = buildJsonObject {
             // Always include isongoing to reflect the current state
             put("isongoing", JsonPrimitive(session.isOngoing))
-            // Include enddatetime if present
-            val end = fr.centuryspine.lsgscores.data.DateTimeConverters.fromLocalDateTime(session.endDateTime)
-            if (end != null) put("enddatetime", JsonPrimitive(end))
+
+            // Start datetime (allow null just in case, though it should never be null)
+            if (start != null) put("datetime", JsonPrimitive(start)) else put("datetime", JsonNull)
+
+            // End datetime: set to null explicitly when cleared
+            if (session.endDateTime != null && end != null) {
+                put("enddatetime", JsonPrimitive(end))
+            } else {
+                put("enddatetime", JsonNull)
+            }
+
+            // Weather data if present, otherwise clear
+            if (session.weatherData != null && weather != null) {
+                put("weatherdata", JsonPrimitive(weather))
+            } else {
+                put("weatherdata", JsonNull)
+            }
+
             // Optionally include comment if provided (safe no-op if unchanged)
             session.comment?.let { put("comment", JsonPrimitive(it)) }
         }

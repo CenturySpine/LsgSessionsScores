@@ -19,7 +19,7 @@ interface SessionDao {
     suspend fun getAllList(): List<Session>
 
     @Query("SELECT * FROM sessions WHERE id = :id")
-    fun getById(id: Int): Flow<Session?>
+    fun getById(id: Long): Flow<Session?>
 
     @Insert
     suspend fun insert(session: Session): Long
