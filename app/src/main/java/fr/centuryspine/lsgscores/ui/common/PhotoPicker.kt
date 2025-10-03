@@ -58,9 +58,10 @@ fun usePhotoCameraLauncher(
         contract = ActivityResultContracts.TakePicture()
     ) { success: Boolean ->
         if (success && photoUri != null && photoFile != null) {
-            savePhotoToGallery(context, photoFile!!)
+            val galleryUri = savePhotoToGallery(context, photoFile!!)
+            val uriForCrop = galleryUri ?: photoUri
             cropImageLauncher.launch(
-                CropImageContractOptions(photoUri, CropImageOptions())
+                CropImageContractOptions(uriForCrop, CropImageOptions())
             )
         }
     }
@@ -119,7 +120,10 @@ fun PhotoPicker(
 private fun launchCamera(context: Context, onReady: (Uri, File) -> Unit) {
     val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
     val imageFileName = "photo_${timeStamp}.jpg"
-    val photoFile = File(context.filesDir, imageFileName)
+
+    // Prefer externalCacheDir for broader camera app compatibility; fall back to cacheDir
+    val baseDir = context.externalCacheDir ?: context.cacheDir
+    val photoFile = File(baseDir, imageFileName)
 
     val photoUri: Uri = FileProvider.getUriForFile(
         context,

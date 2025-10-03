@@ -67,6 +67,18 @@ class AuthViewModel @Inject constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    // Keep rendering app content while session restores from storage to avoid UI teardown
+    val isAuthenticatedOrLoading: StateFlow<Boolean> =
+        supabase.auth.sessionStatus
+            .map { status ->
+                when (status) {
+                    is SessionStatus.Authenticated -> true
+                    is SessionStatus.LoadingFromStorage -> true
+                    else -> false
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun linkCurrentUserToPlayer(playerId: Long) {
         viewModelScope.launch {
             try {

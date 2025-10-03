@@ -1,6 +1,6 @@
 package fr.centuryspine.lsgscores.ui.players
 
-import android.net.Uri
+import java.io.File
 import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,8 +39,7 @@ fun PlayerFormScreen(
 ) {
     var name by rememberSaveable { mutableStateOf("") }
 
-    // State for the cropped photo URI
-    var croppedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    // State for the cropped photo absolute path (persisted)
     var photoPath by rememberSaveable { mutableStateOf<String?>(null) }
 
 
@@ -69,9 +68,9 @@ fun PlayerFormScreen(
             Spacer(Modifier.height(16.dp))
 
             // Show cropped photo if available
-            croppedPhotoUri?.let {
+            photoPath?.let {
                 AsyncImage(
-                    model = it,
+                    model = File(it),
                     contentDescription = stringResource(R.string.player_form_photo_description),
                     modifier = Modifier.size(128.dp)
                 )
