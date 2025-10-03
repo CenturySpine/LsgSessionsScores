@@ -656,11 +656,19 @@ class SessionViewModel @Inject constructor(
                         return@launch
                     }
 
-                // Refresh weather info best-effort (current weather at current location)
+                // Try to fetch historical weather for the new start date/time at current device location
                 val updatedWeather = try {
-                    getCurrentWeatherInfo()
+                    val location = locationHelper.getCurrentLocation()
+                    if (location != null) {
+                        val dt = newStart.atZone(java.time.ZoneId.systemDefault()).toEpochSecond()
+                        weatherRepository.getHistoricalWeather(location.first, location.second, dt)
+                            ?: session.weatherData
+                    } else {
+                        // If no location available, keep previous weather
+                        session.weatherData
+                    }
                 } catch (_: Exception) {
-                    session.weatherData // fallback to previous
+                    session.weatherData // fallback to previous on any failure
                 }
 
                 val updated = session.copy(
