@@ -1,28 +1,10 @@
 package fr.centuryspine.lsgscores.ui.sessions
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,10 +20,7 @@ fun PlayedHoleScoreScreen(
     sessionViewModel: SessionViewModel,
     playedHoleId: Long
 ) {
-    // Load teams for the current session/played hole
-    val teams by sessionViewModel.getTeamsForPlayedHole(playedHoleId)
-        .collectAsState(initial = emptyList())
-    // If you want, you can also retrieve the hole and its name for context
+    // Collect teams with players for the current session/played hole (single source of truth)
     val teamsWithPlayers by sessionViewModel
         .getTeamsWithPlayersForPlayedHole(playedHoleId)
         .collectAsState(initial = emptyList())
@@ -151,7 +130,7 @@ fun PlayedHoleScoreScreen(
                     }
                     navController.popBackStack()
                 },
-                enabled = teams.all { strokesByTeam[it.id] != null },
+                enabled = teamsWithPlayers.all { teamWithPlayers -> strokesByTeam[teamWithPlayers.team.id] != null },
                 modifier = Modifier.weight(1f)
             ) {
                 Text(stringResource(R.string.played_hole_score_button_save))

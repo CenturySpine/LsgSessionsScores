@@ -22,11 +22,12 @@ val supabaseBucketHoles = (localProps.getProperty("supabase.bucket.holes") ?: "h
 
 android {
     namespace = "fr.centuryspine.lsgscores"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "fr.centuryspine.lsgscores"
-        minSdk = 26
+        minSdk = 34
+        //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -94,17 +95,17 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.accompanist.flowlayout)
     implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.compose.bom.v20240500)
+    implementation(platform(libs.androidx.compose.bom.v20240500))
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
 
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation(libs.play.services.location)
+    implementation(libs.coil.compose)
 
     // Supabase and Ktor client
     implementation(platform(libs.supabase.bom))
