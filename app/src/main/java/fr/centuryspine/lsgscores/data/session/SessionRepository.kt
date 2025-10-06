@@ -1,5 +1,4 @@
 package fr.centuryspine.lsgscores.data.session
-import androidx.room.Transaction
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import kotlinx.coroutines.flow.Flow
 
@@ -39,7 +38,6 @@ class SessionRepository(
 
     fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?> = sessionDao.getOngoingSessionFlowForCity(cityId)
 
-    @Transaction
     suspend fun deleteSessionCascade(session: Session) {
         // 1. Récupérer tous les playedHoleIds de la session
         val playedHoleIds = playedHoleDao.getPlayedHoleIdsForSession(session.id)
