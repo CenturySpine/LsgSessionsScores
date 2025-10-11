@@ -355,4 +355,12 @@ This action cannot be undone.</string>
     <string name="settings_section_legal">Legal</string>
     <string name="settings_privacy_policy">Privacy policy</string>
     <string name="settings_privacy_policy_url">https://qgrfxhvgoqcumxhsyjoa.supabase.co/storage/v1/object/public/PublicDocs/lsgscore_privacy_policy.html</string>
+    
+    <!-- Settings - Delete account -->
+    <string name="settings_delete_account_button">Delete my account</string>
+    <string name="settings_delete_account_confirm_title">Delete your account?</string>
+    <string name="settings_delete_account_confirm_message">This will permanently delete your account and ALL your data. This action cannot be undone. Do you want to continue?</string>
+    <string name="settings_delete_account_confirm_confirm">Delete</string>
+    <string name="settings_delete_account_confirm_cancel">Cancel</string>
+    <string name="settings_delete_account_success_toast">Your account and data have been deleted.</string>
 </resources>

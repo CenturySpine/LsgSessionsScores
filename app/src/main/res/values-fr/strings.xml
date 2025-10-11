@@ -348,4 +348,12 @@
     <string name="settings_section_legal">Mentions légales</string>
     <string name="settings_privacy_policy">Politique de confidentialité</string>
     <string name="settings_privacy_policy_url">https://qgrfxhvgoqcumxhsyjoa.supabase.co/storage/v1/object/public/PublicDocs/lsgscore_privacy_policy.html</string>
+    
+    <!-- Paramètres - Suppression du compte -->
+    <string name="settings_delete_account_button">Supprimer mon compte</string>
+    <string name="settings_delete_account_confirm_title">Supprimer votre compte ?</string>
+    <string name="settings_delete_account_confirm_message">Cette opération supprimera définitivement votre compte et TOUTES vos données. Cette action est irréversible. Voulez-vous continuer ?</string>
+    <string name="settings_delete_account_confirm_confirm">Supprimer</string>
+    <string name="settings_delete_account_confirm_cancel">Annuler</string>
+    <string name="settings_delete_account_success_toast">Votre compte et toutes vos données ont été supprimés.</string>
 </resources>

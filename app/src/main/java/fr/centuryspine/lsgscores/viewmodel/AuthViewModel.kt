@@ -19,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val supabase: SupabaseClient,
-    private val appUserDao: fr.centuryspine.lsgscores.data.authuser.AppUserDaoSupabase
+    private val appUserDao: fr.centuryspine.lsgscores.data.authuser.AppUserDaoSupabase,
+    private val userDataPurger: fr.centuryspine.lsgscores.data.authuser.UserDataPurger
 ) : ViewModel() {
 
     // Linked player (if any) for the current authenticated user
@@ -115,4 +116,33 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    // Delete account (purge user data and sign out). Emits state for UI.
+    private val _deleteAccountState = kotlinx.coroutines.flow.MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
+    val deleteAccountState: StateFlow<DeleteAccountState> = _deleteAccountState
+
+    fun resetDeleteAccountState() { _deleteAccountState.value = DeleteAccountState.Idle }
+
+    fun deleteAccount() {
+        Log.d("AuthVM", "deleteAccount() called")
+        viewModelScope.launch {
+            _deleteAccountState.value = DeleteAccountState.Loading
+            try {
+                userDataPurger.purgeAllForCurrentUser()
+                // After data purge, sign out the user from auth
+                try { supabase.auth.signOut() } catch (_: Throwable) {}
+                _deleteAccountState.value = DeleteAccountState.Success
+            } catch (t: Throwable) {
+                Log.e("AuthVM", "deleteAccount() failed: ${t.message}", t)
+                _deleteAccountState.value = DeleteAccountState.Error(t.message)
+            }
+        }
+    }
+}
+
+sealed class DeleteAccountState {
+    data object Idle : DeleteAccountState()
+    data object Loading : DeleteAccountState()
+    data object Success : DeleteAccountState()
+    data class Error(val message: String?) : DeleteAccountState()
 }

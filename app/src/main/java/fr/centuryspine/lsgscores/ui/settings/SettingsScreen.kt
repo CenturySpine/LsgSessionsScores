@@ -1,5 +1,6 @@
 package fr.centuryspine.lsgscores.ui.settings
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -9,6 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,7 +30,9 @@ import fr.centuryspine.lsgscores.viewmodel.LanguageOption
 import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
 import fr.centuryspine.lsgscores.viewmodel.MigrationViewModel
 import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
+import androidx.core.net.toUri
 
+@SuppressLint("UseKtx")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -136,7 +142,7 @@ fun SettingsScreen(
                     context.startActivity(chooser)
                 } catch (e: Exception) {
                     // Fallback: just try a basic ACTION_VIEW
-                    val fallback = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                    val fallback = android.content.Intent(android.content.Intent.ACTION_VIEW, url.toUri())
                     context.startActivity(fallback)
                 }
             }) {
@@ -152,17 +158,78 @@ fun SettingsScreen(
                 MigrationDebugSection()
             }
 
-            // Sign out section (for testing Google Auth)
+            // Account section: sign out and delete account
             val authViewModel: fr.centuryspine.lsgscores.viewmodel.AuthViewModel = hiltViewModel()
             val currentUser by authViewModel.user.collectAsState()
+            val deleteState by authViewModel.deleteAccountState.collectAsState()
+            var showDeleteDialog by remember { mutableStateOf(false) }
+
+            // Success toast after deletion and sign-out
+            val ctx = context
+            LaunchedEffect(deleteState) {
+                if (deleteState is fr.centuryspine.lsgscores.viewmodel.DeleteAccountState.Success) {
+                    android.widget.Toast.makeText(
+                        ctx,
+                        ctx.getString(R.string.settings_delete_account_success_toast),
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    authViewModel.resetDeleteAccountState()
+                }
+            }
+
             if (currentUser != null) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = stringResource(R.string.settings_account_section_title),
                     style = MaterialTheme.typography.titleLarge
                 )
+
+                // Sign out button
                 Button(onClick = { authViewModel.signOut() }) {
                     Text(stringResource(R.string.settings_sign_out_button))
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Delete account button (destructive)
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    ),
+                    enabled = deleteState !is fr.centuryspine.lsgscores.viewmodel.DeleteAccountState.Loading
+                ) {
+                    if (deleteState is fr.centuryspine.lsgscores.viewmodel.DeleteAccountState.Loading) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.onError,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(stringResource(R.string.settings_delete_account_button))
+                }
+
+                if (showDeleteDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text(stringResource(R.string.settings_delete_account_confirm_title)) },
+                        text = { Text(stringResource(R.string.settings_delete_account_confirm_message)) },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                showDeleteDialog = false
+                                authViewModel.deleteAccount()
+                            }) {
+                                Text(stringResource(R.string.settings_delete_account_confirm_confirm))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = false }) {
+                                Text(stringResource(R.string.settings_delete_account_confirm_cancel))
+                            }
+                        }
+                    )
                 }
             }
 
