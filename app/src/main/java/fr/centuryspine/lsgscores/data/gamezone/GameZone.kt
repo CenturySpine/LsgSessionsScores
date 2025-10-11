@@ -7,6 +7,8 @@ import kotlinx.serialization.SerialName
 data class GameZone(
     @SerialName("id")
     val id: Long = 0,
+    @SerialName("user_id")
+    val userId: String = "",
     @SerialName("name")
     val name: String,
     @SerialName("cityid")

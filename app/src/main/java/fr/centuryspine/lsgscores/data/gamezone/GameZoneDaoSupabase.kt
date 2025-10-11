@@ -10,25 +10,29 @@ import javax.inject.Singleton
 
 @Singleton
 class GameZoneDaoSupabase @Inject constructor(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val currentUser: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) : GameZoneDao {
 
     override fun getGameZonesByCityId(cityId: Long): Flow<List<GameZone>> = flow {
+        val uid = currentUser.requireUserId()
         val list = supabase.postgrest["game_zones"].select {
-            filter { eq("cityid", cityId) }
+            filter { eq("cityid", cityId); eq("user_id", uid) }
             order("name", Order.ASCENDING)
         }.decodeList<GameZone>()
         emit(list)
     }
 
     override suspend fun getAll(): List<GameZone> {
-        return supabase.postgrest["game_zones"].select().decodeList<GameZone>()
+        val uid = currentUser.requireUserId()
+        return supabase.postgrest["game_zones"].select { filter { eq("user_id", uid) } }.decodeList<GameZone>()
     }
 
     override suspend fun getGameZoneById(id: Long): GameZone? {
         return try {
+            val uid = currentUser.requireUserId()
             supabase.postgrest["game_zones"].select {
-                filter { eq("id", id) }
+                filter { eq("id", id); eq("user_id", uid) }
             }.decodeList<GameZone>().firstOrNull()
         } catch (_: Throwable) {
             null
@@ -36,19 +40,22 @@ class GameZoneDaoSupabase @Inject constructor(
     }
 
     override suspend fun insert(gameZone: GameZone): Long {
-        val inserted = supabase.postgrest["game_zones"].insert(gameZone) { select() }.decodeSingle<GameZone>()
+        val uid = currentUser.requireUserId()
+        val inserted = supabase.postgrest["game_zones"].insert(gameZone.copy(userId = uid)) { select() }.decodeSingle<GameZone>()
         return inserted.id
     }
 
     override suspend fun update(gameZone: GameZone) {
-        supabase.postgrest["game_zones"].update(gameZone) {
-            filter { eq("id", gameZone.id) }
+        val uid = currentUser.requireUserId()
+        supabase.postgrest["game_zones"].update(gameZone.copy(userId = uid)) {
+            filter { eq("id", gameZone.id); eq("user_id", uid) }
         }
     }
 
     override suspend fun delete(gameZone: GameZone) {
+        val uid = currentUser.requireUserId()
         supabase.postgrest["game_zones"].delete {
-            filter { eq("id", gameZone.id) }
+            filter { eq("id", gameZone.id); eq("user_id", uid) }
         }
     }
 }

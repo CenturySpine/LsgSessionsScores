@@ -20,9 +20,10 @@ begin
 end; $$;
 
 -- Ensure trigger exists for both tables later
-create or replace trigger trg_app_user_updated
+drop trigger if exists trg_app_user_updated on public.app_user;
+create trigger trg_app_user_updated
 before update on public.app_user
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 -- 2) user_player_link: 1:1 link from user -> player
 create table if not exists public.user_player_link (
@@ -32,9 +33,10 @@ create table if not exists public.user_player_link (
     updated_at timestamptz not null default now()
 );
 
-create or replace trigger trg_user_player_link_updated
+drop trigger if exists trg_user_player_link_updated on public.user_player_link;
+create trigger trg_user_player_link_updated
 before update on public.user_player_link
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 -- RLS: only the current user can see/modify their own rows
 alter table public.app_user enable row level security;
@@ -81,4 +83,4 @@ grant execute on function public.link_current_user_to_player(bigint) to authenti
 
 -- Notes:
 -- - player_id is unique, so two users cannot claim the same player.
--- - if you already have players, just run this script. On first Google login, the app will upsert app_user with user id.
+-- - if you already have players, just run this script. No SQL is executed on login in this setup.

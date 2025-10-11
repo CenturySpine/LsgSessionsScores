@@ -10,6 +10,9 @@ data class PlayedHoleScore(
     @SerialName("id")
     val id: Long = 0,
 
+    @SerialName("user_id")
+    val userId: String = "",
+
     @SerialName("playedholeid")
     val playedHoleId: Long,     // FK to PlayedHole
     @SerialName("teamid")

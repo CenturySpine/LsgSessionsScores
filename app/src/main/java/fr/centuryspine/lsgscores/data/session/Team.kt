@@ -10,6 +10,10 @@ data class Team(
 
     @SerialName("id")
     val id: Long = 0,
+
+    @SerialName("user_id")
+    val userId: String = "",
+
     @SerialName("sessionid")
     val sessionId: Long,               // FK vers Session
     @SerialName("player1id")

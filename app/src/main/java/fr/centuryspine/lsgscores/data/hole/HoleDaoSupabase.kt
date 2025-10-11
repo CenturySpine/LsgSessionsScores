@@ -15,7 +15,8 @@ import javax.inject.Singleton
 
 @Singleton
 class HoleDaoSupabase @Inject constructor(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val currentUser: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) : HoleDao {
 
     private val refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -28,15 +29,16 @@ class HoleDaoSupabase @Inject constructor(
             .flatMapLatest {
                 flow {
                     // Fetch game zones for this city, then fetch holes for each zone and merge
+                    val uid = currentUser.requireUserId()
                     val zones = supabase.postgrest["game_zones"].select {
-                        filter { eq("cityid", cityId) }
+                        filter { eq("cityid", cityId); eq("user_id", uid) }
                         order("name", Order.ASCENDING)
                     }.decodeList<GameZone>()
                     val zoneIds = zones.map { it.id }.toSet()
                     val result = mutableListOf<Hole>()
                     for (gz in zones) {
                         val holes = supabase.postgrest["holes"].select {
-                            filter { eq("gamezoneid", gz.id) }
+                            filter { eq("gamezoneid", gz.id); eq("user_id", uid) }
                             order("name", Order.ASCENDING)
                         }.decodeList<Hole>()
                         result += holes
@@ -56,19 +58,21 @@ class HoleDaoSupabase @Inject constructor(
             }
 
     override suspend fun getAll(): List<Hole> {
-        return supabase.postgrest["holes"].select().decodeList<Hole>()
+        val uid = currentUser.requireUserId()
+        return supabase.postgrest["holes"].select { filter { eq("user_id", uid) } }.decodeList<Hole>()
     }
 
     override suspend fun getHolesByCityIdList(cityId: Long): List<Hole> {
         return try {
+            val uid = currentUser.requireUserId()
             val zones = supabase.postgrest["game_zones"].select {
-                filter { eq("cityid", cityId) }
+                filter { eq("cityid", cityId); eq("user_id", uid) }
                 order("name", Order.ASCENDING)
             }.decodeList<GameZone>()
             val result = mutableListOf<Hole>()
             for (gz in zones) {
                 val holes = supabase.postgrest["holes"].select {
-                    filter { eq("gamezoneid", gz.id) }
+                    filter { eq("gamezoneid", gz.id); eq("user_id", uid) }
                     order("name", Order.ASCENDING)
                 }.decodeList<Hole>()
                 result += holes
@@ -82,14 +86,15 @@ class HoleDaoSupabase @Inject constructor(
     override suspend fun insert(hole: Hole): Long {
         // Insert without assuming the server returns the inserted row in the body.
         // Some PostgREST setups use return=minimal which yields an empty body, causing decode errors.
+        val uid = currentUser.requireUserId()
         try {
-            supabase.postgrest["holes"].insert(hole)
+            supabase.postgrest["holes"].insert(hole.copy(userId = uid))
         } catch (_: Throwable) {
             // Ignore insert body/decoding issues and proceed to fetch by SELECT
         }
-        // Fetch the most recent matching hole for the same game zone and name
+        // Fetch the most recent matching hole for the same game zone and name for current user
         val list = supabase.postgrest["holes"].select {
-            filter { eq("name", hole.name); eq("gamezoneid", hole.gameZoneId) }
+            filter { eq("name", hole.name); eq("gamezoneid", hole.gameZoneId); eq("user_id", uid) }
             order("id", Order.DESCENDING)
         }.decodeList<Hole>()
         val found = list.firstOrNull()
@@ -104,29 +109,33 @@ class HoleDaoSupabase @Inject constructor(
     }
 
     override suspend fun update(hole: Hole) {
-        supabase.postgrest["holes"].update(hole) {
-            filter { eq("id", hole.id) }
+        val uid = currentUser.requireUserId()
+        supabase.postgrest["holes"].update(hole.copy(userId = uid)) {
+            filter { eq("id", hole.id); eq("user_id", uid) }
         }
         refreshTrigger.tryEmit(Unit)
     }
 
     override suspend fun delete(hole: Hole) {
+        val uid = currentUser.requireUserId()
         supabase.postgrest["holes"].delete {
-            filter { eq("id", hole.id) }
+            filter { eq("id", hole.id); eq("user_id", uid) }
         }
         refreshTrigger.tryEmit(Unit)
     }
 
     override fun getById(id: Long): Flow<Hole> = flow {
+        val uid = currentUser.requireUserId()
         val hole = supabase.postgrest["holes"].select {
-            filter { eq("id", id) }
+            filter { eq("id", id); eq("user_id", uid) }
         }.decodeList<Hole>().firstOrNull()
         if (hole != null) emit(hole)
     }
 
     override suspend fun getHolesByGameZoneId(gameZoneId: Long): List<Hole> {
+        val uid = currentUser.requireUserId()
         return supabase.postgrest["holes"].select {
-            filter { eq("gamezoneid", gameZoneId) }
+            filter { eq("gamezoneid", gameZoneId); eq("user_id", uid) }
             order("name", Order.ASCENDING)
         }.decodeList()
     }

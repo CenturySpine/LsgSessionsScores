@@ -1,6 +1,7 @@
 package fr.centuryspine.lsgscores.di
 
 
+import fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.hole.HoleDao
 import fr.centuryspine.lsgscores.data.player.PlayerDao
@@ -23,29 +24,29 @@ object DatabaseModule {
 
 
     @Provides
-    fun providePlayerDao(supabase: SupabaseClient): PlayerDao = fr.centuryspine.lsgscores.data.player.PlayerDaoSupabase(supabase)
+    fun providePlayerDao(supabase: SupabaseClient, currentUserProvider: CurrentUserProvider): PlayerDao = fr.centuryspine.lsgscores.data.player.PlayerDaoSupabase(supabase, currentUserProvider)
 
     @Provides
-    fun provideHoleDao(supabase: SupabaseClient): HoleDao = fr.centuryspine.lsgscores.data.hole.HoleDaoSupabase(supabase)
+    fun provideHoleDao(supabase: SupabaseClient, currentUserProvider: CurrentUserProvider): HoleDao = fr.centuryspine.lsgscores.data.hole.HoleDaoSupabase(supabase, currentUserProvider)
 
     @Provides
-    fun provideSessionDao(supabase: SupabaseClient): SessionDao = fr.centuryspine.lsgscores.data.session.SessionDaoSupabase(supabase)
+    fun provideSessionDao(supabase: SupabaseClient, currentUserProvider: CurrentUserProvider): SessionDao = fr.centuryspine.lsgscores.data.session.SessionDaoSupabase(supabase, currentUserProvider)
 
     @Provides
     fun provideScoringModeDao(supabase: SupabaseClient): ScoringModeDao = fr.centuryspine.lsgscores.data.scoring.ScoringModeDaoSupabase(supabase)
 
 
     @Provides
-    fun provideTeamDao(supabase: SupabaseClient): TeamDao = fr.centuryspine.lsgscores.data.session.TeamDaoSupabase(supabase)
+    fun provideTeamDao(supabase: SupabaseClient, currentUserProvider: CurrentUserProvider): TeamDao = fr.centuryspine.lsgscores.data.session.TeamDaoSupabase(supabase, currentUserProvider)
 
     @Provides
-    fun providePlayedHoleDao(supabase: SupabaseClient): PlayedHoleDao = fr.centuryspine.lsgscores.data.session.PlayedHoleDaoSupabase(supabase)
+    fun providePlayedHoleDao(supabase: SupabaseClient, currentUserProvider: CurrentUserProvider): PlayedHoleDao = fr.centuryspine.lsgscores.data.session.PlayedHoleDaoSupabase(supabase, currentUserProvider)
 
     @Provides
-    fun providePlayedHoleScoreDao(supabase: SupabaseClient): PlayedHoleScoreDao = fr.centuryspine.lsgscores.data.session.PlayedHoleScoreDaoSupabase(supabase)
+    fun providePlayedHoleScoreDao(supabase: SupabaseClient, currentUserProvider: CurrentUserProvider): PlayedHoleScoreDao = fr.centuryspine.lsgscores.data.session.PlayedHoleScoreDaoSupabase(supabase, currentUserProvider)
 
     @Provides
-    fun provideGameZoneDao(supabase: SupabaseClient): GameZoneDao = fr.centuryspine.lsgscores.data.gamezone.GameZoneDaoSupabase(supabase)
+    fun provideGameZoneDao(supabase: SupabaseClient, currentUserProvider: CurrentUserProvider): GameZoneDao = fr.centuryspine.lsgscores.data.gamezone.GameZoneDaoSupabase(supabase, currentUserProvider)
 
     @Provides
     fun provideCityDao(supabase: SupabaseClient): CityDao = fr.centuryspine.lsgscores.data.city.CityDaoSupabase(supabase)

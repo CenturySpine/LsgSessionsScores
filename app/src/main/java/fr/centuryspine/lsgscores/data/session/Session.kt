@@ -15,6 +15,9 @@ data class Session(
     @SerialName("id")
     val id: Long = 0,
 
+    @SerialName("user_id")
+    val userId: String = "",
+
     @SerialName("datetime")
     @Serializable(with = LocalDateTimeAsStringSerializer::class)
     val dateTime: LocalDateTime,

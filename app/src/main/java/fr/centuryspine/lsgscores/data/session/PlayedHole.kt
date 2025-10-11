@@ -10,6 +10,9 @@ data class PlayedHole(
     @SerialName("id")
     val id: Long = 0,
 
+    @SerialName("user_id")
+    val userId: String = "",
+
     @SerialName("sessionid")
     val sessionId: Long,      // FK to Session
     @SerialName("holeid")

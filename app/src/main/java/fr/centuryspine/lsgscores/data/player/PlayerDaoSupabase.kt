@@ -15,7 +15,8 @@ import javax.inject.Singleton
 
 @Singleton
 class PlayerDaoSupabase @Inject constructor(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val currentUser: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) : PlayerDao {
 
     private val refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -27,8 +28,9 @@ class PlayerDaoSupabase @Inject constructor(
             .flatMapLatest {
                 flow {
                     try {
+                        val uid = currentUser.requireUserId()
                         val list = supabase.postgrest["players"].select {
-                            filter { eq("cityid", cityId) }
+                            filter { eq("cityid", cityId); eq("user_id", uid) }
                             order("name", Order.ASCENDING)
                         }.decodeList<Player>()
                         emit(list)
@@ -39,13 +41,15 @@ class PlayerDaoSupabase @Inject constructor(
             }
 
     override suspend fun getAll(): List<Player> {
-        return supabase.postgrest["players"].select().decodeList<Player>()
+        val uid = currentUser.requireUserId()
+        return supabase.postgrest["players"].select { filter { eq("user_id", uid) } }.decodeList<Player>()
     }
 
     override suspend fun getPlayersByCityIdList(cityId: Long): List<Player> {
         return try {
+            val uid = currentUser.requireUserId()
             supabase.postgrest["players"].select {
-                filter { eq("cityid", cityId) }
+                filter { eq("cityid", cityId); eq("user_id", uid) }
                 order("name", Order.ASCENDING)
             }.decodeList()
         } catch (_: Throwable) {
@@ -54,19 +58,21 @@ class PlayerDaoSupabase @Inject constructor(
     }
 
     override suspend fun getById(id: Long): Player? {
-        return supabase.postgrest["players"].select { filter { eq("id", id) } }.decodeList<Player>().firstOrNull()
+        val uid = currentUser.requireUserId()
+        return supabase.postgrest["players"].select { filter { eq("id", id); eq("user_id", uid) } }.decodeList<Player>().firstOrNull()
     }
 
     override fun insert(player: Player): Long = runBlocking {
+        val uid = currentUser.requireUserId()
         try {
             // Perform insert; ignore body to avoid decode issues when server returns 204 or array
-            supabase.postgrest["players"].insert(player)
+            supabase.postgrest["players"].insert(player.copy(userId = uid))
         } catch (_: Throwable) {
             // Ignore and proceed to fetch by SELECT; network error will surface below if no row found
         }
-        // Fetch the most recent matching player in this city by name
+        // Fetch the most recent matching player in this city by name for current user
         val list = supabase.postgrest["players"].select {
-            filter { eq("name", player.name); eq("cityid", player.cityId) }
+            filter { eq("name", player.name); eq("cityid", player.cityId); eq("user_id", uid) }
             order("id", Order.DESCENDING)
         }.decodeList<Player>()
         val found = list.firstOrNull()
@@ -76,8 +82,9 @@ class PlayerDaoSupabase @Inject constructor(
 
     override fun update(player: Player) {
         runBlocking {
-            supabase.postgrest["players"].update(player) {
-                filter { eq("id", player.id) }
+            val uid = currentUser.requireUserId()
+            supabase.postgrest["players"].update(player.copy(userId = uid)) {
+                filter { eq("id", player.id); eq("user_id", uid) }
             }
         }
         refreshTrigger.tryEmit(Unit)
@@ -85,8 +92,9 @@ class PlayerDaoSupabase @Inject constructor(
 
     override fun delete(player: Player) {
         runBlocking {
+            val uid = currentUser.requireUserId()
             supabase.postgrest["players"].delete {
-                filter { eq("id", player.id) }
+                filter { eq("id", player.id); eq("user_id", uid) }
             }
         }
         refreshTrigger.tryEmit(Unit)
