@@ -118,3 +118,36 @@ Aucune licence explicite n’est fournie pour l’instant. Ajoutez un fichier `L
 ---
 
 Questions, retours ou demandes spécifiques (FR/EN, badges, CI, screenshots)? N’hésitez pas à ouvrir une issue ou à proposer une PR.
+
+## Politique de confidentialité (Play Store)
+- Modèle inclus: app/src/doc/privacy-policy-fr.html
+- Référence Google Play: https://support.google.com/googleplay/android-developer/answer/9859455?hl=fr#privacy_policy
+
+Comment personnaliser le modèle
+1) Ouvrez app/src/doc/privacy-policy-fr.html et remplacez les champs entre crochets par vos informations (éditeur, adresse, e‑mail, services tiers réellement utilisés).
+2) Mettez à jour la date « Dernière mise à jour ».
+3) Retirez les services non utilisés (ex. Crashlytics/Analytics) ou précisez leur usage.
+
+Héberger la politique sur Supabase Storage (URL publique)
+1) Dans Supabase, créez un bucket public (ex.: PublicDocs, legal ou policies).
+2) Uploadez le fichier privacy-policy-fr.html dans ce bucket.
+3) Très important: définissez les métadonnées Content-Type de l’objet à text/html pour éviter un affichage en texte brut dans le navigateur.
+   - UI Supabase: Storage > votre bucket > objet > Details > Metadata > Content-Type = text/html
+   - CLI/API: envoyez l’en-tête Content-Type: text/html à l’upload
+4) Rendez l’objet public (si le bucket n’est pas déjà public).
+5) L’URL publique aura la forme:
+   https://YOUR-PROJECT.supabase.co/storage/v1/object/public/BUCKET_NAME/privacy-policy-fr.html
+   Remplacez YOUR-PROJECT et BUCKET_NAME par vos valeurs.
+6) Vérifiez l’accessibilité anonyme de l’URL (dans une fenêtre privée).
+
+Déclarer l’URL dans la Play Console
+- App content > Privacy policy: collez l’URL publique du fichier hébergé sur Supabase.
+- Section Sécurité des données: déclarez les catégories de données collectées/partagées et les finalités, en cohérence avec la politique.
+
+Intégration (facultative) dans l’app
+- Ajoutez un lien « Politique de confidentialité » dans l’écran Paramètres/A propos et ouvrez l’URL publique avec un Intent ACTION_VIEW.
+
+Bonnes pratiques
+- Versionnez le fichier modèle dans le dépôt, mais n’y mettez pas d’informations confidentielles.
+- A chaque changement matériel (nouvelle collecte/finalité), mettez à jour le fichier et la date, et redéployez sur le même objet du bucket pour conserver l’URL.
+- Si vous ciblez l’UE/FR, vérifiez la conformité RGPD (droits, bases légales, transferts) et complétez si nécessaire (registre de traitements, DPA avec prestataires, etc.).

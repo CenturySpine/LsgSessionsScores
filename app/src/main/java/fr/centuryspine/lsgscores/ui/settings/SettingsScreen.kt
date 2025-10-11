@@ -116,6 +116,33 @@ fun SettingsScreen(
                 }
             }
 
+            // Legal section
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(R.string.settings_section_legal),
+                style = MaterialTheme.typography.titleLarge
+            )
+            Button(onClick = {
+                val url = context.getString(R.string.settings_privacy_policy_url)
+                try {
+                    val viewIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
+                        addCategory(android.content.Intent.CATEGORY_BROWSABLE)
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    val chooser = android.content.Intent.createChooser(
+                        viewIntent,
+                        context.getString(R.string.settings_privacy_policy)
+                    )
+                    context.startActivity(chooser)
+                } catch (e: Exception) {
+                    // Fallback: just try a basic ACTION_VIEW
+                    val fallback = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                    context.startActivity(fallback)
+                }
+            }) {
+                Text(stringResource(R.string.settings_privacy_policy))
+            }
+
             if (BuildConfig.DEBUG) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(

@@ -343,4 +343,9 @@
     <string name="edit_session_start_time_label">Heure de début</string>
     <string name="edit_session_end_time_label">Heure de fin (optionnel)</string>
     <string name="edit_session_clear_end_time">Effacer</string>
+    
+    <!-- Settings - Legal -->
+    <string name="settings_section_legal">Mentions légales</string>
+    <string name="settings_privacy_policy">Politique de confidentialité</string>
+    <string name="settings_privacy_policy_url">https://qgrfxhvgoqcumxhsyjoa.supabase.co/storage/v1/object/public/PublicDocs/lsgscore_privacy_policy.html</string>
 </resources>

@@ -350,4 +350,9 @@ This action cannot be undone.</string>
     <string name="edit_session_start_time_label">Start time</string>
     <string name="edit_session_end_time_label">End time (optional)</string>
     <string name="edit_session_clear_end_time">Clear</string>
+    
+    <!-- Settings - Legal -->
+    <string name="settings_section_legal">Legal</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
+    <string name="settings_privacy_policy_url">https://qgrfxhvgoqcumxhsyjoa.supabase.co/storage/v1/object/public/PublicDocs/lsgscore_privacy_policy.html</string>
 </resources>
