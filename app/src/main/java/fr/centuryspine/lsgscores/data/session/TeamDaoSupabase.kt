@@ -60,15 +60,15 @@ class TeamDaoSupabase @Inject constructor(
     }
 
     override fun getTeamsWithPlayersForSession(sessionId: Long): Flow<List<TeamWithPlayers>> = flow {
-        val uid = currentUser.requireUserId()
-        val teams = supabase.postgrest["teams"].select { filter { eq("sessionid", sessionId); eq("user_id", uid) } }.decodeList<Team>()
+        // Public read for join flow: fetch teams and player names without owner restriction
+        val teams = supabase.postgrest["teams"].select { filter { eq("sessionid", sessionId) } }.decodeList<Team>()
         val result = mutableListOf<TeamWithPlayers>()
         for (t in teams) {
             val p1 = t.player1Id.let {
-                supabase.postgrest["players"].select { filter { eq("id", it); eq("user_id", uid) } }.decodeList<Player>().firstOrNull()
+                supabase.postgrest["players"].select { filter { eq("id", it) } }.decodeList<Player>().firstOrNull()
             }
             val p2 = t.player2Id?.let {
-                supabase.postgrest["players"].select { filter { eq("id", it); eq("user_id", uid) } }.decodeList<Player>().firstOrNull()
+                supabase.postgrest["players"].select { filter { eq("id", it) } }.decodeList<Player>().firstOrNull()
             }
             result += TeamWithPlayers(team = t, player1 = p1, player2 = p2)
         }

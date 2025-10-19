@@ -1,6 +1,7 @@
 package fr.centuryspine.lsgscores.ui.sessions
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +60,7 @@ import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.flow.flowOf
 import fr.centuryspine.lsgscores.utils.getLocalizedDescription as getGameModeLocalizedDescription
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +70,7 @@ fun OngoingSessionScreen(
     sessionViewModel: SessionViewModel,
     holeViewModel: HoleViewModel
 ) {
+    val isParticipant by sessionViewModel.isParticipantMode.collectAsState()
     var showHolePicker by remember { mutableStateOf(false) }
     val ongoingSession = sessionViewModel.ongoingSession.collectAsState(initial = null).value
     val holes by holeViewModel.holes.collectAsState(initial = emptyList())
@@ -84,6 +87,12 @@ fun OngoingSessionScreen(
     var showGameModeInfo by remember { mutableStateOf(false) }
     var selectedGameModeForInfo by remember { mutableStateOf<HoleGameMode?>(null) }
 
+    // Teams of the session to detect missing scores
+    val teamsForSession by ((ongoingSession?.let { sessionViewModel.getTeamsWithPlayersForSession(it.id) } ?: flowOf(emptyList())))
+        .collectAsState(initial = emptyList())
+
+    val hasMissingScores = ongoingSession != null && playedHoles.any { it.teamResults.size < teamsForSession.size }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -96,6 +105,12 @@ fun OngoingSessionScreen(
                 .padding(bottom = 88.dp), // Space for sticky buttons
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (ongoingSession == null) {
+                Text(
+                    text = stringResource(R.string.ongoing_session_no_holes_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             ongoingSession?.let { session ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -166,13 +181,30 @@ fun OngoingSessionScreen(
 
                 // Team standings table (only show if we have data)
                 if (teamStandings.isNotEmpty()) {
+                    if (hasMissingScores) {
+                        Text(
+                            text = "Classement provisoire: des scores manquants",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                     StandingsTable(standings = teamStandings)
                 }
-                Button(
-                    onClick = { showHolePicker = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.ongoing_session_button_add_hole))
+                if (!isParticipant) {
+                    OutlinedButton(
+                        onClick = { navController.navigate("session_qr") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Afficher le QR de la session")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { showHolePicker = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.ongoing_session_button_add_hole))
+                    }
                 }
                 // Section des trous joués
                 if (playedHoles.isEmpty()) {
@@ -189,7 +221,9 @@ fun OngoingSessionScreen(
 
                     playedHoles.forEach { playedHole ->
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { navController.navigate("played_hole_score/${playedHole.playedHoleId}") },
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Row(
@@ -212,22 +246,26 @@ fun OngoingSessionScreen(
                                     )
                                 }
 
-                                IconButton(
-                                    onClick = {
-                                        playedHoleToDelete = playedHole.playedHoleId
-                                        showDeletePlayedHoleConfirm = true
+                                if (!isParticipant) {
+                                    IconButton(
+                                        onClick = {
+                                            playedHoleToDelete = playedHole.playedHoleId
+                                            showDeletePlayedHoleConfirm = true
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.ongoing_session_delete_hole_icon_description),
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.ongoing_session_delete_hole_icon_description),
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
+                                } else {
+                                    // No delete action in participant mode
+                                }
                                 }
                             }
                         }
                     }
-                }
 
 
 
@@ -390,27 +428,29 @@ fun OngoingSessionScreen(
         }
 
         // Sticky buttons at bottom
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Button(
-                onClick = { showDeleteConfirm = true },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        if (!isParticipant) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(stringResource(R.string.ongoing_session_button_cancel))
-            }
-            Spacer(modifier = Modifier.width(24.dp))
-            Button(
-                onClick = { showValidateConfirm = true },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.ongoing_session_button_validate))
+                Button(
+                    onClick = { showDeleteConfirm = true },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.ongoing_session_button_cancel))
+                }
+                Spacer(modifier = Modifier.width(24.dp))
+                Button(
+                    onClick = { showValidateConfirm = true },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.ongoing_session_button_validate))
+                }
             }
         }
     }

@@ -26,6 +26,11 @@ class AppPreferences(context: Context) {
         const val LANGUAGE_FRENCH = "fr"
 
         private const val KEY_SELECTED_CITY = "selected_city_id"
+
+        // Participant mode prefs
+        private const val KEY_PARTICIPANT_MODE = "participant_mode"
+        private const val KEY_PARTICIPANT_SESSION_ID = "participant_session_id"
+        private const val KEY_PARTICIPANT_TEAM_ID = "participant_team_id"
     }
 
     var selectedTheme: String
@@ -44,6 +49,49 @@ class AppPreferences(context: Context) {
     fun setSelectedCityId(cityId: Long) {
         prefs.edit { putLong(KEY_SELECTED_CITY, cityId) }
         _selectedCityIdFlow.value = cityId
+    }
+
+    // Participant state helpers
+    private val _participantModeFlow = MutableStateFlow(isParticipantMode())
+    val participantModeFlow: StateFlow<Boolean> = _participantModeFlow.asStateFlow()
+
+    fun isParticipantMode(): Boolean = prefs.getBoolean(KEY_PARTICIPANT_MODE, false)
+    fun setParticipantMode(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_PARTICIPANT_MODE, enabled) }
+        _participantModeFlow.value = enabled
+    }
+
+    // Participant session id as Flow
+    private val _participantSessionIdFlow = MutableStateFlow(getParticipantSessionId())
+    val participantSessionIdFlow: StateFlow<Long?> = _participantSessionIdFlow.asStateFlow()
+
+    fun getParticipantSessionId(): Long? {
+        val id = prefs.getLong(KEY_PARTICIPANT_SESSION_ID, -1L)
+        return if (id == -1L) null else id
+    }
+    fun setParticipantSessionId(sessionId: Long?) {
+        if (sessionId == null) {
+            prefs.edit { remove(KEY_PARTICIPANT_SESSION_ID) }
+        } else {
+            prefs.edit { putLong(KEY_PARTICIPANT_SESSION_ID, sessionId) }
+        }
+        _participantSessionIdFlow.value = sessionId
+    }
+
+    private val _participantTeamIdFlow = MutableStateFlow(getParticipantTeamId())
+    val participantTeamIdFlow: StateFlow<Long?> = _participantTeamIdFlow.asStateFlow()
+
+    fun getParticipantTeamId(): Long? {
+        val id = prefs.getLong(KEY_PARTICIPANT_TEAM_ID, -1L)
+        return if (id == -1L) null else id
+    }
+    fun setParticipantTeamId(teamId: Long?) {
+        if (teamId == null) {
+            prefs.edit { remove(KEY_PARTICIPANT_TEAM_ID) }
+        } else {
+            prefs.edit { putLong(KEY_PARTICIPANT_TEAM_ID, teamId) }
+        }
+        _participantTeamIdFlow.value = teamId
     }
 
 }

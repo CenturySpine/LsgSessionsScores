@@ -20,9 +20,9 @@ class PlayedHoleScoreDaoSupabase @Inject constructor(
     }
 
     override fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> = flow {
-        val uid = currentUser.requireUserId()
+        // Public read for join participants: do not filter by owner
         val list = supabase.postgrest["played_hole_scores"].select {
-            filter { eq("playedholeid", playedHoleId); eq("user_id", uid) }
+            filter { eq("playedholeid", playedHoleId) }
         }.decodeList<PlayedHoleScore>()
         emit(list)
     }

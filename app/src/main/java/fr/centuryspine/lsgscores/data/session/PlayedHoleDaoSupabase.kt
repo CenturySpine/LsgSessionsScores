@@ -21,17 +21,19 @@ class PlayedHoleDaoSupabase @Inject constructor(
     }
 
     override fun getPlayedHolesForSession(sessionId: Long): Flow<List<PlayedHole>> = flow {
-        val uid = currentUser.requireUserId()
+        // Public read for join participants: do not filter by owner
         val list = supabase.postgrest["played_holes"].select {
-            filter { eq("sessionid", sessionId); eq("user_id", uid) }
+            filter { eq("sessionid", sessionId) }
             order("position", Order.ASCENDING)
         }.decodeList<PlayedHole>()
         emit(list)
     }
 
     override fun getById(playedHoleId: Long): Flow<PlayedHole?> = flow {
-        val uid = currentUser.requireUserId()
-        val one = supabase.postgrest["played_holes"].select { filter { eq("id", playedHoleId); eq("user_id", uid) } }.decodeList<PlayedHole>().firstOrNull()
+        // Public read to allow participants to open the score screen by playedHoleId
+        val one = supabase.postgrest["played_holes"].select {
+            filter { eq("id", playedHoleId) }
+        }.decodeList<PlayedHole>().firstOrNull()
         emit(one)
     }
 

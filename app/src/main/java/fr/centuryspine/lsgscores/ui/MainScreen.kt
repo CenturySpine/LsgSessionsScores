@@ -57,6 +57,9 @@ import fr.centuryspine.lsgscores.ui.sessions.PlayedHoleScoreScreen
 import fr.centuryspine.lsgscores.ui.sessions.SessionCreationScreen
 import fr.centuryspine.lsgscores.ui.sessions.SessionHistoryScreen
 import fr.centuryspine.lsgscores.ui.sessions.SessionTeamsScreen
+import fr.centuryspine.lsgscores.ui.sessions.SessionQrScreen
+import fr.centuryspine.lsgscores.ui.sessions.JoinSessionScannerScreen
+import fr.centuryspine.lsgscores.ui.sessions.JoinSessionTeamPickerScreen
 import fr.centuryspine.lsgscores.ui.settings.SettingsScreen
 import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
@@ -308,12 +311,21 @@ fun MainScreen(
                                                 restoreState = false // Also disable state restoration
                                             }
                                         } else {
-                                            navController.navigate(item.route) {
-                                                popUpTo(navController.graph.startDestinationId) {
-                                                    saveState = true
+                                            if (item == BottomNavItem.Home) {
+                                                navController.navigate(item.route) {
+                                                    // Ensure we can always navigate back to Home after joining via QR
+                                                    popUpTo(0) { inclusive = false }
+                                                    launchSingleTop = true
+                                                    restoreState = true
                                                 }
-                                                launchSingleTop = true
-                                                restoreState = true
+                                            } else {
+                                                navController.navigate(item.route) {
+                                                    popUpTo(navController.graph.startDestinationId) {
+                                                        saveState = true
+                                                    }
+                                                    launchSingleTop = true
+                                                    restoreState = true
+                                                }
                                             }
                                         }
                                     }
@@ -332,7 +344,9 @@ fun MainScreen(
             ) {
                 // Existing routes...
                 composable(BottomNavItem.Home.route) {
-                    HomeScreen(cityViewModel = cityViewModel)
+                    HomeScreen(cityViewModel = cityViewModel, onJoinSessionClick = {
+                        navController.navigate("join_session_scan")
+                    })
                 }
                 composable(BottomNavItem.NewSession.route) {
                     SessionCreationScreen(navController, sessionViewModel)
@@ -401,6 +415,25 @@ fun MainScreen(
                 }
                 composable(DrawerNavItem.Areas.route) {
                     AreasScreen(gameZoneViewModel, cityViewModel)
+                }
+
+                // QR and Join routes
+                composable("session_qr") {
+                    SessionQrScreen(navController, sessionViewModel)
+                }
+                composable("join_session_scan") {
+                    JoinSessionScannerScreen(navController)
+                }
+                composable(
+                    route = "join_session_pick_team/{sessionId}",
+                    arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: 0L
+                    JoinSessionTeamPickerScreen(
+                        navController = navController,
+                        sessionViewModel = sessionViewModel,
+                        sessionId = sessionId
+                    )
                 }
             }
         }

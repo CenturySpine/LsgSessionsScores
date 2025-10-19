@@ -29,16 +29,15 @@ class HoleDaoSupabase @Inject constructor(
             .flatMapLatest {
                 flow {
                     // Fetch game zones for this city, then fetch holes for each zone and merge
-                    val uid = currentUser.requireUserId()
                     val zones = supabase.postgrest["game_zones"].select {
-                        filter { eq("cityid", cityId); eq("user_id", uid) }
+                        filter { eq("cityid", cityId) }
                         order("name", Order.ASCENDING)
                     }.decodeList<GameZone>()
                     val zoneIds = zones.map { it.id }.toSet()
                     val result = mutableListOf<Hole>()
                     for (gz in zones) {
                         val holes = supabase.postgrest["holes"].select {
-                            filter { eq("gamezoneid", gz.id); eq("user_id", uid) }
+                            filter { eq("gamezoneid", gz.id) }
                             order("name", Order.ASCENDING)
                         }.decodeList<Hole>()
                         result += holes
@@ -64,15 +63,14 @@ class HoleDaoSupabase @Inject constructor(
 
     override suspend fun getHolesByCityIdList(cityId: Long): List<Hole> {
         return try {
-            val uid = currentUser.requireUserId()
             val zones = supabase.postgrest["game_zones"].select {
-                filter { eq("cityid", cityId); eq("user_id", uid) }
+                filter { eq("cityid", cityId) }
                 order("name", Order.ASCENDING)
             }.decodeList<GameZone>()
             val result = mutableListOf<Hole>()
             for (gz in zones) {
                 val holes = supabase.postgrest["holes"].select {
-                    filter { eq("gamezoneid", gz.id); eq("user_id", uid) }
+                    filter { eq("gamezoneid", gz.id) }
                     order("name", Order.ASCENDING)
                 }.decodeList<Hole>()
                 result += holes

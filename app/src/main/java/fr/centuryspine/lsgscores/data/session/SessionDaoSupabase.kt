@@ -28,8 +28,8 @@ class SessionDaoSupabase @Inject constructor(
     }
 
     override fun getById(id: Long): Flow<Session?> = flow {
-        val uid = currentUser.requireUserId()
-        val list = supabase.postgrest["sessions"].select { filter { eq("id", id); eq("user_id", uid) } }.decodeList<Session>()
+        // Public read: allow fetching a session by ID regardless of owner
+        val list = supabase.postgrest["sessions"].select { filter { eq("id", id) } }.decodeList<Session>()
         emit(list.firstOrNull())
     }
 

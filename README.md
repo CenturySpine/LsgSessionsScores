@@ -92,18 +92,18 @@ Les tests unitaires se trouvent dans `app/src/test/java/...`.
 ## Captures d’écran
 Les captures d’écran ci-dessous sont disponibles dans `app/src/doc`.
 
-<p align="center">
-  <img src="app/src/doc/Screenshot_20251002-192330.png" alt="Capture 192330" width="260" />
-  <img src="app/src/doc/Screenshot_20251002-192500.png" alt="Capture 192500" width="260" />
-  <img src="app/src/doc/Screenshot_20251002-192512.png" alt="Capture 192512" width="260" />
+<p >
+  <img src="app/src/doc/Screenshot_20251002-192330.png" alt="Capture 192330" width="1080" />
+  <img src="app/src/doc/Screenshot_20251002-192500.png" alt="Capture 192500" width="1080" />
+  <img src="app/src/doc/Screenshot_20251002-192512.png" alt="Capture 192512" width="1080" />
   <br/>
-  <img src="app/src/doc/Screenshot_20251002-192541.png" alt="Capture 192541" width="260" />
-  <img src="app/src/doc/Screenshot_20251002-192556.png" alt="Capture 192556" width="260" />
-  <img src="app/src/doc/Screenshot_20251002-192612.png" alt="Capture 192612" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192541.png" alt="Capture 192541" width="1080" />
+  <img src="app/src/doc/Screenshot_20251002-192556.png" alt="Capture 192556" width="1080" />
+  <img src="app/src/doc/Screenshot_20251002-192612.png" alt="Capture 192612" width="1080" />
   <br/>
-  <img src="app/src/doc/Screenshot_20251002-192628.png" alt="Capture 192628" width="260" />
-  <img src="app/src/doc/Screenshot_20251002-192721.png" alt="Capture 192721" width="260" />
-  <img src="app/src/doc/Screenshot_20251002-192907.png" alt="Capture 192907" width="260" />
+  <img src="app/src/doc/Screenshot_20251002-192628.png" alt="Capture 192628" width="1080" />
+  <img src="app/src/doc/Screenshot_20251002-192721.png" alt="Capture 192721" width="1080" />
+  <img src="app/src/doc/Screenshot_20251002-192907.png" alt="Capture 192907" width="1080" />
 </p>
 
 ## Contribution
@@ -151,3 +151,25 @@ Bonnes pratiques
 - Versionnez le fichier modèle dans le dépôt, mais n’y mettez pas d’informations confidentielles.
 - A chaque changement matériel (nouvelle collecte/finalité), mettez à jour le fichier et la date, et redéployez sur le même objet du bucket pour conserver l’URL.
 - Si vous ciblez l’UE/FR, vérifiez la conformité RGPD (droits, bases légales, transferts) et complétez si nécessaire (registre de traitements, DPA avec prestataires, etc.).
+
+
+## Compatibilité Android et minSdk 29
+
+À partir de cette version, le minSdk de l’application est défini à 29 (Android 10). Cela permet d’installer l’app sur des appareils en API 29 tout en conservant un targetSdk récent (API 35).
+
+Impacts et comportements clés sur Android 10 (API 29):
+- Stockage (scoped storage): Android 10 introduit le stockage à portée (scoped storage). L’app est déjà compatible et utilise MediaStore pour enregistrer les images dans la galerie avec RELATIVE_PATH et IS_PENDING. Aucune permission WRITE_EXTERNAL_STORAGE n’est requise en 29 pour ces opérations (la permission est déclarée avec maxSdkVersion=28 et donc non demandée en 29+).
+- Caméra et scanner (CameraX/ML Kit): Compatibles minSdk 21. Aucun changement nécessaire pour 29.
+- Navigation retour (predictive back): La fonctionnalité avancée est disponible à partir d’Android 13 (API 33). Sur Android 10, le comportement de retour standard s’applique. L’app reste fonctionnelle.
+- Localisation: L’app demande ACCESS_FINE_LOCATION pour les fonctionnalités météo ou liées à la position. Pas de localisation en arrière-plan; donc pas de permission ACCESS_BACKGROUND_LOCATION nécessaire. Le flux de permission en 29 reste standard via Activity Result API.
+- Notifications: La permission runtime POST_NOTIFICATIONS ne concerne que 33+. Aucun impact spécifique en 29 si l’app n’en demande pas.
+
+Changements réalisés dans le code:
+- app/build.gradle.kts: minSdk passé de 34 à 29.
+- Build complet effectué sans erreurs.
+
+Ce qu’il est recommandé de tester sur un appareil API 29:
+- Prise de photo, recadrage et sauvegarde dans la galerie (MediaStore).
+- Scan QR (CameraX + ML Kit).
+- Localisation en premier plan (météo, etc.).
+- Partage d’images générées (export et partage via Intent).

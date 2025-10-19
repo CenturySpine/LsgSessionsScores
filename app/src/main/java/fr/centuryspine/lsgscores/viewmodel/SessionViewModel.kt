@@ -47,10 +47,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import javax.inject.Inject
 
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
@@ -63,12 +65,29 @@ class SessionViewModel @Inject constructor(
     private val gameZoneDao: GameZoneDao,
     private val weatherRepository: WeatherRepository,
     @ApplicationContext private val context: Context,
-    appPreferences: AppPreferences
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
+
+    // Expose helpers for join flow
+    fun getSessionById(sessionId: Long): Flow<Session?> = sessionRepository.getById(sessionId)
+    fun getTeamsWithPlayersForSession(sessionId: Long): Flow<List<TeamWithPlayers>> = teamRepository.getTeamsWithPlayersForSession(sessionId)
+    fun forceSelectCity(cityId: Long) = appPreferences.setSelectedCityId(cityId)
 
     // Expose the selected city ID as a StateFlow that observes changes from AppPreferences
     val selectedCityId: StateFlow<Long?> = appPreferences.selectedCityIdFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    // Participant mode state
+    val isParticipantMode: StateFlow<Boolean> = appPreferences.participantModeFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+    val participantSessionId: StateFlow<Long?> = appPreferences.participantSessionIdFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    val participantTeamId: StateFlow<Long?> = appPreferences.participantTeamIdFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    fun setParticipantMode(enabled: Boolean) = appPreferences.setParticipantMode(enabled)
+    fun setParticipantSession(sessionId: Long?) = appPreferences.setParticipantSessionId(sessionId)
+    fun setParticipantTeam(teamId: Long?) = appPreferences.setParticipantTeamId(teamId)
 
     var scoringModeId: Int? = null
         private set
@@ -77,17 +96,21 @@ class SessionViewModel @Inject constructor(
     private val refreshCounter = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val ongoingSession: StateFlow<Session?> = combine(selectedCityId, refreshCounter) { cityId, _ -> cityId }
-        .flatMapLatest { cityId ->
-            if (cityId != null) {
-                // Re-query whenever selected city changes or a mutation bumps the counter
-                sessionRepository.getOngoingSessionFlowForCity(cityId)
-            } else {
-                // During app startup, selectedCityId might be null temporarily
-                // Return empty flow instead of crashing the app
-                flowOf(null)
+    val ongoingSession: StateFlow<Session?> = combine(isParticipantMode, participantSessionId, selectedCityId, refreshCounter) { isPart, partId, cityId, _ ->
+        Triple(isPart, partId, cityId)
+    }.flatMapLatest { (isPart, partId, cityId) ->
+        when {
+            isPart && partId != null -> {
+                // Participant mode: always reflect the joined session by ID
+                sessionRepository.getById(partId)
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+            cityId != null -> {
+                // Admin/owner mode: ongoing session for selected city
+                sessionRepository.getOngoingSessionFlowForCity(cityId)
+            }
+            else -> flowOf(null)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     
     // Check if there's an ongoing session for the currently selected city
     val hasOngoingSessionForCurrentCity: StateFlow<Boolean> = combine(
@@ -142,6 +165,27 @@ class SessionViewModel @Inject constructor(
                     initializeDraftForCity(cityId)
                 }
             }
+        }
+
+        // Auto-refresh played holes and scores whenever there is an ongoing session (admin or participant)
+        viewModelScope.launch {
+            ongoingSession
+                .map { it != null }
+                .flatMapLatest { active ->
+                    if (active) {
+                        flow {
+                            while (true) {
+                                emit(Unit)
+                                delay(3000)
+                            }
+                        }
+                    } else {
+                        flow { }
+                    }
+                }
+                .collect {
+                    refreshCounter.update { it + 1 }
+                }
         }
     }
 
@@ -456,6 +500,10 @@ class SessionViewModel @Inject constructor(
                     flowOf(emptyList())
                 }
             }
+    }
+
+    fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> {
+        return playedHoleScoreRepository.getScoresForPlayedHole(playedHoleId)
     }
 
     fun computeScoresForCurrentScoringMode(strokesByTeam: Map<Long, Int>): Map<Long, Int> {

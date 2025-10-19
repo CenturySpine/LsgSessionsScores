@@ -34,7 +34,8 @@ import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    cityViewModel: CityViewModel
+    cityViewModel: CityViewModel,
+    onJoinSessionClick: (() -> Unit)? = null
 ) {
     val cities by cityViewModel.cities.collectAsState(initial = emptyList())
     val selectedCityId by cityViewModel.selectedCityId.collectAsState()
@@ -111,6 +112,11 @@ fun HomeScreen(
                 text = stringResource(R.string.home_welcome_text),
                 style = MaterialTheme.typography.headlineMedium
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            androidx.compose.material3.Button(onClick = { onJoinSessionClick?.invoke() }) {
+                Text("Rejoindre une session")
+            }
         }
     }
 }
