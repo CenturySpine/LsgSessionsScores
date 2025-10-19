@@ -6,13 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,15 +16,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
-import fr.centuryspine.lsgscores.BuildConfig
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.theme.availableThemes
 import fr.centuryspine.lsgscores.viewmodel.LanguageOption
 import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
-import fr.centuryspine.lsgscores.viewmodel.MigrationViewModel
 import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
-import androidx.core.net.toUri
 
 @SuppressLint("UseKtx")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,7 +84,7 @@ fun SettingsScreen(
                     )
                 }
             }
-            // Language section (ajoutez après la section thème)
+            // Langage section (ajoutez après la section thème)
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
@@ -140,7 +132,7 @@ fun SettingsScreen(
                         context.getString(R.string.settings_privacy_policy)
                     )
                     context.startActivity(chooser)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Fallback: just try a basic ACTION_VIEW
                     val fallback = android.content.Intent(android.content.Intent.ACTION_VIEW, url.toUri())
                     context.startActivity(fallback)
@@ -149,16 +141,8 @@ fun SettingsScreen(
                 Text(stringResource(R.string.settings_privacy_policy))
             }
 
-            if (BuildConfig.DEBUG) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Migration (debug)",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                MigrationDebugSection()
-            }
 
-            // Account section: sign out and delete account
+            // Account section: sign out and delete an account
             val authViewModel: fr.centuryspine.lsgscores.viewmodel.AuthViewModel = hiltViewModel()
             val currentUser by authViewModel.user.collectAsState()
             val deleteState by authViewModel.deleteAccountState.collectAsState()
@@ -367,41 +351,4 @@ private fun ColorCircle(
     )
 }
 
-@Composable
-private fun MigrationDebugSection(
-    viewModel: MigrationViewModel = hiltViewModel()
-) {
-    val state by viewModel.state.collectAsState()
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = state.lastMessage ?: "Prêt à migrer vos données locales vers Supabase.")
-
-            state.error?.let { err ->
-                Text(text = err, color = Color.Red)
-            }
-
-            state.report?.let { r ->
-                Text(text = "Résultat:")
-                Text(text = "- Villes: ${r.cities}")
-                Text(text = "- Zones de jeu: ${r.gameZones}")
-                Text(text = "- Modes de score: ${r.scoringModes}")
-                Text(text = "- Joueurs: ${r.players}")
-                Text(text = "- Trous: ${r.holes}")
-                Text(text = "- Sessions: ${r.sessions}")
-                Text(text = "- Équipes: ${r.teams}")
-                Text(text = "- Trous joués: ${r.playedHoles}")
-                Text(text = "- Scores: ${r.playedHoleScores}")
-            }
-
-            Button(onClick = { viewModel.runMigration() }, enabled = !state.isRunning) {
-                Text(if (state.isRunning) "Migration en cours…" else "Lancer la migration")
-            }
-
-        }
-    }
-}
 
