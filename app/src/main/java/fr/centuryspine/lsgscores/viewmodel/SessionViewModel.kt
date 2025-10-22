@@ -202,9 +202,7 @@ class SessionViewModel @Inject constructor(
                                 combine(
                                     playedHoles.map { playedHole ->
                                         combine(
-                                            holeRepository.getHolesByCityId(session.cityId).map { holes ->
-                                                holes.find { it.id == playedHole.holeId }
-                                            },
+                                            holeRepository.getHoleByIdPublic(playedHole.holeId),
                                             holeGameModeRepository.getById(playedHole.gameModeId),
                                             playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id),
                                             teamRepository.getTeamsWithPlayersForSession(session.id)

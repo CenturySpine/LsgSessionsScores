@@ -17,5 +17,8 @@ interface HoleDao {
 
     fun getById(id: Long): Flow<Hole>
 
+    // Public read used for session display (participants)
+    fun getHoleByIdPublic(id: Long): Flow<Hole?>
+
     suspend fun getHolesByGameZoneId(gameZoneId: Long): List<Hole>
 }

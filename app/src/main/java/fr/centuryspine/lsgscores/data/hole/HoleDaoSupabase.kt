@@ -28,16 +28,17 @@ class HoleDaoSupabase @Inject constructor(
             .onStart { emit(Unit) }
             .flatMapLatest {
                 flow {
-                    // Fetch game zones for this city, then fetch holes for each zone and merge
+                    // Owner-only reads for generic hole lists
+                    val uid = currentUser.requireUserId()
                     val zones = supabase.postgrest["game_zones"].select {
-                        filter { eq("cityid", cityId) }
+                        filter { eq("cityid", cityId); eq("user_id", uid) }
                         order("name", Order.ASCENDING)
                     }.decodeList<GameZone>()
                     val zoneIds = zones.map { it.id }.toSet()
                     val result = mutableListOf<Hole>()
                     for (gz in zones) {
                         val holes = supabase.postgrest["holes"].select {
-                            filter { eq("gamezoneid", gz.id) }
+                            filter { eq("gamezoneid", gz.id); eq("user_id", uid) }
                             order("name", Order.ASCENDING)
                         }.decodeList<Hole>()
                         result += holes
@@ -128,6 +129,13 @@ class HoleDaoSupabase @Inject constructor(
             filter { eq("id", id); eq("user_id", uid) }
         }.decodeList<Hole>().firstOrNull()
         if (hole != null) emit(hole)
+    }
+
+    override fun getHoleByIdPublic(id: Long): Flow<Hole?> = flow {
+        val hole = supabase.postgrest["holes"].select {
+            filter { eq("id", id) }
+        }.decodeList<Hole>().firstOrNull()
+        emit(hole)
     }
 
     override suspend fun getHolesByGameZoneId(gameZoneId: Long): List<Hole> {

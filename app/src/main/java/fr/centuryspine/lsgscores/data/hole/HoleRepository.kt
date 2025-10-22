@@ -126,4 +126,7 @@ class HoleRepository @Inject constructor(
     }
 
     fun getHoleById(id: Long): Flow<Hole> = holeDao.getById(id)
+
+    // Public read by id for session displays (participants)
+    fun getHoleByIdPublic(id: Long): Flow<Hole?> = holeDao.getHoleByIdPublic(id)
 }

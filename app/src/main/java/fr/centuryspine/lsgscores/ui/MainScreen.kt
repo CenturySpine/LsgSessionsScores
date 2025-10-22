@@ -108,6 +108,7 @@ fun MainScreen(
     cityViewModel: CityViewModel = hiltViewModel()
 ) {
     val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsState()
+    val isParticipant by sessionViewModel.isParticipantMode.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
