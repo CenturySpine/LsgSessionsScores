@@ -159,6 +159,11 @@
     <string name="ongoing_session_validate_dialog_button_complete">Terminer</string>
     <string name="ongoing_session_validate_dialog_button_cancel">Annuler</string>
 
+    <!-- OngoingSessionScreen - Participant Session Closed Dialog -->
+    <string name="ongoing_session_closed_dialog_title">Session clôturée</string>
+    <string name="ongoing_session_closed_dialog_message">Cette session a été clôturée par l\'administrateur. Vous allez être redirigé vers la page d\'accueil.</string>
+    <string name="ongoing_session_closed_dialog_button_ok">OK</string>
+
     <!-- PlayedHoleScoreScreen -->
     <string name="played_hole_score_title">Entrez les coups pour chaque équipe</string>
     <string name="played_hole_score_button_cancel">Annuler</string>

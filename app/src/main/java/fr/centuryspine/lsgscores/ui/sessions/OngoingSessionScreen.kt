@@ -87,6 +87,17 @@ fun OngoingSessionScreen(
     var showGameModeInfo by remember { mutableStateOf(false) }
     var selectedGameModeForInfo by remember { mutableStateOf<HoleGameMode?>(null) }
 
+    // When a participant is viewing a session that has been closed by the admin, show a notice
+    var showSessionClosedDialog by remember { mutableStateOf(false) }
+    var hasObservedSession by remember { mutableStateOf(false) }
+    if (ongoingSession != null) {
+        hasObservedSession = true
+    }
+    if (isParticipant && hasObservedSession && (ongoingSession == null || (!ongoingSession.isOngoing))) {
+        // Only trigger showing once per composition to avoid repeat flicker
+        if (!showSessionClosedDialog) showSessionClosedDialog = true
+    }
+
     // Teams of the session to detect missing scores
     val teamsForSession by ((ongoingSession?.let { sessionViewModel.getTeamsWithPlayersForSession(it.id) } ?: flowOf(emptyList())))
         .collectAsState(initial = emptyList())
@@ -498,6 +509,32 @@ fun OngoingSessionScreen(
                 }
             )
         }
+    }
+
+    // Participant notice: session closed by admin
+    if (showSessionClosedDialog) {
+        AlertDialog(
+            onDismissRequest = { /* prevent dismiss without acknowledgement */ },
+            title = { Text(stringResource(R.string.ongoing_session_closed_dialog_title)) },
+            text = { Text(stringResource(R.string.ongoing_session_closed_dialog_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSessionClosedDialog = false
+                        // Clear participant state and return to home
+                        sessionViewModel.setParticipantTeam(null)
+                        sessionViewModel.setParticipantSession(null)
+                        sessionViewModel.setParticipantMode(false)
+                        navController.navigate(BottomNavItem.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.ongoing_session_closed_dialog_button_ok))
+                }
+            }
+        )
     }
 
     // Delete played hole confirmation dialog
