@@ -30,13 +30,7 @@ export default function Home() {
     <main style={{ padding: 24 }}>
       <h1>LSGScore Guest (Web)</h1>
       <p>Bienvenue. Bientôt: rejoindre une session via code/QR, saisir vos scores, et voir le dashboard en temps réel.</p>
-      <div style={{ marginTop: 16, marginBottom: 16 }}>
-        <strong>Etat:</strong> {status}
-      </div>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button onClick={loginWithGoogle} style={{ padding: 12 }}>Se connecter avec Google</button>
-        <button onClick={signOut} style={{ padding: 12 }}>Se déconnecter</button>
-      </div>
+
     </main>
   )
 }
