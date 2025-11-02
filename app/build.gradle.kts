@@ -20,6 +20,13 @@ val supabaseAnonKey = (localProps.getProperty("supabase.anonKey") ?: "")
 val supabaseBucketPlayers = (localProps.getProperty("supabase.bucket.players") ?: "players")
 val supabaseBucketHoles = (localProps.getProperty("supabase.bucket.holes") ?: "holes")
 
+// Release signing credentials from user/global gradle.properties or environment variables (do not commit secrets)
+val releaseStoreFile = (project.findProperty("RELEASE_STORE_FILE") as String?) ?: System.getenv("RELEASE_STORE_FILE")
+val releaseStorePassword = (project.findProperty("RELEASE_STORE_PASSWORD") as String?) ?: System.getenv("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = (project.findProperty("RELEASE_KEY_ALIAS") as String?) ?: System.getenv("RELEASE_KEY_ALIAS")
+val releaseKeyPassword = (project.findProperty("RELEASE_KEY_PASSWORD") as String?) ?: System.getenv("RELEASE_KEY_PASSWORD")
+val hasReleaseSigning = listOf(releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
+
 android {
     namespace = "fr.centuryspine.lsgscores"
     compileSdk = 36
@@ -29,8 +36,8 @@ android {
         minSdk = 29
         //noinspection OldTargetApi
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -49,6 +56,26 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+
+    if (hasReleaseSigning) {
+        println("[Gradle] Using provided RELEASE_* properties to sign release builds")
+        signingConfigs {
+            create("release")
+        }
+        signingConfigs.getByName("release") {
+            storeFile = file(releaseStoreFile!!)
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
+        buildTypes {
+            getByName("release") {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    } else {
+        println("[Gradle] Release signing not configured (missing RELEASE_* properties). AAB/APK will be unsigned.")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
