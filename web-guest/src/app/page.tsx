@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <main style={{ padding: 24 }}>
       <h1>LSGScore Guest (Web)</h1>
-      <p>Bienvenue. Bientôt: rejoindre une session via code/QR, saisir vos scores, et voir le dashboard en temps réel.</p>
+      <p>Rejoignez une session et saisissez vous-même vos scores, quelle que soit le model de votre device !</p>
 
       {!isAuthenticated && (
         <div style={{
