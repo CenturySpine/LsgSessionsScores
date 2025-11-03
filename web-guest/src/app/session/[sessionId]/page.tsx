@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import Link from "next/link"
 
 type SessionRow = {
   id: number
@@ -256,13 +257,29 @@ export default function OngoingSessionPage() {
 
           {/* Holes list */}
           <div style={{ background: "#f3f4f6", padding: 12, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Trous</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ fontWeight: 600 }}>Trous</div>
+              {!selectedTeamId && (
+                <div style={{ color: "#b45309", background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 6, padding: "4px 8px", fontSize: 12 }}>
+                  Scannez le QR code et revenez ici pour saisir le score de votre équipe
+                </div>
+              )}
+            </div>
             {playedHoles.length === 0 ? (
               <div style={{ color: "#6b7280" }}>Aucun trou défini pour cette session.</div>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
                 {playedHoles.map((ph) => {
                   const isCurrent = currentPlayedHole?.id === ph.id
+                  const href = selectedTeamId ? `/session/${session!.id}/hole/${ph.id}?teamId=${selectedTeamId}` : null
+                  const content = (
+                    <div style={{ color: "inherit", textDecoration: "none" }}>
+                      <div style={{ color: "#6b7280", fontSize: 12 }}>Position {ph.position}</div>
+                      <div style={{ fontWeight: 500 }}>
+                        {holesById[ph.holeid]?.name ?? `Trou #${ph.holeid}`} <span style={{ color: "#6b7280", fontWeight: 400 }}>(par {holesById[ph.holeid]?.par ?? "?"})</span>
+                      </div>
+                    </div>
+                  )
                   return (
                     <li key={ph.id} style={{
                       background: isCurrent ? "#ECFDF5" : "#fff",
@@ -270,22 +287,18 @@ export default function OngoingSessionPage() {
                       borderRadius: 8,
                       padding: 8
                     }}>
-                      <div style={{ color: "#6b7280", fontSize: 12 }}>Position {ph.position}</div>
-                      <div style={{ fontWeight: 500 }}>
-                        {holesById[ph.holeid]?.name ?? `Trou #${ph.holeid}`} <span style={{ color: "#6b7280", fontWeight: 400 }}>(par {holesById[ph.holeid]?.par ?? "?"})</span>
-                      </div>
+                      {href ? (
+                        <Link href={href} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+                          {content}
+                        </Link>
+                      ) : (
+                        content
+                      )}
                     </li>
                   )
                 })}
               </ul>
             )}
-          </div>
-
-          {/* Placeholder button for score entry */}
-          <div style={{ textAlign: "right" }}>
-            <button disabled style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #D1D5DB", background: "#E5E7EB", color: "#6b7280" }}>
-              Saisir les scores (à venir)
-            </button>
           </div>
         </div>
       )}

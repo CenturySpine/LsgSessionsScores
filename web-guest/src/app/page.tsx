@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { readLastSession } from "@/lib/resume"
+import { ensureAppUser } from "@/lib/appUser"
 
 function GoogleIcon() {
   return (
@@ -21,13 +22,24 @@ export default function Home() {
   const [resume, setResume] = useState<{ sid: string; tid: number } | null>(null)
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session)
-      setUserId(session?.user?.id ?? null)
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const authed = !!session
+      setIsAuthenticated(authed)
+      const uid = session?.user?.id ?? null
+      setUserId(uid)
+      if (authed) {
+        // Ensure an app_user row exists for this user (first login provisioning)
+        try { await ensureAppUser() } catch { /* noop */ }
+      }
     })
-    supabase.auth.getSession().then(({ data }) => {
-      setIsAuthenticated(!!data.session)
-      setUserId(data.session?.user?.id ?? null)
+    supabase.auth.getSession().then(async ({ data }) => {
+      const authed = !!data.session
+      setIsAuthenticated(authed)
+      const uid = data.session?.user?.id ?? null
+      setUserId(uid)
+      if (authed) {
+        try { await ensureAppUser() } catch { /* noop */ }
+      }
     })
     return () => { sub.subscription.unsubscribe() }
   }, [])
