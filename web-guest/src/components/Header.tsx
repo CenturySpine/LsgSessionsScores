@@ -55,9 +55,9 @@ export default function Header() {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatar} alt="avatar" width={28} height={28} style={{ borderRadius: "50%" }} />
+              <img src={avatar} alt={email} width={28} height={28} style={{ borderRadius: "50%" }} />
             ) : null}
-            <span style={{ fontSize: 14 }}>{email}</span>
+
             <button
               onClick={signOut}
               aria-label="Se déconnecter"

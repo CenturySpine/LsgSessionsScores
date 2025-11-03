@@ -35,20 +35,13 @@ export default function Home() {
   }
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1>LSGScore Guest (Web)</h1>
-      <p>Rejoignez une session et saisissez vous-même vos scores, quelle que soit le model de votre device !</p>
-
-      {!isAuthenticated && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: 32
-        }}>
+    <main style={{ padding: 24, minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {!isAuthenticated ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
+          <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Login to lsg score</div>
           <button
             onClick={loginWithGoogle}
-            aria-label="Continue with Google"
+            aria-label="Se connecter avec Google"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -62,12 +55,15 @@ export default function Home() {
             }}
           >
             <GoogleIcon />
-            <span style={{ fontWeight: 500 }}>Continue with Google</span>
+            <span style={{ fontWeight: 500 }}>Se connecter avec Google</span>
           </button>
         </div>
-      )}
-      {isAuthenticated && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center', maxWidth: 560 }}>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>Bienvenue</div>
+          <p style={{ color: '#6b7280', margin: 0 }}>
+            Rejoignez une session en scannant le QR code fourni par votre animateur.
+          </p>
           <Link
             href="/join"
             style={{
