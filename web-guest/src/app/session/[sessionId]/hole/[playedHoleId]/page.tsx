@@ -158,30 +158,14 @@ export default function PlayedHoleScorePage() {
         throw new Error("Vous devez être connecté pour enregistrer un score.")
       }
 
-      // Try to find an existing row for (playedholeid, teamid)
-      const { data: scRows, error: selErr } = await supabase
+      // Upsert score so the last write wins, regardless of author
+      const { error: upErr } = await supabase
         .from("played_hole_scores")
-        .select("id")
-        .eq("playedholeid", playedHoleId)
-        .eq("teamid", teamId)
-        .limit(1)
-      if (selErr) throw selErr
-
-      type ExistingScoreRow = { id: number }
-      const existing = (scRows ?? [])[0] as ExistingScoreRow | undefined
-
-      if (existing?.id) {
-        const { error: updErr } = await supabase
-          .from("played_hole_scores")
-          .update({ strokes })
-          .eq("id", existing.id)
-        if (updErr) throw updErr
-      } else {
-        const { error: insErr } = await supabase
-          .from("played_hole_scores")
-          .insert({ playedholeid: playedHoleId, teamid: teamId, strokes })
-        if (insErr) throw insErr
-      }
+        .upsert({ playedholeid: playedHoleId, teamid: teamId, strokes }, {
+          onConflict: "playedholeid,teamid",
+          ignoreDuplicates: false,
+        })
+      if (upErr) throw upErr
       // Back to session page, preserve teamId
       router.push(`/session/${sessionId}?teamId=${teamId}`)
     } catch (e: any) {

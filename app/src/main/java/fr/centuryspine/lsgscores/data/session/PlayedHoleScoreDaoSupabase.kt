@@ -14,9 +14,17 @@ class PlayedHoleScoreDaoSupabase @Inject constructor(
 ) : PlayedHoleScoreDao {
 
     override suspend fun insert(score: PlayedHoleScore): Long {
-        // RLS now allows any authenticated user to insert; no user_id column expected
+        // Legacy insert (kept for compatibility); prefer upsert()
         val inserted = supabase.postgrest["played_hole_scores"].insert(score) { select() }.decodeSingle<PlayedHoleScore>()
         return inserted.id
+    }
+
+    override suspend fun upsert(score: PlayedHoleScore): Long {
+        // Last write wins on conflict (playedholeid, teamid)
+        val upserted = supabase.postgrest["played_hole_scores"]
+            .upsert(score, onConflict = "playedholeid,teamid") { select() }
+            .decodeSingle<PlayedHoleScore>()
+        return upserted.id
     }
 
     override fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> = flow {

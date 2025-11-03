@@ -457,7 +457,7 @@ class SessionViewModel @Inject constructor(
                 teamId = teamId,
                 strokes = strokes
             )
-            playedHoleScoreRepository.insertPlayedHoleScore(score)
+            playedHoleScoreRepository.upsertPlayedHoleScore(score)
             // Force refresh so the UI re-queries Supabase-backed flows and displays the new/updated scores
             refreshCounter.update { it + 1 }
         }

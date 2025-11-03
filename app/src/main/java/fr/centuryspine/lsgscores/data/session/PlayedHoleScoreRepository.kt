@@ -8,6 +8,10 @@ class PlayedHoleScoreRepository(private val playedHoleScoreDao: PlayedHoleScoreD
         return playedHoleScoreDao.insert(score)
     }
 
+    suspend fun upsertPlayedHoleScore(score: PlayedHoleScore): Long {
+        return playedHoleScoreDao.upsert(score)
+    }
+
     fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> {
         return playedHoleScoreDao.getScoresForPlayedHole(playedHoleId)
     }
