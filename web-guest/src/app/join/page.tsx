@@ -2,6 +2,7 @@
 import { useCallback, useMemo, useState, useEffect, useRef, type ChangeEvent } from "react"
 import { Scanner } from "@yudiel/react-qr-scanner"
 import { supabase } from "@/lib/supabaseClient"
+import { useRouter } from "next/navigation"
 
 type TeamRow = {
   id: number
@@ -16,6 +17,7 @@ type PlayerRow = {
 }
 
 export default function JoinPage() {
+  const router = useRouter()
   const [scanning, setScanning] = useState(true)
   const [raw, setRaw] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -26,6 +28,10 @@ export default function JoinPage() {
   const [teams, setTeams] = useState<TeamRow[] | null>(null)
   const [teamsError, setTeamsError] = useState<string | null>(null)
   const [playersById, setPlayersById] = useState<Record<number, PlayerRow>>({})
+
+  // Sélection d'équipe et confirmation
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   // Dev-only: import QR from image file
   const isDev = process.env.NODE_ENV !== "production"
@@ -207,6 +213,27 @@ export default function JoinPage() {
     }
   }, [sessionId])
 
+  // Reset selection when teams reload or session changes
+  useEffect(() => {
+    setSelectedTeamId(null)
+    setConfirmOpen(false)
+  }, [sessionId, loadingTeams])
+
+  const selectedTeamLabel = useMemo(() => {
+    if (!selectedTeamId || !teams) return null
+    const t = teams.find(tt => tt.id === selectedTeamId)
+    if (!t) return null
+    const p1 = playersById[t.player1id]?.name ?? `#${t.player1id}`
+    const p2 = t.player2id ? (playersById[t.player2id]?.name ?? `#${t.player2id}`) : null
+    return p2 ? `${p1} & ${p2}` : p1
+  }, [selectedTeamId, teams, playersById])
+
+  const handleConfirmProceed = useCallback(() => {
+    if (!sessionId || !selectedTeamId) return
+    setConfirmOpen(false)
+    router.push(`/session/${sessionId}?teamId=${selectedTeamId}`)
+  }, [router, sessionId, selectedTeamId])
+
   return (
     <main style={{ padding: 16 }}>
       <h1 style={{ fontSize: 20, marginBottom: 8 }}>Rejoindre une session</h1>
@@ -267,6 +294,8 @@ export default function JoinPage() {
               setPlayersById({})
               setTeamsError(null)
               setLoadingTeams(false)
+              setSelectedTeamId(null)
+              setConfirmOpen(false)
             }}
             style={{ padding: "8px 12px", border: "1px solid #D1D5DB", borderRadius: 8 }}
           >
@@ -301,19 +330,61 @@ export default function JoinPage() {
               )}
 
               {!loadingTeams && !teamsError && teams && teams.length > 0 && (
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
-                  {teams.map((t, idx) => {
-                    const p1 = playersById[t.player1id]?.name ?? `#${t.player1id}`
-                    const p2 = t.player2id ? (playersById[t.player2id]?.name ?? `#${t.player2id}`) : null
-                    const label = p2 ? `${p1} & ${p2}` : p1
-                    return (
-                      <li key={t.id} style={{ background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, padding: 8 }}>
-                        <div style={{ color: "#6b7280", fontSize: 12 }}>Équipe {idx + 1}</div>
-                        <div style={{ fontWeight: 500 }}>{label}</div>
-                      </li>
-                    )
-                  })}
-                </ul>
+                <div>
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
+                    {teams.map((t, idx) => {
+                      const p1 = playersById[t.player1id]?.name ?? `#${t.player1id}`
+                      const p2 = t.player2id ? (playersById[t.player2id]?.name ?? `#${t.player2id}`) : null
+                      const label = p2 ? `${p1} & ${p2}` : p1
+                      const selected = selectedTeamId === t.id
+                      return (
+                        <li
+                          key={t.id}
+                          onClick={() => setSelectedTeamId(t.id)}
+                          style={{
+                            background: selected ? "#EEF2FF" : "#fff",
+                            border: selected ? "2px solid #6366F1" : "1px solid #E5E7EB",
+                            borderRadius: 8,
+                            padding: 8,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8
+                          }}
+                          aria-selected={selected}
+                        >
+                          <input
+                            type="radio"
+                            name="team"
+                            checked={selected}
+                            onChange={() => setSelectedTeamId(t.id)}
+                            style={{ margin: 0 }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ color: "#6b7280", fontSize: 12 }}>Équipe {idx + 1}</div>
+                            <div style={{ fontWeight: 500 }}>{label}</div>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+
+                  <div style={{ marginTop: 12, textAlign: "right" }}>
+                    <button
+                      disabled={!selectedTeamId}
+                      onClick={() => setConfirmOpen(true)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "1px solid #D1D5DB",
+                        background: selectedTeamId ? "#4F46E5" : "#E5E7EB",
+                        color: selectedTeamId ? "#fff" : "#6b7280"
+                      }}
+                    >
+                      Valider
+                    </button>
+                  </div>
+                </div>
               )}
 
               {raw && (
@@ -327,6 +398,40 @@ export default function JoinPage() {
       <div style={{ marginTop: 16, color: "#6b7280", fontSize: 12 }}>
         Astuce: si la caméra ne s'affiche pas, assurez-vous d'être sur HTTPS (prod) ou en localhost, et d'avoir autorisé l'accès caméra.
       </div>
+
+      {confirmOpen && selectedTeamLabel && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+          zIndex: 50
+        }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 16, width: "100%", maxWidth: 420, boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}>
+            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>Confirmer l'équipe</div>
+            <div style={{ color: "#374151" }}>Vous allez saisir les scores pour:</div>
+            <div style={{ fontWeight: 600, marginTop: 6 }}>{selectedTeamLabel}</div>
+
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #D1D5DB", background: "#fff" }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleConfirmProceed}
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #4F46E5", background: "#4F46E5", color: "#fff" }}
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
