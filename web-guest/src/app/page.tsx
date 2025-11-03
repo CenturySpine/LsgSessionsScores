@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabaseClient"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { readLastSession } from "@/lib/resume"
 
 function GoogleIcon() {
   return (
@@ -16,16 +17,27 @@ function GoogleIcon() {
 //test
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [resume, setResume] = useState<{ sid: string; tid: number } | null>(null)
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session)
+      setUserId(session?.user?.id ?? null)
     })
     supabase.auth.getSession().then(({ data }) => {
       setIsAuthenticated(!!data.session)
+      setUserId(data.session?.user?.id ?? null)
     })
     return () => { sub.subscription.unsubscribe() }
   }, [])
+
+  useEffect(() => {
+    if (!userId) { setResume(null); return }
+    const last = readLastSession(userId)
+    if (last) setResume({ sid: last.sid, tid: last.tid })
+    else setResume(null)
+  }, [userId])
 
   const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
@@ -84,6 +96,30 @@ export default function Home() {
             </svg>
             <span style={{ fontWeight: 500 }}>Scanner un QR de session</span>
           </Link>
+
+          {resume && (
+            <div style={{ marginTop: 12 }}>
+              <Link
+                href={`/session/${resume.sid}?teamId=${resume.tid}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  background: '#065f46',
+                  color: '#fff',
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" />
+                </svg>
+                <span style={{ fontWeight: 500 }}>Reprendre la session</span>
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </main>

@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState, useEffect, useRef, type ChangeEvent } f
 import { Scanner } from "@yudiel/react-qr-scanner"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import { saveLastSession } from "@/lib/resume"
 
 type TeamRow = {
   id: number
@@ -228,9 +229,13 @@ export default function JoinPage() {
     return p2 ? `${p1} & ${p2}` : p1
   }, [selectedTeamId, teams, playersById])
 
-  const handleConfirmProceed = useCallback(() => {
+  const handleConfirmProceed = useCallback(async () => {
     if (!sessionId || !selectedTeamId) return
     setConfirmOpen(false)
+    // Save last session locally for resume (scoped to current user)
+    const { data: { user } } = await supabase.auth.getUser()
+    saveLastSession(sessionId, selectedTeamId, user?.id)
+    // Navigate as before
     router.push(`/session/${sessionId}?teamId=${selectedTeamId}`)
   }, [router, sessionId, selectedTeamId])
 

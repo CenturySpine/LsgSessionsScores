@@ -1,24 +1,42 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import { clearLastSession } from "@/lib/resume"
 
 export default function Header() {
   const [email, setEmail] = useState<string | null>(null)
+  const [displayName, setDisplayName] = useState<string | null>(null)
   const [avatar, setAvatar] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState(false)
+  const router = useRouter()
+  const btnRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ?? null
+      setUserId(user?.id ?? null)
       setEmail(user?.email ?? null)
       const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
+      const name = typeof meta["full_name"] === "string" ? (meta["full_name"] as string)
+        : typeof meta["name"] === "string" ? (meta["name"] as string)
+        : (user?.email ? user.email.split("@")[0] : null)
+      setDisplayName(name)
       setAvatar(typeof meta["avatar_url"] === "string" ? (meta["avatar_url"] as string) : null)
     })
 
     supabase.auth.getSession().then(({ data }) => {
       const user = data.session?.user ?? null
+      setUserId(user?.id ?? null)
       setEmail(user?.email ?? null)
       const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
+      const name = typeof meta["full_name"] === "string" ? (meta["full_name"] as string)
+        : typeof meta["name"] === "string" ? (meta["name"] as string)
+        : (user?.email ? user.email.split("@")[0] : null)
+      setDisplayName(name)
       setAvatar(typeof meta["avatar_url"] === "string" ? (meta["avatar_url"] as string) : null)
       setLoading(false)
     })
@@ -28,8 +46,34 @@ export default function Header() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e: MouseEvent) {
+      const t = e.target as Node
+      if (menuRef.current && !menuRef.current.contains(t) && btnRef.current && !btnRef.current.contains(t)) {
+        setOpen(false)
+      }
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false) }
+    document.addEventListener("mousedown", onDocClick)
+    document.addEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("mousedown", onDocClick)
+      document.removeEventListener("keydown", onKey)
+    }
+  }, [open])
+
+  const goHome = () => {
+    setOpen(false)
+    router.push("/")
+  }
+
   const signOut = async () => {
+    // clear per-user resume then sign out
+    if (userId) clearLastSession(userId)
     await supabase.auth.signOut()
+    setOpen(false)
+    router.replace("/")
   }
 
   return (
@@ -48,46 +92,80 @@ export default function Header() {
         <span style={{ fontWeight: 600 }}>LSGScore Guest</span>
       </div>
 
-      <div>
+      <div style={{ position: "relative" }}>
         {loading ? (
           <span style={{ color: "#6b7280" }}>Chargement…</span>
         ) : email ? (
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatar} alt={email} width={28} height={28} style={{ borderRadius: "50%" }} />
-            ) : null}
-
             <button
-              onClick={signOut}
-              aria-label="Se déconnecter"
-              title="Se déconnecter"
+              ref={btnRef}
+              onClick={() => setOpen(v => !v)}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              title={email ?? undefined}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 padding: 0,
-                border: "none",
-                background: "transparent",
+                border: "1px solid #E5E7EB",
+                background: "#fff",
                 cursor: "pointer",
-                color: "#374151"
+                color: "#374151",
+                borderRadius: "9999px"
               }}
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M21 12H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 19a7 7 0 110-14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatar} alt={email ?? "avatar"} width={28} height={28} style={{ borderRadius: "50%" }} />
+              ) : (
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#9CA3AF" }} />
+              )}
             </button>
+
+            {open && (
+              <div ref={menuRef} role="menu" aria-label="User menu" style={{
+                position: "absolute",
+                right: 0,
+                top: 44,
+                width: 260,
+                background: "#fff",
+                border: "1px solid #E5E7EB",
+                borderRadius: 12,
+                boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+                overflow: "hidden",
+                zIndex: 50
+              }}>
+                <div style={{ padding: "12px 14px", borderBottom: "1px solid #F3F4F6" }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{displayName ?? "Utilisateur"}</div>
+                  <div style={{ fontSize: 12, color: "#6B7280" }}>{email}</div>
+                </div>
+
+                <button onClick={goHome} role="menuitem" style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
+                }}>
+                  <span style={{ color: "#111827" }}>Home Page</span>
+                  <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <title>home</title>
+                    <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+                  </svg>
+                </button>
+
+                <button onClick={signOut} role="menuitem" style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
+                }}>
+                  <span style={{ color: "#111827" }}>Log Out</span>
+                  <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <title>logout</title>
+                    <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12M4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           // Si non connecté: pas de bouton dans le header (le bouton est centré sur la page)

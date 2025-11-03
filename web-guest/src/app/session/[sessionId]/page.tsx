@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useSearchParams, useRouter } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 
 type SessionRow = {
@@ -27,7 +27,6 @@ type PlayedHoleScoreRow = { id: number; playedholeid: number; teamid: number; st
 export default function OngoingSessionPage() {
   const params = useParams<{ sessionId: string }>()
   const search = useSearchParams()
-  const router = useRouter()
 
   const sessionIdStr = params?.sessionId
   const teamIdStr = search.get("teamId")
@@ -188,9 +187,6 @@ export default function OngoingSessionPage() {
     <main style={{ padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <h1 style={{ fontSize: 20, marginBottom: 8 }}>Session en cours</h1>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => router.push("/join")} style={{ padding: "8px 12px", border: "1px solid #D1D5DB", borderRadius: 8 }}>Changer d'équipe</button>
-        </div>
       </div>
 
       {error && (
