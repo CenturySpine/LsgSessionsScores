@@ -14,13 +14,13 @@ class PlayedHoleScoreDaoSupabase @Inject constructor(
 ) : PlayedHoleScoreDao {
 
     override suspend fun insert(score: PlayedHoleScore): Long {
-        val uid = currentUser.requireUserId()
-        val inserted = supabase.postgrest["played_hole_scores"].insert(score.copy(userId = uid)) { select() }.decodeSingle<PlayedHoleScore>()
+        // RLS now allows any authenticated user to insert; no user_id column expected
+        val inserted = supabase.postgrest["played_hole_scores"].insert(score) { select() }.decodeSingle<PlayedHoleScore>()
         return inserted.id
     }
 
     override fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> = flow {
-        // Public read for join participants: do not filter by owner
+        // Public read for join participants: no owner filter
         val list = supabase.postgrest["played_hole_scores"].select {
             filter { eq("playedholeid", playedHoleId) }
         }.decodeList<PlayedHoleScore>()
@@ -28,15 +28,14 @@ class PlayedHoleScoreDaoSupabase @Inject constructor(
     }
 
     override suspend fun getAll(): List<PlayedHoleScore> {
-        val uid = currentUser.requireUserId()
-        return supabase.postgrest["played_hole_scores"].select { filter { eq("user_id", uid) } }.decodeList()
+        // Return all scores (administrative use). No user filter as user_id is being removed.
+        return supabase.postgrest["played_hole_scores"].select().decodeList<PlayedHoleScore>()
     }
 
     override suspend fun deleteScoresForPlayedHoles(playedHoleIds: List<Long>) {
-        // PostgREST "in" filter; do per-id deletes to keep it simple
-        val uid = currentUser.requireUserId()
+        // Delete by played hole ids only. RLS allows authenticated users to delete.
         for (id in playedHoleIds) {
-            supabase.postgrest["played_hole_scores"].delete { filter { eq("playedholeid", id); eq("user_id", uid) } }
+            supabase.postgrest["played_hole_scores"].delete { filter { eq("playedholeid", id) } }
         }
     }
 }

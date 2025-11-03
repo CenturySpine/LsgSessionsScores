@@ -21,6 +21,62 @@ class UserDataPurger @Inject constructor(
 ) {
     private val TAG = "UserDataPurger"
 
+    @kotlinx.serialization.Serializable
+    private data class IdOnly(@kotlinx.serialization.SerialName("id") val id: Long)
+
+    /**
+     * Since played_hole_scores no longer has user_id, delete them by traversing the
+     * current user's sessions -> played_holes and removing scores for those holes.
+     */
+    private suspend fun safeDeleteScoresForUserSessions(userId: String) {
+        try {
+            // 1) Sessions owned by user
+            val sessions = try {
+                supabase.postgrest["sessions"].select {
+                    filter { eq("user_id", userId) }
+                    // select only id
+                }.decodeList<IdOnly>().map { it.id }
+            } catch (_: Throwable) { emptyList() }
+
+            if (sessions.isEmpty()) {
+                Log.d(TAG, "[played_hole_scores] no sessions for user; nothing to delete")
+                return
+            }
+
+            // 2) Gather played hole ids for those sessions
+            val playedHoleIds = mutableListOf<Long>()
+            for (sid in sessions) {
+                val holes = try {
+                    supabase.postgrest["played_holes"].select {
+                        filter { eq("sessionid", sid) }
+                    }.decodeList<IdOnly>().map { it.id }
+                } catch (_: Throwable) { emptyList() }
+                playedHoleIds.addAll(holes)
+            }
+
+            if (playedHoleIds.isEmpty()) {
+                Log.d(TAG, "[played_hole_scores] no played holes for user's sessions; nothing to delete")
+                return
+            }
+
+            // 3) Delete scores for each played hole id
+            var deletedBatches = 0
+            for (phId in playedHoleIds) {
+                try {
+                    supabase.postgrest["played_hole_scores"].delete { filter { eq("playedholeid", phId) } }
+                    deletedBatches++
+                } catch (t: Throwable) {
+                    Log.w(TAG, "Delete scores for playedholeid=$phId failed: ${t.message}")
+                    throw t
+                }
+            }
+            Log.d(TAG, "[played_hole_scores] delete batches executed: $deletedBatches for ${playedHoleIds.size} holes")
+        } catch (t: Throwable) {
+            Log.w(TAG, "safeDeleteScoresForUserSessions failed: ${t.message}")
+            throw t
+        }
+    }
+
     /**
      * Delete all rows for the current user in a dependency-safe order.
      * Adds strong guardrails:
@@ -33,7 +89,7 @@ class UserDataPurger @Inject constructor(
         assertValidUserId(uid)
         try {
             // 1) Session-related data (scores -> played holes -> teams -> sessions)
-            safeDeleteStrict("played_hole_scores", uid)
+            safeDeleteScoresForUserSessions(uid)
             safeDeleteStrict("played_holes", uid)
             safeDeleteStrict("teams", uid)
             safeDeleteStrict("sessions", uid)

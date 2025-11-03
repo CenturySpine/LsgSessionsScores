@@ -151,7 +151,7 @@ export default function PlayedHoleScorePage() {
     if (!selected || Number.isNaN(teamId) || Number.isNaN(playedHoleId)) return
     const strokes = selected === "X" ? 10 : Number(selected)
     try {
-      // Get current authenticated user id (required by RLS policies)
+      // Require authentication but no user_id field in DB payload anymore
       const { data: sessionData } = await supabase.auth.getSession()
       const uid = sessionData.session?.user?.id
       if (!uid) {
@@ -161,27 +161,25 @@ export default function PlayedHoleScorePage() {
       // Try to find an existing row for (playedholeid, teamid)
       const { data: scRows, error: selErr } = await supabase
         .from("played_hole_scores")
-        .select("id, user_id")
+        .select("id")
         .eq("playedholeid", playedHoleId)
         .eq("teamid", teamId)
         .limit(1)
       if (selErr) throw selErr
 
-      type ExistingScoreRow = { id: number; user_id: string }
+      type ExistingScoreRow = { id: number }
       const existing = (scRows ?? [])[0] as ExistingScoreRow | undefined
 
-      if (existing?.id && existing.user_id === uid) {
-        // Safe to update: owned by current user per RLS (user_id = auth.uid())
+      if (existing?.id) {
         const { error: updErr } = await supabase
           .from("played_hole_scores")
           .update({ strokes })
           .eq("id", existing.id)
         if (updErr) throw updErr
       } else {
-        // Insert a new row owned by the current user to satisfy INSERT policy
         const { error: insErr } = await supabase
           .from("played_hole_scores")
-          .insert({ playedholeid: playedHoleId, teamid: teamId, strokes, user_id: uid })
+          .insert({ playedholeid: playedHoleId, teamid: teamId, strokes })
         if (insErr) throw insErr
       }
       // Back to session page, preserve teamId
