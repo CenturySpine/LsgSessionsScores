@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
-import { clearLastSession } from "@/lib/resume"
 
 export default function Header() {
   const [email, setEmail] = useState<string | null>(null)
@@ -69,8 +68,7 @@ export default function Header() {
   }
 
   const signOut = async () => {
-    // clear per-user resume then sign out
-    if (userId) clearLastSession(userId)
+    // keep last session resume persisted across logout; do not clear here
     await supabase.auth.signOut()
     setOpen(false)
     router.replace("/")
