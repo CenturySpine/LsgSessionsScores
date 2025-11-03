@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react"
 import { useParams, useSearchParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 
-// Minimal row shapes we need from Supabase
 type SessionRow = {
   id: number
   datetime: string
