@@ -109,6 +109,29 @@ export default function Home() {
             <span style={{ fontWeight: 500 }}>Scanner un QR de session</span>
           </Link>
 
+          <a
+            href="https://github.com/CenturySpine/LsgSessionsScores/releases/download/1.0.2/signed-lsgscores-release.apk"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              background: '#2563eb',
+              color: '#fff',
+              padding: '10px 16px',
+              borderRadius: 8,
+              textDecoration: 'none',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <span style={{ fontWeight: 500 }}>Télécharger l'APK Android (v1.0.2)</span>
+          </a>
+
           {resume && (
             <div style={{ marginTop: 12 }}>
               <Link
