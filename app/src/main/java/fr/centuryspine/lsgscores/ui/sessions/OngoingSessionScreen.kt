@@ -249,12 +249,28 @@ fun OngoingSessionScreen(
                                         style = MaterialTheme.typography.titleSmall
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = playedHole.teamResults.joinToString(", ") {
-                                            "${it.teamName}: ${it.strokes} - ${it.calculatedScore}"
-                                        },
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
+                                    Column {
+                                        teamsForSession.forEach { teamWithPlayers ->
+                                            val name = listOfNotNull(teamWithPlayers.player1?.name, teamWithPlayers.player2?.name).joinToString(" & ")
+                                            val displayName = if (name.isBlank()) "Equipe ${teamWithPlayers.team.id}" else name
+                                            val result = playedHole.teamResults.find { it.teamName == name }
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = displayName,
+                                                    color = if (result == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                                Text(
+                                                    text = ": ",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                                Text(
+                                                    text = if (result == null) "-" else "${result.strokes} - ${result.calculatedScore}",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
 
                                 if (!isParticipant) {
@@ -412,9 +428,8 @@ fun OngoingSessionScreen(
                                                 sessionViewModel.addPlayedHole(
                                                     holeId = selectedHoleId!!,
                                                     gameModeId = selectedGameModeId!!,
-                                                    onPlayedHoleCreated = { playedHoleId ->
-                                                        // Navigate to the score entry screen for the new played hole
-                                                        navController.navigate("played_hole_score/$playedHoleId")
+                                                    onPlayedHoleCreated = { _ ->
+                                                        // Do not auto-navigate to score entry; stay on current screen
                                                         showHolePicker = false
                                                         selectedHoleId = null
                                                         selectedGameModeId = null
