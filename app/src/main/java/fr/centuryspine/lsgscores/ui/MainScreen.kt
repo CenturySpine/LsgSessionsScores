@@ -314,8 +314,10 @@ fun MainScreen(
                                         } else {
                                             if (item == BottomNavItem.Home) {
                                                 navController.navigate(item.route) {
-                                                    // Ensure we can always navigate back to Home after joining via QR
-                                                    popUpTo(0) { inclusive = false }
+                                                    // Navigate to Home and clear up to start destination to avoid ghost back navigation
+                                                    popUpTo(navController.graph.startDestinationId) {
+                                                        saveState = true
+                                                    }
                                                     launchSingleTop = true
                                                     restoreState = true
                                                 }
