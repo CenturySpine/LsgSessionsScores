@@ -59,29 +59,36 @@ export default function Home() {
   }
 
   return (
-    <main style={{ padding: 24, minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <main style={{ padding: 24, minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
       {!isAuthenticated ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
-          <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Login to lsg score</div>
-          <button
-            onClick={loginWithGoogle}
-            aria-label="Se connecter avec Google"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              border: '1px solid #D1D5DB',
-              background: '#fff',
-              padding: '10px 16px',
-              borderRadius: 8,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              cursor: 'pointer'
-            }}
-          >
-            <GoogleIcon />
-            <span style={{ fontWeight: 500 }}>Se connecter avec Google</span>
-          </button>
-        </div>
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
+            <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Login to lsgscores</div>
+            <button
+              onClick={loginWithGoogle}
+              aria-label="Se connecter avec Google"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                border: '1px solid #D1D5DB',
+                background: '#fff',
+                padding: '10px 16px',
+                borderRadius: 8,
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                cursor: 'pointer'
+              }}
+            >
+              <GoogleIcon />
+              <span style={{ fontWeight: 500 }}>Se connecter avec Google</span>
+            </button>
+          </div>
+          <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 16, color: '#6b7280' }}>
+            <Link href="/terms-of-use" style={{ color: '#6b7280', textDecoration: 'none' }}>Terms of Use</Link>
+            <span>•</span>
+            <Link href="/privacy-policy" style={{ color: '#6b7280', textDecoration: 'none' }}>Privacy Policy</Link>
+          </div>
+        </>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center', maxWidth: 560 }}>
           <div style={{ fontSize: 22, fontWeight: 600 }}>Bienvenue</div>

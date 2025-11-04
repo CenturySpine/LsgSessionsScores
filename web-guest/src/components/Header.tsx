@@ -87,7 +87,7 @@ export default function Header() {
       zIndex: 10
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ fontWeight: 600 }}>LSGScore Guest</span>
+        <span style={{ fontWeight: 600 }}>Lsgscores</span>
       </div>
 
       <div style={{ position: "relative" }}>

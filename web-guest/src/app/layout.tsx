@@ -1,8 +1,8 @@
 import Header from "@/components/Header"
 
 export const metadata = {
-  title: 'LSGScore Guest (Web)',
-  description: 'Guest web app for LSGScore',
+  title: 'Lsgscores (Web)',
+  description: 'Web app for Lsgscores',
 }
 
 export const viewport = {
