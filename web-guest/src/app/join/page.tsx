@@ -34,8 +34,7 @@ export default function JoinPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  // Dev-only: import QR from image file
-  const isDev = process.env.NODE_ENV !== "production"
+  // import QR from image file
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleDevFileClick = useCallback(() => {
@@ -264,13 +263,13 @@ export default function JoinPage() {
             />
           </div>
 
-          {isDev && (
+          {(
             <div style={{ marginTop: 12, textAlign: "center" }}>
               <button
                 onClick={handleDevFileClick}
                 style={{ padding: "8px 12px", border: "1px solid #D1D5DB", borderRadius: 8 }}
               >
-                Choisir une photo de QR (DEV)
+                Choisir une photo
               </button>
               <input
                 ref={fileInputRef}
@@ -279,9 +278,6 @@ export default function JoinPage() {
                 onChange={handleFileChange}
                 style={{ display: "none" }}
               />
-              <div style={{ color: "#6b7280", fontSize: 12, marginTop: 6 }}>
-                Astuce dev: permet de tester depuis un navigateur sans caméra.
-              </div>
             </div>
           )}
         </div>
@@ -398,10 +394,6 @@ export default function JoinPage() {
             </div>
           </div>
         )}
-      </div>
-
-      <div style={{ marginTop: 16, color: "#6b7280", fontSize: 12 }}>
-        Astuce: si la caméra ne s'affiche pas, assurez-vous d'être sur HTTPS (prod) ou en localhost, et d'avoir autorisé l'accès caméra.
       </div>
 
       {confirmOpen && selectedTeamLabel && (

@@ -75,7 +75,10 @@ export default function OngoingSessionPage() {
           .eq("id", idNum)
           .limit(1)
 
-        if (sErr) throw sErr
+        if (sErr) {
+          if (!cancelled) setError(sErr.message ?? "Erreur de chargement")
+          return
+        }
         const s = (sRows ?? [])[0] as unknown as SessionRow | undefined
         if (!s) {
           try {
@@ -96,7 +99,10 @@ export default function OngoingSessionPage() {
           .select("id, sessionid, player1id, player2id")
           .eq("sessionid", idNum)
           .order("id", { ascending: true })
-        if (tErr) throw tErr
+        if (tErr) {
+          if (!cancelled) setError(tErr.message ?? "Erreur de chargement")
+          return
+        }
         const tlist = (tRows ?? []) as TeamRow[]
         if (!cancelled) setTeams(tlist)
 
@@ -111,7 +117,10 @@ export default function OngoingSessionPage() {
             .from("players")
             .select("id, name")
             .in("id", pids)
-          if (pErr) throw pErr
+          if (pErr) {
+            if (!cancelled) setError(pErr.message ?? "Erreur de chargement")
+            return
+          }
           const map: Record<number, PlayerRow> = Object.fromEntries(
             (pRows as PlayerRow[]).map((p) => [p.id, p])
           )
@@ -126,7 +135,10 @@ export default function OngoingSessionPage() {
           .select("id, sessionid, holeid, gamemodeid, position")
           .eq("sessionid", idNum)
           .order("position", { ascending: true })
-        if (phErr) throw phErr
+        if (phErr) {
+          if (!cancelled) setError(phErr.message ?? "Erreur de chargement")
+          return
+        }
         const phList = (phRows ?? []) as PlayedHoleRow[]
         if (!cancelled) setPlayedHoles(phList)
 
@@ -136,7 +148,10 @@ export default function OngoingSessionPage() {
           .from("holes")
           .select("id, name, par, gamezoneid")
           .eq("gamezoneid", gzId)
-        if (hErr) throw hErr
+        if (hErr) {
+          if (!cancelled) setError(hErr.message ?? "Erreur de chargement")
+          return
+        }
         const hMap: Record<number, HoleRow> = Object.fromEntries(
           (hRows as HoleRow[]).map((h) => [h.id, h])
         )
@@ -149,7 +164,10 @@ export default function OngoingSessionPage() {
             .from("played_hole_scores")
             .select("id, playedholeid, teamid, strokes")
             .in("playedholeid", phIds)
-          if (scErr) throw scErr
+          if (scErr) {
+            if (!cancelled) setError(scErr.message ?? "Erreur de chargement")
+            return
+          }
           if (!cancelled) setScores((scRows ?? []) as PlayedHoleScoreRow[])
         } else {
           if (!cancelled) setScores([])
@@ -161,7 +179,7 @@ export default function OngoingSessionPage() {
       }
     }
 
-    load()
+    void load()
     return () => {
       cancelled = true
     }
@@ -181,9 +199,9 @@ export default function OngoingSessionPage() {
           .select("id, isongoing, enddatetime")
           .eq("id", idNum)
           .limit(1)
-        if (sErr) throw sErr
+        if (sErr) return
         const s = (sRows ?? [])[0] as { id: number; isongoing: boolean; enddatetime: string | null } | undefined
-        const unavailable = !s || s.isongoing === false || s.enddatetime !== null
+        const unavailable = !s || !s.isongoing
         if (unavailable) {
           // Clear any persisted last-session info for the current user
           try {
@@ -207,7 +225,7 @@ export default function OngoingSessionPage() {
           .select("id, sessionid, holeid, gamemodeid, position")
           .eq("sessionid", idNum)
           .order("position", { ascending: true })
-        if (phErr) throw phErr
+        if (phErr) return
         const phListNew = (phRows ?? []) as PlayedHoleRow[]
         // Update played holes only if changed
         setPlayedHoles((prev) => {
@@ -222,7 +240,7 @@ export default function OngoingSessionPage() {
             .from("played_hole_scores")
             .select("id, playedholeid, teamid, strokes")
             .in("playedholeid", phIds)
-          if (scErr) throw scErr
+          if (scErr) return
           const newScores = (scRows ?? []) as PlayedHoleScoreRow[]
           setScores((prev) => {
             if (prev.length === newScores.length) {
