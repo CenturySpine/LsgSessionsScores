@@ -368,4 +368,11 @@ This action cannot be undone.</string>
     <string name="settings_delete_account_confirm_confirm">Delete</string>
     <string name="settings_delete_account_confirm_cancel">Cancel</string>
     <string name="settings_delete_account_success_toast">Your account and data have been deleted.</string>
+
+    <!-- SessionQrScreen -->
+    <string name="session_qr_button_back">Back</string>
+    <string name="session_qr_title">Session QR code</string>
+    <string name="session_qr_no_session">No ongoing session</string>
+    <string name="session_qr_image_description">Session QR code</string>
+    <string name="session_qr_instruction">Scan this code to join the session</string>
 </resources>

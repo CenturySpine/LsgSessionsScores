@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -47,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import fr.centuryspine.lsgscores.R
@@ -123,64 +125,79 @@ fun OngoingSessionScreen(
                 )
             }
             ongoingSession?.let { session ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = stringResource(
-                                R.string.ongoing_session_date_format,
-                                session.dateTime.format(
-                                    DateTimeFormatter.ofPattern(
-                                        "dd MMMM yyyy",
-                                        Locale.FRENCH
-                                    )
-                                )
-                            ),
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Carte du mode de scoring
-                currentScoringMode?.let { scoringMode ->
+                    // Encart: date (gauche)
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Row(
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(12.dp),
+                            contentAlignment = Alignment.CenterStart
                         ) {
                             Text(
-                                text = scoringMode.getLocalizedName(LocalContext.current),
-                                style = MaterialTheme.typography.titleSmall.copy(fontStyle = FontStyle.Italic),
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.weight(1f)
+                                text = session.dateTime.format(
+                                    DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.FRENCH)
+                                ),
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
-                            IconButton(
-                                onClick = { showScoringModeInfo = true },
-                                modifier = Modifier.size(24.dp)
+                        }
+                    }
+
+                    // Encart: mode de scoring (centre)
+                    Card(
+                        onClick = { showScoringModeInfo = true },
+                        enabled = currentScoringMode != null,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            currentScoringMode?.let { scoringMode ->
+                                Text(
+                                    text = scoringMode.getLocalizedName(LocalContext.current),
+                                    style = MaterialTheme.typography.titleSmall.copy(fontStyle = FontStyle.Italic),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+
+                    // Encart: QR (droite)
+                    if (!isParticipant) {
+                        Card(
+                            onClick = { navController.navigate("session_qr") },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(12.dp),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = stringResource(R.string.ongoing_session_scoring_info_icon_description),
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    imageVector = Icons.Default.QrCode,
+                                    contentDescription = "Afficher le QR de la session",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -188,7 +205,7 @@ fun OngoingSessionScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+
 
                 // Team standings table (only show if we have data)
                 if (teamStandings.isNotEmpty()) {
@@ -203,13 +220,6 @@ fun OngoingSessionScreen(
                     StandingsTable(standings = teamStandings)
                 }
                 if (!isParticipant) {
-                    OutlinedButton(
-                        onClick = { navController.navigate("session_qr") },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Afficher le QR de la session")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = { showHolePicker = true },
                         modifier = Modifier.fillMaxWidth()
@@ -252,7 +262,7 @@ fun OngoingSessionScreen(
                                     Column {
                                         teamsForSession.forEach { teamWithPlayers ->
                                             val name = listOfNotNull(teamWithPlayers.player1?.name, teamWithPlayers.player2?.name).joinToString(" & ")
-                                            val displayName = if (name.isBlank()) "Equipe ${teamWithPlayers.team.id}" else name
+                                            val displayName = name.ifBlank { "Equipe ${teamWithPlayers.team.id}" }
                                             val result = playedHole.teamResults.find { it.teamName == name }
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Text(

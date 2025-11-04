@@ -361,4 +361,11 @@
     <string name="settings_delete_account_confirm_confirm">Supprimer</string>
     <string name="settings_delete_account_confirm_cancel">Annuler</string>
     <string name="settings_delete_account_success_toast">Votre compte et toutes vos données ont été supprimés.</string>
+    
+    <!-- SessionQrScreen -->
+    <string name="session_qr_button_back">Retour</string>
+    <string name="session_qr_title">QR code de la session</string>
+    <string name="session_qr_no_session">Aucune session en cours</string>
+    <string name="session_qr_image_description">QR de session</string>
+    <string name="session_qr_instruction">Scannez ce code pour rejoindre la session</string>
 </resources>
