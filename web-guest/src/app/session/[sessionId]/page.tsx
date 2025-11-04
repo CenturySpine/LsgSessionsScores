@@ -1,7 +1,8 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useSearchParams } from "next/navigation"
+import { useParams, useSearchParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import { clearLastSession } from "@/lib/resume"
 import Link from "next/link"
 
 type SessionRow = {
@@ -28,6 +29,8 @@ type PlayedHoleScoreRow = { id: number; playedholeid: number; teamid: number; st
 export default function OngoingSessionPage() {
   const params = useParams<{ sessionId: string }>()
   const search = useSearchParams()
+
+  const router = useRouter()
 
   const sessionIdStr = params?.sessionId
   const teamIdStr = search.get("teamId")
@@ -75,6 +78,12 @@ export default function OngoingSessionPage() {
         if (sErr) throw sErr
         const s = (sRows ?? [])[0] as unknown as SessionRow | undefined
         if (!s) {
+          try {
+            const { data: { user } } = await supabase.auth.getUser()
+            clearLastSession(user?.id)
+          } catch {
+            try { clearLastSession() } catch { /* noop */ }
+          }
           setError("Session introuvable")
           setLoading(false)
           return
@@ -158,6 +167,84 @@ export default function OngoingSessionPage() {
     }
   }, [sessionIdStr])
 
+  // Polling refresh for played holes and scores (no full page reload)
+  useEffect(() => {
+    const idNum = Number(sessionIdStr)
+    if (!sessionIdStr || Number.isNaN(idNum)) return
+    let cancelled = false
+    const interval = setInterval(async () => {
+      if (cancelled) return
+      try {
+        // Check session availability (no full page refresh)
+        const { data: sRows, error: sErr } = await supabase
+          .from("sessions")
+          .select("id, isongoing, enddatetime")
+          .eq("id", idNum)
+          .limit(1)
+        if (sErr) throw sErr
+        const s = (sRows ?? [])[0] as { id: number; isongoing: boolean; enddatetime: string | null } | undefined
+        const unavailable = !s || s.isongoing === false || s.enddatetime !== null
+        if (unavailable) {
+          // Clear any persisted last-session info for the current user
+          try {
+            const { data: { user } } = await supabase.auth.getUser()
+            clearLastSession(user?.id)
+          } catch {
+            try { clearLastSession() } catch { /* noop */ }
+          }
+          setError("Cette session n'est plus disponible. Redirection vers l'accueil…")
+          clearInterval(interval)
+          setTimeout(() => {
+            try {
+              router.push("/")
+            } catch {}
+          }, 1500)
+          return
+        }
+
+        const { data: phRows, error: phErr } = await supabase
+          .from("played_holes")
+          .select("id, sessionid, holeid, gamemodeid, position")
+          .eq("sessionid", idNum)
+          .order("position", { ascending: true })
+        if (phErr) throw phErr
+        const phListNew = (phRows ?? []) as PlayedHoleRow[]
+        // Update played holes only if changed
+        setPlayedHoles((prev) => {
+          const same =
+            prev.length === phListNew.length &&
+            prev.every((p, i) => p.id === phListNew[i]?.id && p.position === phListNew[i]?.position && p.holeid === phListNew[i]?.holeid)
+          return same ? prev : phListNew
+        })
+        const phIds = phListNew.map((ph) => ph.id)
+        if (phIds.length > 0) {
+          const { data: scRows, error: scErr } = await supabase
+            .from("played_hole_scores")
+            .select("id, playedholeid, teamid, strokes")
+            .in("playedholeid", phIds)
+          if (scErr) throw scErr
+          const newScores = (scRows ?? []) as PlayedHoleScoreRow[]
+          setScores((prev) => {
+            if (prev.length === newScores.length) {
+              const hash = (arr: PlayedHoleScoreRow[]) =>
+                arr.map((s) => `${s.id}:${s.playedholeid}:${s.teamid}:${s.strokes}`).sort().join("|")
+              if (hash(prev) === hash(newScores)) return prev
+            }
+            return newScores
+          })
+        } else {
+          setScores((prev) => (prev.length === 0 ? prev : []))
+        }
+      } catch {
+        // Ignore polling errors silently
+      }
+    }, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [sessionIdStr])
+
   // Aggregate scores per team
   const ranking = useMemo(() => {
     const totals = new Map<number, number>()
@@ -181,6 +268,37 @@ export default function OngoingSessionPage() {
     }
     return null
   }, [teams.length, playedHoles, scores])
+
+  // Build quick lookup: playedHoleId -> { teamId -> strokes }
+  const scoresByPlayedHoleId = useMemo(() => {
+    const map: Record<number, Record<number, number>> = {}
+    for (const s of scores) {
+      if (!map[s.playedholeid]) map[s.playedholeid] = {}
+      map[s.playedholeid][s.teamid] = s.strokes
+    }
+    return map
+  }, [scores])
+
+  // Missing scores per hole and global flag
+  const missingCountByPlayedHoleId = useMemo(() => {
+    const teamCount = teams.length
+    const map: Record<number, number> = {}
+    for (const ph of playedHoles) {
+      const count = Object.keys(scoresByPlayedHoleId[ph.id] ?? {}).length
+      map[ph.id] = Math.max(0, teamCount - count)
+    }
+    return map
+  }, [playedHoles, scoresByPlayedHoleId, teams.length])
+
+  const hasMissingScores = useMemo(() => {
+    const teamCount = teams.length
+    if (teamCount === 0) return false
+    for (const ph of playedHoles) {
+      const count = Object.keys(scoresByPlayedHoleId[ph.id] ?? {}).length
+      if (count < teamCount) return true
+    }
+    return false
+  }, [playedHoles, scoresByPlayedHoleId, teams.length])
 
   const selectedTeam = useMemo(() => teams.find((t) => t.id === selectedTeamId) ?? null, [teams, selectedTeamId])
 
@@ -225,7 +343,14 @@ export default function OngoingSessionPage() {
 
           {/* Ranking */}
           <div style={{ background: "#f9fafb", padding: 12, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Classement</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ fontWeight: 600 }}>Classement</div>
+              {hasMissingScores && (
+                <div style={{ color: "#b91c1c", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 6, padding: "2px 8px", fontSize: 12 }}>
+                  Scores manquants — classement non à jour
+                </div>
+              )}
+            </div>
             {ranking.length === 0 ? (
               <div style={{ color: "#6b7280" }}>Pas encore de scores saisis.</div>
             ) : (
@@ -272,11 +397,37 @@ export default function OngoingSessionPage() {
                 {playedHoles.map((ph) => {
                   const isCurrent = currentPlayedHole?.id === ph.id
                   const href = selectedTeamId ? `/session/${session!.id}/hole/${ph.id}?teamId=${selectedTeamId}` : null
+                  const holeScores = scoresByPlayedHoleId[ph.id] ?? {}
+                  const missing = missingCountByPlayedHoleId[ph.id] ?? 0
+                  const availableTeams = teams.filter((t) => holeScores[t.id] !== undefined)
                   const content = (
                     <div style={{ color: "inherit", textDecoration: "none" }}>
                       <div style={{ color: "#6b7280", fontSize: 12 }}>Position {ph.position}</div>
                       <div style={{ fontWeight: 500 }}>
                         {holesById[ph.holeid]?.name ?? `Trou #${ph.holeid}`} <span style={{ color: "#6b7280", fontWeight: 400 }}>(par {holesById[ph.holeid]?.par ?? "?"})</span>
+                      </div>
+                      <div style={{ marginTop: 8 }}>
+                        {availableTeams.length > 0 ? (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {availableTeams.map((t) => {
+                              const val = holeScores[t.id] as number
+                              const isSelTeam = selectedTeamId === t.id
+                              return (
+                                <div key={t.id} style={{ background: isSelTeam ? "#EEF2FF" : "#F3F4F6", border: isSelTeam ? "1px solid #6366F1" : "1px solid #E5E7EB", borderRadius: 12, padding: "2px 8px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                  <span style={{ color: "#374151" }}>{teamLabel(t)}</span>
+                                  <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{val}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div style={{ color: "#6b7280", fontSize: 12 }}>Aucun score saisi pour ce trou pour l'instant.</div>
+                        )}
+                        {missing > 0 && (
+                          <div style={{ color: "#b91c1c", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 6, padding: "2px 6px", fontSize: 12, display: "inline-block", marginTop: 6 }}>
+                            Manque {missing} score{missing > 1 ? "s" : ""}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
