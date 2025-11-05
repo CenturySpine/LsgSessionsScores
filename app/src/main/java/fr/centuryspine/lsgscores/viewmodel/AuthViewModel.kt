@@ -9,10 +9,14 @@ import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.user.UserInfo
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,8 +28,12 @@ class AuthViewModel @Inject constructor(
 ) : ViewModel() {
 
     // Linked player (if any) for the current authenticated user
-    private val _linkedPlayerId = kotlinx.coroutines.flow.MutableStateFlow<Long?>(null)
+    private val _linkedPlayerId = MutableStateFlow<Long?>(null)
     val linkedPlayerId: StateFlow<Long?> = _linkedPlayerId
+
+    // Track manual sign-out to bypass debounce
+    private val _signedOutManually = MutableStateFlow(false)
+    val signedOutManually: StateFlow<Boolean> = _signedOutManually
 
     init {
         // Trace session status changes for debugging and ensure app_user row exists
@@ -41,6 +49,8 @@ class AuthViewModel @Inject constructor(
                         } catch (t: Throwable) {
                             Log.w("AuthVM", "ensureUserRow/getLinked failed: ${t.message}")
                         }
+                        // Reset manual sign-out flag once authenticated again
+                        _signedOutManually.value = false
                     }
                     is SessionStatus.NotAuthenticated -> {
                         Log.d("AuthVM", "SessionStatus=NotAuthenticated")
@@ -68,16 +78,35 @@ class AuthViewModel @Inject constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    // Keep rendering app content while session restores from storage to avoid UI teardown
-    val isAuthenticatedOrLoading: StateFlow<Boolean> =
-        supabase.auth.sessionStatus
-            .map { status ->
+    // UI-facing auth state with debounce on transient NotAuthenticated
+    val authUiState: StateFlow<AuthUiState> =
+        combine(supabase.auth.sessionStatus, signedOutManually) { status, signedOut ->
+            Pair(status, signedOut)
+        }
+            .transformLatest { (status, signedOut) ->
+                if (signedOut) {
+                    emit(AuthUiState.NotAuthenticated)
+                    return@transformLatest
+                }
                 when (status) {
-                    is SessionStatus.Authenticated -> true
-                    is SessionStatus.LoadingFromStorage -> true
-                    else -> false
+                    is SessionStatus.Authenticated -> emit(AuthUiState.Authenticated)
+                    is SessionStatus.LoadingFromStorage -> emit(AuthUiState.Checking)
+                    is SessionStatus.NotAuthenticated -> {
+                        // Grace window: emit Checking first, then NotAuthenticated if it persists
+                        emit(AuthUiState.Checking)
+                        // 2 seconds debounce; adjust if needed
+                        delay(2000)
+                        emit(AuthUiState.NotAuthenticated)
+                    }
+                    else -> emit(AuthUiState.Checking)
                 }
             }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AuthUiState.Checking)
+
+    // Keep a simple boolean for legacy collectors that expect loading/authenticated
+    val isAuthenticatedOrLoading: StateFlow<Boolean> =
+        authUiState
+            .map { it == AuthUiState.Authenticated || it == AuthUiState.Checking }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun linkCurrentUserToPlayer(playerId: Long) {
@@ -109,6 +138,7 @@ class AuthViewModel @Inject constructor(
         Log.d("AuthVM", "signOut() called")
         viewModelScope.launch {
             try {
+                _signedOutManually.value = true
                 supabase.auth.signOut()
                 Log.d("AuthVM", "signOut() done")
             } catch (t: Throwable) {
@@ -118,7 +148,7 @@ class AuthViewModel @Inject constructor(
     }
 
     // Delete account (purge user data and sign out). Emits state for UI.
-    private val _deleteAccountState = kotlinx.coroutines.flow.MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
+    private val _deleteAccountState = MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
     val deleteAccountState: StateFlow<DeleteAccountState> = _deleteAccountState
 
     fun resetDeleteAccountState() { _deleteAccountState.value = DeleteAccountState.Idle }
@@ -145,4 +175,10 @@ sealed class DeleteAccountState {
     data object Loading : DeleteAccountState()
     data object Success : DeleteAccountState()
     data class Error(val message: String?) : DeleteAccountState()
+}
+
+sealed class AuthUiState {
+    data object Authenticated : AuthUiState()
+    data object Checking : AuthUiState()
+    data object NotAuthenticated : AuthUiState()
 }

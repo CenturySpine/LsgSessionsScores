@@ -3,8 +3,12 @@ package fr.centuryspine.lsgscores.data.session
 import fr.centuryspine.lsgscores.data.player.Player
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.gotrue.SessionStatus
+import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,13 +38,19 @@ class TeamDaoSupabase @Inject constructor(
         }
     }
 
-    override fun getTeamsForSession(sessionId: Long): Flow<List<Team>> = flow {
-        val uid = currentUser.requireUserId()
-        val list = supabase.postgrest["teams"].select {
-            filter { eq("sessionid", sessionId); eq("user_id", uid) }
-        }.decodeList<Team>()
-        emit(list)
-    }
+    override fun getTeamsForSession(sessionId: Long): Flow<List<Team>> =
+        supabase.auth.sessionStatus.flatMapLatest { status ->
+            when (status) {
+                is SessionStatus.Authenticated -> flow {
+                    val uid = currentUser.requireUserId()
+                    val list = supabase.postgrest["teams"].select {
+                        filter { eq("sessionid", sessionId); eq("user_id", uid) }
+                    }.decodeList<Team>()
+                    emit(list)
+                }
+                else -> flowOf(emptyList())
+            }
+        }
 
     override suspend fun getById(id: Long): Team? {
         val uid = currentUser.requireUserId()

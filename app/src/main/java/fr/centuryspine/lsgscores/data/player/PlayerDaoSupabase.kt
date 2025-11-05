@@ -3,11 +3,14 @@ package fr.centuryspine.lsgscores.data.player
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.gotrue.SessionStatus
+import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -23,22 +26,28 @@ class PlayerDaoSupabase @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getPlayersByCityId(cityId: Long): Flow<List<Player>> =
-        refreshTrigger
-            .onStart { emit(Unit) }
-            .flatMapLatest {
-                flow {
-                    try {
-                        val uid = currentUser.requireUserId()
-                        val list = supabase.postgrest["players"].select {
-                            filter { eq("cityid", cityId); eq("user_id", uid) }
-                            order("name", Order.ASCENDING)
-                        }.decodeList<Player>()
-                        emit(list)
-                    } catch (_: Throwable) {
-                        emit(emptyList())
-                    }
-                }
+        supabase.auth.sessionStatus.flatMapLatest { status ->
+            when (status) {
+                is SessionStatus.Authenticated ->
+                    refreshTrigger
+                        .onStart { emit(Unit) }
+                        .flatMapLatest {
+                            flow {
+                                try {
+                                    val uid = currentUser.requireUserId()
+                                    val list = supabase.postgrest["players"].select {
+                                        filter { eq("cityid", cityId); eq("user_id", uid) }
+                                        order("name", Order.ASCENDING)
+                                    }.decodeList<Player>()
+                                    emit(list)
+                                } catch (_: Throwable) {
+                                    emit(emptyList())
+                                }
+                            }
+                        }
+                else -> flowOf(emptyList())
             }
+        }
 
     override suspend fun getAll(): List<Player> {
         val uid = currentUser.requireUserId()

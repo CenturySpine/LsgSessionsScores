@@ -4,11 +4,14 @@ import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.gotrue.SessionStatus
+import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,38 +27,44 @@ class HoleDaoSupabase @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getHolesByCityId(cityId: Long): Flow<List<Hole>> =
-        refreshTrigger
-            .onStart { emit(Unit) }
-            .flatMapLatest {
-                flow {
-                    // Owner-only reads for generic hole lists
-                    val uid = currentUser.requireUserId()
-                    val zones = supabase.postgrest["game_zones"].select {
-                        filter { eq("cityid", cityId); eq("user_id", uid) }
-                        order("name", Order.ASCENDING)
-                    }.decodeList<GameZone>()
-                    val zoneIds = zones.map { it.id }.toSet()
-                    val result = mutableListOf<Hole>()
-                    for (gz in zones) {
-                        val holes = supabase.postgrest["holes"].select {
-                            filter { eq("gamezoneid", gz.id); eq("user_id", uid) }
-                            order("name", Order.ASCENDING)
-                        }.decodeList<Hole>()
-                        result += holes
-                    }
-                    var current = result.toList()
-                    emit(current)
-                    // Incrementally append newly added holes without reloading everything
-                    addedHoleFlow.collect { newHole ->
-                        if (zoneIds.contains(newHole.gameZoneId)) {
-                            if (current.none { it.id == newHole.id }) {
-                                current = current + newHole
+        supabase.auth.sessionStatus.flatMapLatest { status ->
+            when (status) {
+                is SessionStatus.Authenticated ->
+                    refreshTrigger
+                        .onStart { emit(Unit) }
+                        .flatMapLatest {
+                            flow {
+                                // Owner-only reads for generic hole lists
+                                val uid = currentUser.requireUserId()
+                                val zones = supabase.postgrest["game_zones"].select {
+                                    filter { eq("cityid", cityId); eq("user_id", uid) }
+                                    order("name", Order.ASCENDING)
+                                }.decodeList<GameZone>()
+                                val zoneIds = zones.map { it.id }.toSet()
+                                val result = mutableListOf<Hole>()
+                                for (gz in zones) {
+                                    val holes = supabase.postgrest["holes"].select {
+                                        filter { eq("gamezoneid", gz.id); eq("user_id", uid) }
+                                        order("name", Order.ASCENDING)
+                                    }.decodeList<Hole>()
+                                    result += holes
+                                }
+                                var current = result.toList()
                                 emit(current)
+                                // Incrementally append newly added holes without reloading everything
+                                addedHoleFlow.collect { newHole ->
+                                    if (zoneIds.contains(newHole.gameZoneId)) {
+                                        if (current.none { it.id == newHole.id }) {
+                                            current = current + newHole
+                                            emit(current)
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                }
+                else -> flowOf(emptyList())
             }
+        }
 
     override suspend fun getAll(): List<Hole> {
         val uid = currentUser.requireUserId()
@@ -123,13 +132,19 @@ class HoleDaoSupabase @Inject constructor(
         refreshTrigger.tryEmit(Unit)
     }
 
-    override fun getById(id: Long): Flow<Hole> = flow {
-        val uid = currentUser.requireUserId()
-        val hole = supabase.postgrest["holes"].select {
-            filter { eq("id", id); eq("user_id", uid) }
-        }.decodeList<Hole>().firstOrNull()
-        if (hole != null) emit(hole)
-    }
+    override fun getById(id: Long): Flow<Hole> =
+        supabase.auth.sessionStatus.flatMapLatest { status ->
+            when (status) {
+                is SessionStatus.Authenticated -> flow {
+                    val uid = currentUser.requireUserId()
+                    val hole = supabase.postgrest["holes"].select {
+                        filter { eq("id", id); eq("user_id", uid) }
+                    }.decodeList<Hole>().firstOrNull()
+                    if (hole != null) emit(hole)
+                }
+                else -> flow { /* emit nothing while unauthenticated */ }
+            }
+        }
 
     override fun getHoleByIdPublic(id: Long): Flow<Hole?> = flow {
         val hole = supabase.postgrest["holes"].select {

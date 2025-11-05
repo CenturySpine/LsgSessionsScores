@@ -26,7 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -107,13 +107,13 @@ fun MainScreen(
     themeViewModel: ThemeViewModel = hiltViewModel(),
     cityViewModel: CityViewModel = hiltViewModel()
 ) {
-    val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsState()
-    val isParticipant by sessionViewModel.isParticipantMode.collectAsState()
+    val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsStateWithLifecycle()
+    val isParticipant by sessionViewModel.isParticipantMode.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     // Add city check
-    val hasCitySelected by cityViewModel.hasCitySelected.collectAsState()  // Add this
+    val hasCitySelected by cityViewModel.hasCitySelected.collectAsStateWithLifecycle()  // lifecycle-aware
     var showNoCityAlert by remember { mutableStateOf(false) }  // Add this
 
     // Bottom bar items (only 3 now)

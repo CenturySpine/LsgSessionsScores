@@ -2,8 +2,12 @@ package fr.centuryspine.lsgscores.data.session
 
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.gotrue.SessionStatus
+import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -16,11 +20,17 @@ class SessionDaoSupabase @Inject constructor(
     private val currentUser: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) : SessionDao {
 
-    override fun getAll(): Flow<List<Session>> = flow {
-        val uid = currentUser.requireUserId()
-        val list = supabase.postgrest["sessions"].select { filter { eq("user_id", uid) } }.decodeList<Session>()
-        emit(list)
-    }
+    override fun getAll(): Flow<List<Session>> =
+        supabase.auth.sessionStatus.flatMapLatest { status ->
+            when (status) {
+                is SessionStatus.Authenticated -> flow {
+                    val uid = currentUser.requireUserId()
+                    val list = supabase.postgrest["sessions"].select { filter { eq("user_id", uid) } }.decodeList<Session>()
+                    emit(list)
+                }
+                else -> flowOf(emptyList())
+            }
+        }
 
     override suspend fun getAllList(): List<Session> {
         val uid = currentUser.requireUserId()
@@ -105,13 +115,21 @@ class SessionDaoSupabase @Inject constructor(
         supabase.postgrest["sessions"].update(body) { filter { eq("isongoing", true); eq("cityid", cityId); eq("user_id", uid) } }
     }
 
-    override fun getOngoingSessionFlow(): Flow<Session?> = flow {
-        emit(getOngoingSession())
-    }
+    override fun getOngoingSessionFlow(): Flow<Session?> =
+        supabase.auth.sessionStatus.flatMapLatest { status ->
+            when (status) {
+                is SessionStatus.Authenticated -> flow { emit(getOngoingSession()) }
+                else -> flowOf(null)
+            }
+        }
 
-    override fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?> = flow {
-        emit(getOngoingSessionForCity(cityId))
-    }
+    override fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?> =
+        supabase.auth.sessionStatus.flatMapLatest { status ->
+            when (status) {
+                is SessionStatus.Authenticated -> flow { emit(getOngoingSessionForCity(cityId)) }
+                else -> flowOf(null)
+            }
+        }
 
     override suspend fun getSessionsByGameZoneId(gameZoneId: Long): List<Session> {
         val uid = currentUser.requireUserId()
