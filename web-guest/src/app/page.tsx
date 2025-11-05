@@ -2,7 +2,7 @@
 import { supabase } from "@/lib/supabaseClient"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { readLastSession } from "@/lib/resume"
+import { readLastSession, clearLastSession } from "@/lib/resume"
 import { ensureAppUser } from "@/lib/appUser"
 
 function GoogleIcon() {
@@ -21,6 +21,8 @@ export default function Home() {
   const [checking, setChecking] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [resume, setResume] = useState<{ sid: string; tid: number } | null>(null)
+  const [canResume, setCanResume] = useState(false)
+  const [recheck, setRecheck] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -63,6 +65,67 @@ export default function Home() {
     if (last) setResume({ sid: last.sid, tid: last.tid })
     else setResume(null)
   }, [userId])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        if (!isAuthenticated || !userId) { setCanResume(false); return }
+        if (!resume) { setCanResume(false); return }
+        const sidNum = Number(resume.sid)
+        if (!Number.isFinite(sidNum)) {
+          try { clearLastSession(userId) } catch { /* noop */ }
+          setResume(null)
+          setCanResume(false)
+          return
+        }
+        const { data: rows, error } = await supabase
+          .from("sessions")
+          .select("id, isongoing")
+          .eq("id", sidNum)
+          .eq("isongoing", true)
+          .limit(1)
+        if (cancelled) return
+        if (error) {
+          // Transient or permission error: do not clear local storage; we will retry on focus/visibility
+          setCanResume(false)
+          return
+        }
+        const exists = Array.isArray(rows) && rows.length > 0
+        if (exists) {
+          setCanResume(true)
+        } else {
+          // Confirmed not found or not ongoing → clear persisted resume
+          try { clearLastSession(userId) } catch { /* noop */ }
+          setResume(null)
+          setCanResume(false)
+        }
+      } catch {
+        if (cancelled) return
+        // On unexpected error, keep storage untouched and just hide the button for now
+        setCanResume(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [isAuthenticated, userId, resume, recheck])
+
+  // Revalidate when the tab/window gains focus or becomes visible again
+  useEffect(() => {
+    const onFocus = () => setRecheck(v => v + 1)
+    const onVis = () => { if (document.visibilityState === "visible") setRecheck(v => v + 1) }
+    window.addEventListener("focus", onFocus)
+    document.addEventListener("visibilitychange", onVis)
+    return () => {
+      window.removeEventListener("focus", onFocus)
+      document.removeEventListener("visibilitychange", onVis)
+    }
+  }, [])
+
+  // Small delayed recheck to cover race conditions on initial mount/navigation
+  useEffect(() => {
+    const t = setTimeout(() => setRecheck(v => v + 1), 700)
+    return () => clearTimeout(t)
+  }, [])
 
   const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
@@ -152,7 +215,7 @@ export default function Home() {
             <span style={{ fontWeight: 500 }}>Télécharger l'APK Android (v1.0.2)</span>
           </a>
 
-          {resume && (
+          {resume && canResume && (
             <div style={{ marginTop: 12 }}>
               <Link
                 href={`/session/${resume.sid}?teamId=${resume.tid}`}
