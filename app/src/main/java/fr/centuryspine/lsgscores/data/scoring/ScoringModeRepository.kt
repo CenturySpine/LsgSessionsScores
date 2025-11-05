@@ -1,30 +1,13 @@
 package fr.centuryspine.lsgscores.data.scoring
+
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
-class ScoringModeRepository {
+class ScoringModeRepository(
+    private val scoringModeDao: ScoringModeDao
+) {
+    fun getAll(): Flow<List<ScoringMode>> = scoringModeDao.getAll()
 
-    // Hardcoded list of scoring modes
-    private val scoringModes = listOf(
-        ScoringMode(
-            id = 1,
-            name = "Stroke Play",
-            description = "Each player's or team's score is the total number of strokes. The lowest total wins."
-        ),
-        ScoringMode(
-            id = 2,
-            name = "Match Play",
-            description = "On each hole, the player or team with the lowest unique number of strokes scores 1 point. All others score 0 points."
-        ),
-        ScoringMode(
-            id = 3,
-            name = "Redistribution",
-            description = "If a single player is first, they get 2 points and a solo second gets 1 point. If two tie for first, they get 1 point each and a solo second gets 1 point. Three or more tied for first: nobody gets any points."
-        )
-        // Add more scoring modes here as needed
-    )
+    suspend fun getAllList(): List<ScoringMode> = scoringModeDao.getAllList()
 
-    fun getAll(): Flow<List<ScoringMode>> = flowOf(scoringModes)
-
-    fun getById(id: Int): Flow<ScoringMode?> = flowOf(scoringModes.find { it.id == id })
+    fun getById(id: Int): Flow<ScoringMode?> = scoringModeDao.getById(id)
 }

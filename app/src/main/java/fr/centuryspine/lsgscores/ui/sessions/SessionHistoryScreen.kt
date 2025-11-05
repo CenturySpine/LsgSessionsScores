@@ -777,9 +777,8 @@ private fun generateAndSharePdf(
             currentY += lineSpacing
 
             // Scoring Mode
-            val scoringModeRepository = ScoringModeRepository()
             val scoringMode = try {
-                scoringModeRepository.getAll().first().find { it.id == pdfData.session.scoringModeId }
+                sessionViewModel.scoringModes.first().find { it.id == pdfData.session.scoringModeId }
             } catch (_: Exception) {
                 null
             }

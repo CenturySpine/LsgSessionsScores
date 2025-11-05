@@ -86,8 +86,8 @@ object RepositoryModule {
     }
     @Provides
     @Singleton
-    fun provideScoringModeRepository(): ScoringModeRepository {
-        return ScoringModeRepository()
+    fun provideScoringModeRepository(scoringModeDao: fr.centuryspine.lsgscores.data.scoring.ScoringModeDao): ScoringModeRepository {
+        return ScoringModeRepository(scoringModeDao)
     }
 
     @Provides
