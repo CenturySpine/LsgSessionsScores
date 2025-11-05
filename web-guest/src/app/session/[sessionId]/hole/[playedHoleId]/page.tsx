@@ -34,6 +34,22 @@ export default function PlayedHoleScorePage() {
 
   const [selected, setSelected] = useState<string | null>(null) // "0".."9" | "X"
 
+  // Auth guard: redirect to /auth if unauthenticated
+  useEffect(() => {
+    let mounted = true
+    const check = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (!mounted) return
+      if (!data.session) router.replace("/auth")
+    }
+    check()
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+      if (!session) router.replace("/auth")
+    })
+    return () => { mounted = false; sub.subscription.unsubscribe() }
+  }, [router])
+
   const sessionId = useMemo(() => Number(sessionIdStr), [sessionIdStr])
   const playedHoleId = useMemo(() => Number(playedHoleIdStr), [playedHoleIdStr])
   const teamId = useMemo(() => (teamIdStr ? Number(teamIdStr) : NaN), [teamIdStr])

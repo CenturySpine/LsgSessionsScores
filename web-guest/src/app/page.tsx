@@ -18,30 +18,43 @@ function GoogleIcon() {
 //test
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [checking, setChecking] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [resume, setResume] = useState<{ sid: string; tid: number } | null>(null)
 
   useEffect(() => {
+    let mounted = true
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return
       const authed = !!session
       setIsAuthenticated(authed)
       const uid = session?.user?.id ?? null
       setUserId(uid)
       if (authed) {
-        // Ensure an app_user row exists for this user (first login provisioning)
         try { await ensureAppUser() } catch { /* noop */ }
+      } else {
+        // redirect to auth page if unauthenticated
+        window.location.replace("/auth")
       }
     })
-    supabase.auth.getSession().then(async ({ data }) => {
-      const authed = !!data.session
-      setIsAuthenticated(authed)
-      const uid = data.session?.user?.id ?? null
-      setUserId(uid)
-      if (authed) {
-        try { await ensureAppUser() } catch { /* noop */ }
+    ;(async () => {
+      try {
+        const { data } = await supabase.auth.getSession()
+        if (!mounted) return
+        const authed = !!data.session
+        setIsAuthenticated(authed)
+        const uid = data.session?.user?.id ?? null
+        setUserId(uid)
+        if (authed) {
+          try { await ensureAppUser() } catch { /* noop */ }
+        } else {
+          window.location.replace("/auth")
+        }
+      } finally {
+        if (mounted) setChecking(false)
       }
-    })
-    return () => { sub.subscription.unsubscribe() }
+    })()
+    return () => { sub.subscription.unsubscribe(); mounted = false }
   }, [])
 
   useEffect(() => {

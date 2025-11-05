@@ -38,6 +38,22 @@ export default function OngoingSessionPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Auth guard: redirect to /auth if unauthenticated
+  useEffect(() => {
+    let mounted = true
+    const check = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (!mounted) return
+      if (!data.session) router.replace("/auth")
+    }
+    check()
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+      if (!session) router.replace("/auth")
+    })
+    return () => { mounted = false; sub.subscription.unsubscribe() }
+  }, [router])
+
   const [session, setSession] = useState<SessionRow | null>(null)
   const [teams, setTeams] = useState<TeamRow[]>([])
   const [playersById, setPlayersById] = useState<Record<number, PlayerRow>>({})

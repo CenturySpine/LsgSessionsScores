@@ -15,32 +15,56 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
+    let mounted = true
+    const safety = setTimeout(() => { if (mounted) setLoading(false) }, 4000)
+
+    const extractProfile = (user: any) => {
+      const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
+      const name = typeof meta["full_name"] === "string" ? (meta["full_name"] as string)
+        : typeof meta["name"] === "string" ? (meta["name"] as string)
+        : (user?.email ? user.email.split("@")[0] : null)
+      const avatar = typeof meta["avatar_url"] === "string" ? (meta["avatar_url"] as string)
+        : typeof meta["picture"] === "string" ? (meta["picture"] as string)
+        : null
+      return { name, avatar }
+    }
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
       const user = session?.user ?? null
       setUserId(user?.id ?? null)
       setEmail(user?.email ?? null)
-      const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
-      const name = typeof meta["full_name"] === "string" ? (meta["full_name"] as string)
-        : typeof meta["name"] === "string" ? (meta["name"] as string)
-        : (user?.email ? user.email.split("@")[0] : null)
+      const { name, avatar } = extractProfile(user)
       setDisplayName(name)
-      setAvatar(typeof meta["avatar_url"] === "string" ? (meta["avatar_url"] as string) : null)
-    })
-
-    supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user ?? null
-      setUserId(user?.id ?? null)
-      setEmail(user?.email ?? null)
-      const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
-      const name = typeof meta["full_name"] === "string" ? (meta["full_name"] as string)
-        : typeof meta["name"] === "string" ? (meta["name"] as string)
-        : (user?.email ? user.email.split("@")[0] : null)
-      setDisplayName(name)
-      setAvatar(typeof meta["avatar_url"] === "string" ? (meta["avatar_url"] as string) : null)
+      setAvatar(avatar)
       setLoading(false)
     })
 
+    ;(async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (!mounted) return
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.warn("getSession() error:", error)
+        }
+        const user = data?.session?.user ?? null
+        setUserId(user?.id ?? null)
+        setEmail(user?.email ?? null)
+        const { name, avatar } = extractProfile(user)
+        setDisplayName(name)
+        setAvatar(avatar)
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn("getSession() threw:", e)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+
     return () => {
+      mounted = false
+      clearTimeout(safety)
       sub.subscription.unsubscribe()
     }
   }, [])
@@ -71,7 +95,7 @@ export default function Header() {
     // keep last session resume persisted across logout; do not clear here
     await supabase.auth.signOut()
     setOpen(false)
-    router.replace("/")
+    router.replace("/auth")
   }
 
   return (

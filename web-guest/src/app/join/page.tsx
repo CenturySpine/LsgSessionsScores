@@ -24,6 +24,22 @@ export default function JoinPage() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+    // Auth guard: redirect to /auth if unauthenticated
+    useEffect(() => {
+      let mounted = true
+      const check = async () => {
+        const { data } = await supabase.auth.getSession()
+        if (!mounted) return
+        if (!data.session) router.replace("/auth")
+      }
+      check()
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!mounted) return
+        if (!session) router.replace("/auth")
+      })
+      return () => { mounted = false; sub.subscription.unsubscribe() }
+    }, [router])
+
   // Chargement des équipes/joueurs de la session scannée
   const [loadingTeams, setLoadingTeams] = useState(false)
   const [teams, setTeams] = useState<TeamRow[] | null>(null)
