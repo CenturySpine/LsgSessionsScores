@@ -163,6 +163,8 @@ export default function JoinPage() {
   // Charge les équipes + les noms des joueurs une fois qu'on a l'id de session
   useEffect(() => {
     let cancelled = false
+    const safety = setTimeout(() => { if (!cancelled) setLoadingTeams(false) }, 6000)
+
     const load = async () => {
       if (!sessionId) return
       setLoadingTeams(true)
@@ -172,60 +174,86 @@ export default function JoinPage() {
 
       const idNum = Number(sessionId)
       if (Number.isNaN(idNum)) {
-        setTeamsError("Identifiant de session invalide")
-        setLoadingTeams(false)
-        return
-      }
-
-      // 1) Récupère les équipes de la session
-      const { data: teamRows, error: teamErr } = await supabase
-        .from("teams")
-        .select("id, sessionid, player1id, player2id")
-        .eq("sessionid", idNum)
-        .order("id", { ascending: true })
-
-      if (teamErr) {
         if (!cancelled) {
-          setTeamsError(teamErr.message)
+          setTeamsError("Identifiant de session invalide")
           setLoadingTeams(false)
         }
         return
       }
 
-      const trows = (teamRows ?? []) as TeamRow[]
-      if (!cancelled) setTeams(trows)
-
-      // 2) Récupère les joueurs (en une requête IN)
-      const ids = Array.from(
-        new Set(
-          trows.flatMap((t) => [t.player1id, t.player2id].filter((x): x is number => typeof x === "number"))
-        )
-      )
-
-      if (ids.length > 0) {
-        const { data: players, error: playersErr } = await supabase
-          .from("players")
-          .select("id, name")
-          .in("id", ids)
-
-        if (!cancelled) {
-          if (playersErr) {
-            setTeamsError(`Erreur chargement joueurs: ${playersErr.message}`)
-          } else {
-            const map: Record<number, PlayerRow> = Object.fromEntries(
-              (players as PlayerRow[]).map((p) => [p.id, p])
-            )
-            setPlayersById(map)
-          }
+      try {
+        // S'assure que l'utilisateur est bien authentifié avant de lancer les requêtes (évite des échecs RLS et des états bloqués)
+        const { data: authData, error: authErr } = await supabase.auth.getSession()
+        if (!cancelled && (authErr || !authData?.session)) {
+          setTeamsError("Vous n'êtes pas authentifié")
+          return
         }
-      }
 
-      if (!cancelled) setLoadingTeams(false)
+        const fetchOnce = async () => {
+          const { data: teamRows, error: teamErr } = await supabase
+            .from("teams")
+            .select("id, sessionid, player1id, player2id")
+            .eq("sessionid", idNum)
+            .order("id", { ascending: true })
+
+          if (teamErr) throw teamErr
+
+          const trows = (teamRows ?? []) as TeamRow[]
+          if (!cancelled) setTeams(trows)
+
+          // 2) Récupère les joueurs (en une requête IN)
+          const ids = Array.from(
+            new Set(
+              trows.flatMap((t) => [t.player1id, t.player2id].filter((x): x is number => typeof x === "number"))
+            )
+          )
+
+          if (ids.length > 0) {
+            const { data: players, error: playersErr } = await supabase
+              .from("players")
+              .select("id, name")
+              .in("id", ids)
+
+            if (playersErr) throw new Error(`Erreur chargement joueurs: ${playersErr.message}`)
+
+            if (!cancelled) {
+              const map: Record<number, PlayerRow> = Object.fromEntries(
+                (players as PlayerRow[]).map((p) => [p.id, p])
+              )
+              setPlayersById(map)
+            }
+          }
+
+          return trows
+        }
+
+        // Premier essai
+        let trows = await fetchOnce()
+
+        // Retry unique si aucune équipe trouvée (mitige latence/écritures juste avant le scan)
+        if (!cancelled && trows.length === 0) {
+          await new Promise((res) => setTimeout(res, 500))
+          trows = await fetchOnce()
+        }
+
+        if (!cancelled && trows.length === 0) {
+          // pas d'erreur: on laissera l'état "aucune équipe" s'afficher
+          setTeamsError(null)
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          const msg = e?.message ?? "Erreur de chargement"
+          setTeamsError(msg)
+        }
+      } finally {
+        if (!cancelled) setLoadingTeams(false)
+      }
     }
 
     load()
     return () => {
       cancelled = true
+      clearTimeout(safety)
     }
   }, [sessionId])
 
