@@ -30,8 +30,8 @@ import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
 fun SettingsScreen(
     themeViewModel: ThemeViewModel,
     languageViewModel: LanguageViewModel,
-
-    ) {
+    authViewModel: fr.centuryspine.lsgscores.viewmodel.AuthViewModel
+) {
     val selectedThemeId by themeViewModel.selectedThemeId.collectAsState()
     val selectedLanguage by languageViewModel.selectedLanguage.collectAsState()
     val availableLanguages = languageViewModel.getAvailableLanguages()
@@ -143,7 +143,6 @@ fun SettingsScreen(
 
 
             // Account section: sign out and delete an account
-            val authViewModel: fr.centuryspine.lsgscores.viewmodel.AuthViewModel = hiltViewModel()
             val currentUser by authViewModel.user.collectAsState()
             val deleteState by authViewModel.deleteAccountState.collectAsState()
             var showDeleteDialog by remember { mutableStateOf(false) }

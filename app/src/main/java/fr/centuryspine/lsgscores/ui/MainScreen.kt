@@ -68,6 +68,7 @@ import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
 import fr.centuryspine.lsgscores.viewmodel.PlayerViewModel
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
+import fr.centuryspine.lsgscores.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -105,7 +106,8 @@ fun MainScreen(
     languageViewModel: LanguageViewModel = hiltViewModel(),
     gameZoneViewModel: GameZoneViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
-    cityViewModel: CityViewModel = hiltViewModel()
+    cityViewModel: CityViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel
 ) {
     val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsStateWithLifecycle()
     val isParticipant by sessionViewModel.isParticipantMode.collectAsStateWithLifecycle()
@@ -302,34 +304,12 @@ fun MainScreen(
                                     if (item == BottomNavItem.NewSession && !hasCitySelected) {
                                         showNoCityAlert = true
                                     } else {
-                                        // For NewSession, force navigation without launchSingleTop to avoid caching issues
-                                        if (item == BottomNavItem.NewSession) {
-                                            navController.navigate(item.route) {
-                                                popUpTo(navController.graph.startDestinationId) {
-                                                    saveState = true
-                                                }
-                                                // Remove launchSingleTop to force recreation
-                                                restoreState = false // Also disable state restoration
+                                        navController.navigate(item.route) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
                                             }
-                                        } else {
-                                            if (item == BottomNavItem.Home) {
-                                                navController.navigate(item.route) {
-                                                    // Navigate to Home and clear up to start destination to avoid ghost back navigation
-                                                    popUpTo(navController.graph.startDestinationId) {
-                                                        saveState = true
-                                                    }
-                                                    launchSingleTop = true
-                                                    restoreState = true
-                                                }
-                                            } else {
-                                                navController.navigate(item.route) {
-                                                    popUpTo(navController.graph.startDestinationId) {
-                                                        saveState = true
-                                                    }
-                                                    launchSingleTop = true
-                                                    restoreState = true
-                                                }
-                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
                                     }
                                 }
@@ -414,7 +394,7 @@ fun MainScreen(
                     )
                 }
                 composable(DrawerNavItem.Settings.route) {
-                    SettingsScreen(themeViewModel, languageViewModel)
+                    SettingsScreen(themeViewModel, languageViewModel, authViewModel)
                 }
                 composable(DrawerNavItem.Areas.route) {
                     AreasScreen(gameZoneViewModel, cityViewModel)

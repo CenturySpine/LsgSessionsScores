@@ -63,10 +63,25 @@ fun AuthGate(
         if (user != null) hadUser = true
     }
 
+    LaunchedEffect(signedOut) {
+        if (signedOut) {
+            // Clear sticky state on explicit sign-out so we show Auth immediately
+            hadUser = false
+        }
+    }
+
     when {
-        // Keep app content mounted if authenticated OR if we previously had a user and user didn't sign out manually
-        user != null || (hadUser && !signedOut) -> {
-            Log.d("AuthGate", "Rendering app content (authenticated or sticky until explicit sign-out)")
+        // Explicit manual sign-out: immediately show Auth screen regardless of transient states
+        signedOut -> {
+            Log.d("AuthGate", "Rendering AuthScreen after explicit sign-out")
+            AuthScreen(
+                onGoogle = { authViewModel.signInWithGoogle() },
+                onFacebook = null
+            )
+        }
+        // Keep app content mounted if authenticated OR if we previously had a user (sticky) during transient restores
+        user != null || hadUser -> {
+            Log.d("AuthGate", "Rendering app content (authenticated or sticky)")
             appContent()
         }
         // Before any user ever existed, show a loader during checking/resume

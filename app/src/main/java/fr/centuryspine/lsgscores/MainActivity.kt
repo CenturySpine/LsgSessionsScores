@@ -14,6 +14,7 @@ import fr.centuryspine.lsgscores.ui.theme.LsgScoresTheme
 import fr.centuryspine.lsgscores.utils.LanguageManager
 import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
 import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
+import fr.centuryspine.lsgscores.viewmodel.AuthViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.handleDeeplinks
@@ -43,12 +44,14 @@ class MainActivity : ComponentActivity() {
 
             LsgScoresTheme(themeViewModel = themeViewModel) {
                 val navController = rememberNavController()
+                val authViewModel: AuthViewModel = hiltViewModel()
 
                 // Gate the entire app behind authentication
                 fr.centuryspine.lsgscores.ui.auth.AuthGate {
                     MainScreen(
                         navController = navController,
-                        languageViewModel = languageViewModel
+                        languageViewModel = languageViewModel,
+                        authViewModel = authViewModel
                     )
                 }
             }
