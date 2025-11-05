@@ -1,64 +1,26 @@
 package fr.centuryspine.lsgscores.ui.sessions
 
 import android.Manifest
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
+import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -68,14 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.viewModelScope
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.session.Session
-import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
-import fr.centuryspine.lsgscores.utils.getLocalizedName
 import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
 import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
 import fr.centuryspine.lsgscores.ui.components.WeatherIcon
+import fr.centuryspine.lsgscores.utils.getLocalizedName
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -83,12 +45,11 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.time.Duration
-import java.time.LocalDateTime
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import androidx.core.graphics.toColorInt
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +64,7 @@ fun SessionHistoryScreen(
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
+    ) { _ ->
         // Permission handled in generateAndSharePdf - weather will be null if denied
     }
 
@@ -151,7 +112,7 @@ fun SessionHistoryScreen(
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             generateAndSharePdf(context, selectedSession, sessionViewModel)
                         },
-                        onExportPhoto = { selectedSession, photoPath ->
+                        onExportPhoto = { _, photoPath ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             generateAndShareImageExport(
                                 context,
@@ -976,7 +937,6 @@ private fun generateAndSharePdf(
             )
 
             // Table Rows
-            var lastRowHeight = lineSpacing
             pdfData.teams.forEach { teamData ->
                 currentX = xMargin
                 val teamDisplayText = "${teamData.position}. ${teamData.teamName}"
@@ -1080,7 +1040,7 @@ private fun generateAndSharePdf(
             val tableBottomY = yPosition
             var lineX = xMargin + teamNameColWidth
             canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
-            (0 until numHoles).forEach { i ->
+            (0 until numHoles).forEach { _ ->
                 // Draw lines between score columns
                 lineX += scoreColWidth
                 canvas.drawLine(lineX, tableTopY, lineX, tableBottomY, paint)
@@ -1307,10 +1267,8 @@ private fun saveAndShareImage(
         val contentValues = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LsgScores")
-                put(MediaStore.Images.Media.IS_PENDING, 1)
-            }
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LsgScores")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
         }
 
         val imageUri = context.contentResolver.insert(
@@ -1325,11 +1283,9 @@ private fun saveAndShareImage(
             }
 
             // Mark as not pending (Android 10+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                contentValues.clear()
-                contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
-                context.contentResolver.update(imageUri, contentValues, null, null)
-            }
+            contentValues.clear()
+            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+            context.contentResolver.update(imageUri, contentValues, null, null)
 
             // Create share intent
             val shareIntent = Intent(Intent.ACTION_SEND).apply {

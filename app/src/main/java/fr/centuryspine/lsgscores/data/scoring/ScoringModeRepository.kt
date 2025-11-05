@@ -7,7 +7,5 @@ class ScoringModeRepository(
 ) {
     fun getAll(): Flow<List<ScoringMode>> = scoringModeDao.getAll()
 
-    suspend fun getAllList(): List<ScoringMode> = scoringModeDao.getAllList()
-
     fun getById(id: Int): Flow<ScoringMode?> = scoringModeDao.getById(id)
 }
