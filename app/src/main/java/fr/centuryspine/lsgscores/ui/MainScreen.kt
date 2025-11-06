@@ -69,6 +69,7 @@ import fr.centuryspine.lsgscores.viewmodel.PlayerViewModel
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
 import fr.centuryspine.lsgscores.viewmodel.AuthViewModel
+import fr.centuryspine.lsgscores.ui.realtime.RealtimeDebugScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -96,7 +97,7 @@ private fun getCurrentNavigationContext(currentRoute: String?): NavigationContex
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, io.github.jan.supabase.annotations.SupabaseExperimental::class)
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -107,7 +108,8 @@ fun MainScreen(
     gameZoneViewModel: GameZoneViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
     cityViewModel: CityViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    supabase: io.github.jan.supabase.SupabaseClient
 ) {
     val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsStateWithLifecycle()
     val isParticipant by sessionViewModel.isParticipantMode.collectAsStateWithLifecycle()
@@ -394,7 +396,17 @@ fun MainScreen(
                     )
                 }
                 composable(DrawerNavItem.Settings.route) {
+                    // Render Settings as usual
                     SettingsScreen(themeViewModel, languageViewModel, authViewModel)
+                    // Inline debug entry: small, non-intrusive section at bottom
+                    androidx.compose.material3.Button(onClick = { navController.navigate("debug_realtime") }, modifier = Modifier.padding(16.dp)) {
+                        Text("Open Realtime Debug")
+                    }
+                }
+
+                // Debug route to test realtime inserts on sessions
+                composable("debug_realtime") {
+                    RealtimeDebugScreen(supabase)
                 }
                 composable(DrawerNavItem.Areas.route) {
                     AreasScreen(gameZoneViewModel, cityViewModel)

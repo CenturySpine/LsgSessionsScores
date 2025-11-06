@@ -12,7 +12,9 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.realtime.Realtime
 import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.okhttp.OkHttp
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -28,7 +30,7 @@ object SupabaseModule {
 
         Log.d("SupabaseModule", "Initializing SupabaseClient with url=$url and redirectUrl=lsgscores://auth-callback")
         return createSupabaseClient(supabaseUrl = url, supabaseKey = anonKey) {
-            httpEngine = Android.create()
+            httpEngine = OkHttp.create()
             install(Postgrest)
             install(Storage)
             install(Auth) {
@@ -36,6 +38,7 @@ object SupabaseModule {
                 scheme = "lsgscores"
                 host = "auth-callback"
             }
+            install(Realtime)
         }
     }
 }

@@ -1,13 +1,20 @@
 package fr.centuryspine.lsgscores.data.session
 
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.postgrest
+
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.realtime
+import io.github.jan.supabase.realtime.selectAsFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -38,7 +45,6 @@ class SessionDaoSupabase @Inject constructor(
     }
 
     override fun getById(id: Long): Flow<Session?> = flow {
-        // Public read: allow fetching a session by ID regardless of owner
         val list = supabase.postgrest["sessions"].select { filter { eq("id", id) } }.decodeList<Session>()
         emit(list.firstOrNull())
     }
@@ -135,4 +141,13 @@ class SessionDaoSupabase @Inject constructor(
         val uid = currentUser.requireUserId()
         return supabase.postgrest["sessions"].select { filter { eq("gamezoneid", gameZoneId); eq("user_id", uid) } }.decodeList<Session>()
     }
+
+    @OptIn(SupabaseExperimental::class)
+    val flow: Flow<List<Session>> = supabase.from("countries").selectAsFlow(Session::id)
+
+    suspend fun test()
+    {
+        flow.collect {    for (session in it) {        println(session.id)    }}
+    }
+
 }
