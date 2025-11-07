@@ -22,30 +22,35 @@ fun PlayedHoleScoreScreen(
 ) {
     val isParticipant by sessionViewModel.isParticipantMode.collectAsState()
     val participantTeamId by sessionViewModel.participantTeamId.collectAsState(initial = null)
+    val effectiveTeamId by sessionViewModel.effectiveUserTeamId.collectAsState(initial = null)
+
     // Collect teams with players for the current session/played hole (single source of truth)
     val teamsWithPlayers by sessionViewModel
         .getTeamsWithPlayersForPlayedHole(playedHoleId)
         .collectAsState(initial = emptyList())
-    // For participants, only show their own team; admins see all teams
-    val visibleTeams = if (isParticipant && participantTeamId != null) {
-        teamsWithPlayers.filter { it.team.id == participantTeamId }
-    } else {
-        teamsWithPlayers
+
+    // Admin: which other teams are expanded (visible). Own team is always visible.
+    val expandedTeams = remember { mutableStateListOf<Long>() }
+
+    // Compute the set of team IDs considered visible for input and saving
+    val visibleTeamIds: Set<Long> = when {
+        isParticipant && participantTeamId != null -> setOf(participantTeamId!!)
+        !isParticipant && effectiveTeamId != null -> setOf(effectiveTeamId!!) + expandedTeams.toSet()
+        else -> teamsWithPlayers.map { it.team.id }.toSet() // Fallback when admin's team is unknown
     }
 
     // State for strokes entered by user, one selection per team ("0".."10" or "X"), no default
     val strokesByTeam = remember { mutableStateMapOf<Long, String?>() }
 
-    // Prefill from existing scores in DB for this played hole
+    // Prefill from existing scores in DB for this played hole, but only for visible teams
     val existingScores by sessionViewModel
         .getScoresForPlayedHole(playedHoleId)
         .collectAsState(initial = emptyList())
 
-    LaunchedEffect(existingScores, visibleTeams) {
+    LaunchedEffect(existingScores, visibleTeamIds) {
         // Map DB strokes to selection labels ("X" for 10)
         val byTeam = existingScores.associate { it.teamId to it.strokes }
-        visibleTeams.forEach { teamWithPlayers ->
-            val teamId = teamWithPlayers.team.id
+        visibleTeamIds.forEach { teamId ->
             if (strokesByTeam[teamId] == null) {
                 val s = byTeam[teamId]
                 if (s != null) {
@@ -55,11 +60,10 @@ fun PlayedHoleScoreScreen(
         }
     }
 
-    // Convert current selection into a map for the calculator ("X" counts as 10)
-    val strokesMap = visibleTeams.associate { teamWithPlayers ->
-        val sel = strokesByTeam[teamWithPlayers.team.id]
-        val value = if (sel == "X") 10 else sel?.toIntOrNull() ?: 0
-        teamWithPlayers.team.id to value
+    // Convert current selection into a map for the calculator ("X" counts as 10), only for visible teams
+    val strokesMap = visibleTeamIds.associateWith { teamId ->
+        val sel = strokesByTeam[teamId]
+        if (sel == "X") 10 else sel?.toIntOrNull() ?: 0
     }
 
     val calculatedScores = sessionViewModel.computeScoresForCurrentScoringMode(strokesMap)
@@ -78,54 +82,94 @@ fun PlayedHoleScoreScreen(
 
         val options = (0..9).map { it.toString() } + "X"
 
-        visibleTeams.forEach { teamWithPlayers ->
+        // In participant mode, hide all other teams entirely (no header). Admins see all headers
+        val teamsToRender = if (isParticipant && participantTeamId != null) {
+            teamsWithPlayers.filter { it.team.id == participantTeamId }
+        } else {
+            teamsWithPlayers
+        }
+
+        teamsToRender.forEach { teamWithPlayers ->
+            val teamId = teamWithPlayers.team.id
             val playerNames =
                 listOfNotNull(teamWithPlayers.player1?.name, teamWithPlayers.player2?.name)
                     .joinToString(" & ")
 
-            val selectedLabel = strokesByTeam[teamWithPlayers.team.id]
-            val liveScore = calculatedScores[teamWithPlayers.team.id] ?: 0
+            val selectedLabel = strokesByTeam[teamId]
+            val liveScore = calculatedScores[teamId] ?: 0
 
+            // Determine visibility for this team
+            val isOwnTeam = if (isParticipant) participantTeamId == teamId else effectiveTeamId == teamId
+            val isVisible = when {
+                isParticipant -> participantTeamId == teamId
+                effectiveTeamId == null -> true // Fallback: show all when we don't know admin's team
+                isOwnTeam -> true
+                else -> expandedTeams.contains(teamId)
+            }
+
+            // Header with toggle for admin on other teams
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(playerNames, style = MaterialTheme.typography.bodyLarge)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    androidx.compose.runtime.CompositionLocalProvider(
-                        LocalMinimumInteractiveComponentEnforcement provides false
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            options.forEach { option ->
-                                val isSelected = selectedLabel == option
-                                CompactSelectableChip(
-                                    label = option,
-                                    selected = isSelected,
-                                    onClick = {
-                                        val canEdit = !isParticipant || (participantTeamId == teamWithPlayers.team.id)
-                                        if (canEdit) {
-                                            // Toggle selection: ensure only one selected, allow deselect
-                                            strokesByTeam[teamWithPlayers.team.id] = if (isSelected) null else option
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
+                    Text(playerNames, style = MaterialTheme.typography.bodyLarge)
+                    if (!isParticipant && effectiveTeamId != null && !isOwnTeam) {
+                        val expanded = expandedTeams.contains(teamId)
+                        TextButton(onClick = {
+                            if (expanded) expandedTeams.remove(teamId) else expandedTeams.add(teamId)
+                        }) {
+                            Text(if (expanded) "Masquer" else "Afficher")
                         }
                     }
-                    AssistChip(
-                        onClick = { /* Read-only chip */ },
-                        label = { Text(liveScore.toString()) },
-                        enabled = false,
-                        colors = AssistChipDefaults.assistChipColors(
-                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                }
+
+                if (isVisible) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            LocalMinimumInteractiveComponentEnforcement provides false
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                options.forEach { option ->
+                                    val isSelected = selectedLabel == option
+                                    CompactSelectableChip(
+                                        label = option,
+                                        selected = isSelected,
+                                        onClick = {
+                                            val canEdit = if (isParticipant) {
+                                                participantTeamId == teamId
+                                            } else {
+                                                // Admin: can edit own team and any expanded (visible) team
+                                                effectiveTeamId == teamId || expandedTeams.contains(teamId)
+                                            }
+                                            if (canEdit) {
+                                                // Toggle selection: ensure only one selected, allow deselect
+                                                strokesByTeam[teamId] = if (isSelected) null else option
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                        AssistChip(
+                            onClick = { /* Read-only chip */ },
+                            label = { Text(liveScore.toString()) },
+                            enabled = false,
+                            colors = AssistChipDefaults.assistChipColors(
+                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                disabledLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -157,13 +201,14 @@ fun PlayedHoleScoreScreen(
                             )
                         }
                     } else {
-                        visibleTeams.forEach { teamWithPlayers ->
-                            val sel = strokesByTeam[teamWithPlayers.team.id]
+                        // Admin: only save visible teams (own + individually expanded)
+                        visibleTeamIds.forEach { teamId ->
+                            val sel = strokesByTeam[teamId]
                             val strokes = if (sel == "X") 10 else sel?.toIntOrNull()
                             if (strokes != null) {
                                 sessionViewModel.savePlayedHoleScore(
                                     playedHoleId = playedHoleId,
-                                    teamId = teamWithPlayers.team.id,
+                                    teamId = teamId,
                                     strokes = strokes
                                 )
                             }
@@ -174,8 +219,8 @@ fun PlayedHoleScoreScreen(
                 enabled = if (isParticipant) {
                     participantTeamId != null && strokesByTeam[participantTeamId] != null
                 } else {
-                    // Admin can save with partial entries; enable when at least one team has a value
-                    visibleTeams.any { teamWithPlayers -> strokesByTeam[teamWithPlayers.team.id] != null }
+                    // Admin can save with partial entries; enable when at least one VISIBLE team has a value
+                    visibleTeamIds.any { teamId -> strokesByTeam[teamId] != null }
                 },
                 modifier = Modifier.weight(1f)
             ) {
