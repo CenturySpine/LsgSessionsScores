@@ -148,13 +148,12 @@ class SessionViewModel @Inject constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
-    // Effective team id for the current user (participant -> participantTeamId, admin -> team containing linked player)
+    // Effective team id for the current user (unified): prefer computed id from user→link→player→team; fallback to participant preference
     val effectiveUserTeamId: StateFlow<Long?> = combine(
-        isParticipantMode,
         participantTeamId,
         adminTeamIdForOngoing
-    ) { isPart, participantId, adminId ->
-        if (isPart) participantId else adminId
+    ) { participantId, computedId ->
+        computedId ?: participantId
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     private val _error = MutableStateFlow<String?>(null)
