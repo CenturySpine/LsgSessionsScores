@@ -101,8 +101,13 @@ class SessionViewModel @Inject constructor(
     }.flatMapLatest { (isPart, partId, cityId) ->
         when {
             isPart && partId != null -> {
-                // Participant mode: always reflect the joined session by ID
-                sessionRepository.getById(partId)
+                // Participant mode: actively poll the joined session by ID to reflect cross-device updates
+                flow {
+                    while (true) {
+                        emit(sessionRepository.getById(partId).firstOrNull())
+                        delay(1500)
+                    }
+                }
             }
             cityId != null -> {
                 // Admin/owner mode: ongoing session for selected city
@@ -167,81 +172,64 @@ class SessionViewModel @Inject constructor(
             }
         }
 
-        // Auto-refresh played holes and scores whenever there is an ongoing session (admin or participant)
-        viewModelScope.launch {
-            ongoingSession
-                .map { it != null }
-                .flatMapLatest { active ->
-                    if (active) {
-                        flow {
-                            while (true) {
-                                emit(Unit)
-                                delay(3000)
-                            }
-                        }
-                    } else {
-                        flow { }
-                    }
-                }
-                .collect {
-                    refreshCounter.update { it + 1 }
-                }
-        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val playedHolesWithScores: StateFlow<List<PlayedHoleDisplay>> =
-        combine(ongoingSession, refreshCounter) { session, _ -> session }
-            .flatMapLatest { session ->
-                if (session != null) {
-                    playedHoleRepository.getPlayedHolesForSession(session.id)
-                        .flatMapLatest { playedHoles ->
-                            if (playedHoles.isEmpty()) {
-                                flowOf(emptyList())
-                            } else {
-                                combine(
-                                    playedHoles.map { playedHole ->
-                                        combine(
-                                            holeRepository.getHoleByIdPublic(playedHole.holeId),
-                                            holeGameModeRepository.getById(playedHole.gameModeId),
-                                            playedHoleScoreRepository.getScoresForPlayedHole(playedHole.id),
-                                            teamRepository.getTeamsWithPlayersForSession(session.id)
-                                        ) { hole, gameMode, scores, teamsWithPlayers ->
-                                            val strokesByTeam =
-                                                scores.associate { it.teamId to it.strokes }
-                                            val calculatedScores =
-                                                computeScoresForCurrentScoringMode(strokesByTeam)
+        ongoingSession.flatMapLatest { session ->
+            if (session == null) return@flatMapLatest flowOf(emptyList())
 
-                                            val teamResults =
-                                                teamsWithPlayers.mapNotNull { teamWithPlayers ->
-                                                    val strokes = strokesByTeam[teamWithPlayers.team.id]
-                                                    val calculatedScore =
-                                                        calculatedScores[teamWithPlayers.team.id]
-                                                    if (strokes != null && calculatedScore != null) {
-                                                        val teamName = listOfNotNull(
-                                                            teamWithPlayers.player1?.name,
-                                                            teamWithPlayers.player2?.name
-                                                        ).joinToString(" & ")
-                                                        TeamResult(teamName, strokes, calculatedScore)
-                                                    } else null
-                                                }
+            combine(
+                playedHoleRepository.getPlayedHolesForSession(session.id),
+                playedHoleScoreRepository.getAllRealtime(),
+                teamRepository.getTeamsWithPlayersForSession(session.id),
+                holeRepository.getHolesByCityId(session.cityId),
+                holeGameModeRepository.getAll()
+            ) { playedHoles, allScores, teamsWithPlayers, holesInCity, gameModes ->
+                if (playedHoles.isEmpty()) return@combine emptyList()
 
-                                            PlayedHoleDisplay(
-                                                playedHoleId = playedHole.id,
-                                                holeName = hole?.name ?: "Unknown Hole",
-                                                position = playedHole.position,
-                                                gameModeName = gameMode?.name ?: "Unknown Mode",
-                                                teamResults = teamResults
-                                            )
-                                        }
-                                    }
-                                ) { it.toList().sortedBy { display -> display.position } }
-                            }
-                        }
-                } else {
-                    flowOf(emptyList())
+                // Static maps for quick lookup
+                val holeNameById = holesInCity
+                    .filter { it.gameZoneId == session.gameZoneId }
+                    .associateBy({ it.id }, { it.name })
+                val gameModeNameById = gameModes.associateBy({ it.id }, { it.name })
+
+                // Filter scores to only those whose playedHoleId is in our session
+                val playedHoleIds = playedHoles.map { it.id }.toHashSet()
+                val scoresForSession = allScores.filter { it.playedHoleId in playedHoleIds }
+
+                // Group scores by playedHoleId for faster assembly
+                val scoresByPlayedHole = scoresForSession.groupBy { it.playedHoleId }
+
+                // Assemble display rows
+                playedHoles.sortedBy { it.position }.map { ph ->
+                    val scores = scoresByPlayedHole[ph.id].orEmpty()
+                    val strokesByTeam: Map<Long, Int> = scores.associate { it.teamId to it.strokes }
+                    val calculatedScores = computeScoresForCurrentScoringMode(strokesByTeam)
+
+                    val teamResults = teamsWithPlayers.mapNotNull { teamWithPlayers ->
+                        val teamId = teamWithPlayers.team.id
+                        val strokes = strokesByTeam[teamId]
+                        val calc = calculatedScores[teamId]
+                        if (strokes != null && calc != null) {
+                            val teamName = listOfNotNull(
+                                teamWithPlayers.player1?.name,
+                                teamWithPlayers.player2?.name
+                            ).joinToString(" & ")
+                            TeamResult(teamName, strokes, calc)
+                        } else null
+                    }
+
+                    PlayedHoleDisplay(
+                        playedHoleId = ph.id,
+                        holeName = holeNameById[ph.holeId] ?: "Unknown Hole",
+                        position = ph.position,
+                        gameModeName = gameModeNameById[ph.gameModeId] ?: "Unknown Mode",
+                        teamResults = teamResults
+                    )
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val currentScoringModeInfo: StateFlow<ScoringMode?> =
@@ -481,8 +469,8 @@ class SessionViewModel @Inject constructor(
                     position = nextPosition
                 )
                 val playedHoleId = playedHoleRepository.insertPlayedHole(playedHole)
-                // Bump refresh so playedHolesWithScores re-collects data via ongoingSession
-                refreshCounter.update { it + 1 }
+               // Bump refresh so playedHolesWithScores re-collects data via ongoingSession
+               refreshCounter.update { it + 1 }
                 onPlayedHoleCreated(playedHoleId)
             }
         }

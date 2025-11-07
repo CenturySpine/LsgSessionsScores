@@ -4,6 +4,10 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import io.github.jan.supabase.annotations.SupabaseExperimental
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.realtime.selectAsFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,13 +31,12 @@ class PlayedHoleScoreDaoSupabase @Inject constructor(
         return upserted.id
     }
 
-    override fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> = flow {
-        // Public read for join participants: no owner filter
-        val list = supabase.postgrest["played_hole_scores"].select {
-            filter { eq("playedholeid", playedHoleId) }
-        }.decodeList<PlayedHoleScore>()
-        emit(list)
-    }
+    override fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> =
+        getAllRealtime().map { rows -> rows.filter { it.playedHoleId == playedHoleId } }
+
+    @OptIn(SupabaseExperimental::class)
+    override fun getAllRealtime(): Flow<List<PlayedHoleScore>> =
+        supabase.from("played_hole_scores").selectAsFlow(PlayedHoleScore::id)
 
     override suspend fun getAll(): List<PlayedHoleScore> {
         // Return all scores (administrative use). No user filter as user_id is being removed.

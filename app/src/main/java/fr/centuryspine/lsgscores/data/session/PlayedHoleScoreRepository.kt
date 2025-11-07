@@ -15,4 +15,8 @@ class PlayedHoleScoreRepository(private val playedHoleScoreDao: PlayedHoleScoreD
     fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>> {
         return playedHoleScoreDao.getScoresForPlayedHole(playedHoleId)
     }
+
+    fun getAllRealtime(): Flow<List<PlayedHoleScore>> {
+        return playedHoleScoreDao.getAllRealtime()
+    }
 }

@@ -10,6 +10,9 @@ interface PlayedHoleScoreDao {
 
     fun getScoresForPlayedHole(playedHoleId: Long): Flow<List<PlayedHoleScore>>
 
+    // Global realtime flow for all scores; consumers filter by playedHoleId
+    fun getAllRealtime(): Flow<List<PlayedHoleScore>>
+
     suspend fun getAll(): List<PlayedHoleScore>
 
     suspend fun deleteScoresForPlayedHoles(playedHoleIds: List<Long>)

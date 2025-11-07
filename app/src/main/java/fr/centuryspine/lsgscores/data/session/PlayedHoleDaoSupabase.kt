@@ -1,10 +1,14 @@
 package fr.centuryspine.lsgscores.data.session
 
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.annotations.SupabaseExperimental
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import io.github.jan.supabase.realtime.selectAsFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,14 +24,13 @@ class PlayedHoleDaoSupabase @Inject constructor(
         return inserted.id
     }
 
-    override fun getPlayedHolesForSession(sessionId: Long): Flow<List<PlayedHole>> = flow {
-        // Public read for join participants: do not filter by owner
-        val list = supabase.postgrest["played_holes"].select {
-            filter { eq("sessionid", sessionId) }
-            order("position", Order.ASCENDING)
-        }.decodeList<PlayedHole>()
-        emit(list)
-    }
+    @OptIn(SupabaseExperimental::class)
+    override fun getPlayedHolesForSession(sessionId: Long): Flow<List<PlayedHole>> =
+        supabase.from("played_holes").selectAsFlow(PlayedHole::id)
+            .map { rows ->
+                rows.filter { it.sessionId == sessionId }
+                    .sortedWith(compareBy<PlayedHole> { it.position }.thenBy { it.id })
+            }
 
     override fun getById(playedHoleId: Long): Flow<PlayedHole?> = flow {
         // Public read to allow participants to open the score screen by playedHoleId

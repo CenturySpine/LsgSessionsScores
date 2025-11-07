@@ -37,8 +37,10 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,8 +65,8 @@ import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.flow.flowOf
+import android.widget.Toast
 import fr.centuryspine.lsgscores.utils.getLocalizedDescription as getGameModeLocalizedDescription
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OngoingSessionScreen(
@@ -72,12 +74,19 @@ fun OngoingSessionScreen(
     sessionViewModel: SessionViewModel,
     holeViewModel: HoleViewModel
 ) {
+
+    
     val isParticipant by sessionViewModel.isParticipantMode.collectAsState()
     var showHolePicker by remember { mutableStateOf(false) }
     val ongoingSession = sessionViewModel.ongoingSession.collectAsState(initial = null).value
+    
+    
     val holes by holeViewModel.holes.collectAsState(initial = emptyList())
+    
     val gameModes by sessionViewModel.holeGameModes.collectAsState()
+    
     val playedHoles by sessionViewModel.playedHolesWithScores.collectAsState()
+    
     var selectedGameModeId by remember { mutableStateOf<Int?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val teamStandings by sessionViewModel.teamStandings.collectAsState()
@@ -89,15 +98,33 @@ fun OngoingSessionScreen(
     var showGameModeInfo by remember { mutableStateOf(false) }
     var selectedGameModeForInfo by remember { mutableStateOf<HoleGameMode?>(null) }
 
-    // When a participant is viewing a session that has been closed by the admin, show a notice
-    var showSessionClosedDialog by remember { mutableStateOf(false) }
-    var hasObservedSession by remember { mutableStateOf(false) }
-    if (ongoingSession != null) {
-        hasObservedSession = true
-    }
-    if (isParticipant && hasObservedSession && (ongoingSession == null || (!ongoingSession.isOngoing))) {
-        // Only trigger showing once per composition to avoid repeat flicker
-        if (!showSessionClosedDialog) showSessionClosedDialog = true
+
+    // Participant: detect session end (validated or deleted) and redirect with a toast
+    val context = LocalContext.current
+    var hasSeenActiveSession by remember { mutableStateOf(false) }
+    var sessionEndHandled by remember { mutableStateOf(false) }
+    LaunchedEffect(isParticipant, ongoingSession?.id, ongoingSession?.isOngoing) {
+        if (isParticipant) {
+            if (ongoingSession?.isOngoing == true) {
+                hasSeenActiveSession = true
+                sessionEndHandled = false
+            } else if (hasSeenActiveSession && !sessionEndHandled) {
+                // Show toast and reset participant state, then navigate home
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.ongoing_session_closed_dialog_message),
+                    Toast.LENGTH_LONG
+                ).show()
+                sessionViewModel.setParticipantTeam(null)
+                sessionViewModel.setParticipantSession(null)
+                sessionViewModel.setParticipantMode(false)
+                sessionEndHandled = true
+                navController.navigate(BottomNavItem.Home.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
     }
 
     // Teams of the session to detect missing scores
@@ -536,31 +563,6 @@ fun OngoingSessionScreen(
         }
     }
 
-    // Participant notice: session closed by admin
-    if (showSessionClosedDialog) {
-        AlertDialog(
-            onDismissRequest = { /* prevent dismiss without acknowledgement */ },
-            title = { Text(stringResource(R.string.ongoing_session_closed_dialog_title)) },
-            text = { Text(stringResource(R.string.ongoing_session_closed_dialog_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showSessionClosedDialog = false
-                        // Clear participant state and return to home
-                        sessionViewModel.setParticipantTeam(null)
-                        sessionViewModel.setParticipantSession(null)
-                        sessionViewModel.setParticipantMode(false)
-                        navController.navigate(BottomNavItem.Home.route) {
-                            popUpTo(0) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.ongoing_session_closed_dialog_button_ok))
-                }
-            }
-        )
-    }
 
     // Delete played hole confirmation dialog
     if (showDeletePlayedHoleConfirm && playedHoleToDelete != null) {

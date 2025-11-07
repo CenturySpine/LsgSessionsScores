@@ -121,14 +121,8 @@ fun RealtimeDebugScreen(
     LaunchedEffect(Unit) {
         var previousById: Map<Long, Session>? = null
         flow.collect { currentList ->
-            // Filtrer les sessions pour ne garder que celles du user authentifié
-            val currentUserId = supabase.auth.currentSessionOrNull()?.user?.id
-            val filtered = if (currentUserId != null) {
-                currentList.filter { it.userId == currentUserId }
-            } else {
-                emptyList()
-            }
-            val currentById = filtered.associateBy { it.id }
+
+            val currentById = currentList.associateBy { it.id }
 
             val prev = previousById
             if (prev != null) {
