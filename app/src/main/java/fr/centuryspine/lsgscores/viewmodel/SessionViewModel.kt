@@ -65,7 +65,8 @@ class SessionViewModel @Inject constructor(
     private val gameZoneDao: GameZoneDao,
     private val weatherRepository: WeatherRepository,
     @ApplicationContext private val context: Context,
-    private val appPreferences: AppPreferences
+    private val appPreferences: AppPreferences,
+    private val appUserDao: fr.centuryspine.lsgscores.data.authuser.AppUserDaoSupabase
 ) : ViewModel() {
 
     // Expose helpers for join flow
@@ -88,6 +89,11 @@ class SessionViewModel @Inject constructor(
     fun setParticipantMode(enabled: Boolean) = appPreferences.setParticipantMode(enabled)
     fun setParticipantSession(sessionId: Long?) = appPreferences.setParticipantSessionId(sessionId)
     fun setParticipantTeam(teamId: Long?) = appPreferences.setParticipantTeamId(teamId)
+
+    // Linked player: returns the playerId associated to the current authenticated user, if any
+    suspend fun getLinkedPlayerIdForCurrentUser(): Long? = try {
+        appUserDao.getLinkedPlayerId()
+    } catch (_: Exception) { null }
 
     var scoringModeId: Int? = null
         private set

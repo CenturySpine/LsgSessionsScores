@@ -57,10 +57,20 @@ class AppUserDaoSupabase @Inject constructor(
     }
 
     suspend fun getLinkedPlayerId(): Long? {
-        val userId = supabase.auth.currentSessionOrNull()?.user?.id ?: return null
+        // Wait briefly for auth session restoration. On cold start the session can be null for a short time.
+        var attempts = 0
+        var userId: String? = null
+        while (attempts < 6 && userId == null) {
+            userId = try { supabase.auth.currentSessionOrNull()?.user?.id } catch (_: Throwable) { null }
+            if (userId == null) {
+                try { kotlinx.coroutines.delay(250) } catch (_: Throwable) {}
+                attempts++
+            }
+        }
+        val uid = userId ?: return null
         return try {
             val rows = supabase.postgrest[tableLink]
-                .select { filter { eq("user_id", userId) } }
+                .select { filter { eq("user_id", uid) } }
                 .decodeList<UserPlayerLink>()
             rows.firstOrNull()?.playerId
         } catch (t: Throwable) {

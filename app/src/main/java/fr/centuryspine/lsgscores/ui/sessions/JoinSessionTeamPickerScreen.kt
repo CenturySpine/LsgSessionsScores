@@ -12,6 +12,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ fun JoinSessionTeamPickerScreen(
     val teamsWithPlayers = sessionViewModel.getTeamsWithPlayersForSession(sessionId).collectAsState(initial = emptyList()).value
 
     var selectedTeamId by remember { mutableStateOf<Long?>(null) }
+    var attemptedAutoJoin by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -49,6 +51,33 @@ fun JoinSessionTeamPickerScreen(
             Text("Cette session n'est plus active")
             TextButton(onClick = { navController.popBackStack() }) { Text("Retour") }
             return@Column
+        }
+
+        // Auto-join if current user is linked to a player who is in one of the teams of this session
+        LaunchedEffect(session?.id, teamsWithPlayers.size, attemptedAutoJoin) {
+            if (!attemptedAutoJoin && session != null && session.isOngoing && teamsWithPlayers.isNotEmpty()) {
+
+                val linkedPlayerId = sessionViewModel.getLinkedPlayerIdForCurrentUser()
+                if (linkedPlayerId != null) {
+                    val matchingTeam = teamsWithPlayers.firstOrNull { twp ->
+                        (twp.player1?.id == linkedPlayerId) || (twp.player2?.id == linkedPlayerId)
+                    }
+                    if (matchingTeam != null) {
+                        // Set participant context and navigate directly to ongoing session
+                        sessionViewModel.setParticipantMode(true)
+                        sessionViewModel.setParticipantSession(sessionId)
+                        sessionViewModel.setParticipantTeam(matchingTeam.team.id)
+                        sessionViewModel.forceSelectCity(session.cityId)
+                        navController.navigate(BottomNavItem.OngoingSession.route) {
+                            popUpTo(BottomNavItem.Home.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                        return@LaunchedEffect
+                    }
+                    attemptedAutoJoin = true
+                }
+                // If no match or no link, leave UI as-is for manual selection
+            }
         }
 
         Text("Choisissez votre équipe/joueur", style = MaterialTheme.typography.titleMedium)

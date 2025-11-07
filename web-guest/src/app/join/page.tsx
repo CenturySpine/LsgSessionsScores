@@ -50,6 +50,8 @@ export default function JoinPage() {
   // Sélection d'équipe et confirmation
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // Auto-assign guard to prevent repeated redirects
+  const [autoTried, setAutoTried] = useState(false)
 
   // import QR from image file
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -280,7 +282,39 @@ export default function JoinPage() {
   useEffect(() => {
     setSelectedTeamId(null)
     setConfirmOpen(false)
+    setAutoTried(false)
   }, [sessionId, loadingTeams])
+
+  // Auto-assign team if current user is linked to a player present in this session
+  useEffect(() => {
+    const run = async () => {
+      if (!sessionId || !teams || teams.length === 0 || loadingTeams || autoTried) return
+      setAutoTried(true)
+      try {
+        const { data: authData } = await supabase.auth.getUser()
+        const uid = authData.user?.id
+        if (!uid) return
+        const { data: linkRows, error: linkErr } = await supabase
+          .from("user_player_link")
+          .select("player_id")
+          .eq("user_id", uid)
+          .limit(1)
+        if (linkErr) return
+        const playerId: number | undefined = (linkRows?.[0]?.player_id as number | undefined)
+        if (!playerId) return
+        const match = teams.find(t => t.player1id === playerId || t.player2id === playerId)
+        if (match) {
+          // Save last session and redirect directly
+          const { data: { user } } = await supabase.auth.getUser()
+          saveLastSession(sessionId, match.id, user?.id)
+          router.push(`/session/${sessionId}?teamId=${match.id}`)
+        }
+      } catch {
+        // ignore auto-assign errors; allow manual selection
+      }
+    }
+    run()
+  }, [sessionId, teams, loadingTeams, autoTried, router])
 
   const selectedTeamLabel = useMemo(() => {
     if (!selectedTeamId || !teams) return null
