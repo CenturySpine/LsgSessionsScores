@@ -131,6 +131,32 @@ class SessionViewModel @Inject constructor(
         session != null && cityId != null && session.cityId == cityId
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
+    // Linked player id for current authenticated user (via association table)
+    private val linkedPlayerIdFlow: StateFlow<Long?> = flow {
+        emit(appUserDao.getLinkedPlayerId())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    // For admins (non-participant mode), find the team in the ongoing session that contains the linked player
+    private val adminTeamIdForOngoing: StateFlow<Long?> =
+        combine(ongoingSession, linkedPlayerIdFlow) { session, pid -> session to pid }
+            .flatMapLatest { (session, pid) ->
+                if (session == null || pid == null) flowOf<Long?>(null) else {
+                    getTeamsWithPlayersForSession(session.id).map { teams ->
+                        teams.find { it.player1?.id == pid || it.player2?.id == pid }?.team?.id
+                    }
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    // Effective team id for the current user (participant -> participantTeamId, admin -> team containing linked player)
+    val effectiveUserTeamId: StateFlow<Long?> = combine(
+        isParticipantMode,
+        participantTeamId,
+        adminTeamIdForOngoing
+    ) { isPart, participantId, adminId ->
+        if (isPart) participantId else adminId
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
     private val _error = MutableStateFlow<String?>(null)
 
 

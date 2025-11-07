@@ -376,4 +376,9 @@ This action cannot be undone.</string>
     <string name="session_qr_no_session">No ongoing session</string>
     <string name="session_qr_image_description">Session QR code</string>
     <string name="session_qr_instruction">Scan this code to join the session</string>
+    
+    <!-- OngoingSessionScreen - Welcome banner -->
+    <string name="ongoing_session_welcome_two_names">Welcome %1$s &amp; %2$s!</string>
+    <string name="ongoing_session_welcome_one_name">Welcome %1$s!</string>
+    <string name="ongoing_session_welcome_generic">Welcome!</string>
 </resources>

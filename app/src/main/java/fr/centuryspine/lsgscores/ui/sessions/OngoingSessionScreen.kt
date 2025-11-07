@@ -66,6 +66,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.flow.flowOf
 import android.widget.Toast
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import fr.centuryspine.lsgscores.ui.common.RemoteImage
 import fr.centuryspine.lsgscores.utils.getLocalizedDescription as getGameModeLocalizedDescription
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,6 +133,7 @@ fun OngoingSessionScreen(
     // Teams of the session to detect missing scores
     val teamsForSession by ((ongoingSession?.let { sessionViewModel.getTeamsWithPlayersForSession(it.id) } ?: flowOf(emptyList())))
         .collectAsState(initial = emptyList())
+    val effectiveTeamId by sessionViewModel.effectiveUserTeamId.collectAsState()
 
     val hasMissingScores = ongoingSession != null && playedHoles.any { it.teamResults.size < teamsForSession.size }
 
@@ -155,6 +159,71 @@ fun OngoingSessionScreen(
                 )
             }
             ongoingSession?.let { session ->
+                
+                // Bandeau de bienvenue: miniatures des joueurs + message localisé
+                run {
+                    val participantTeam = teamsForSession.find { it.team.id == effectiveTeamId }
+                    val p1 = participantTeam?.player1
+                    val p2 = participantTeam?.player2
+                    val name1 = p1?.name?.ifBlank { null }
+                    val name2 = p2?.name?.ifBlank { null }
+                    val welcome = when {
+                        name1 != null && name2 != null -> stringResource(R.string.ongoing_session_welcome_two_names, name1, name2)
+                        name1 != null -> stringResource(R.string.ongoing_session_welcome_one_name, name1)
+                        name2 != null -> stringResource(R.string.ongoing_session_welcome_one_name, name2)
+                        else -> stringResource(R.string.ongoing_session_welcome_generic)
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Avatars (affichés seulement si des joueurs existent)
+                        if (p1 != null || p2 != null) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                if (p1?.photoUri?.isNotBlank() == true) {
+                                    RemoteImage(
+                                        url = p1.photoUri!!,
+                                        contentDescription = "Photo ${'$'}{p1.name}",
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                    )
+                                } else if (p1 != null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    )
+                                }
+                                if (p2?.photoUri?.isNotBlank() == true) {
+                                    RemoteImage(
+                                        url = p2.photoUri!!,
+                                        contentDescription = "Photo ${'$'}{p2.name}",
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                    )
+                                } else if (p2 != null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            text = welcome,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),

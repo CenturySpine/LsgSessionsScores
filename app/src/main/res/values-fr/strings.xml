@@ -2,4 +2,9 @@
 <resources>
     <!-- OngoingSessionScreen - Participant specific message -->
     <string name="ongoing_session_no_holes_message_participant">L’administrateur de la session n’a pas encore créé de trou à jouer.</string>
+    
+    <!-- OngoingSessionScreen - Bandeau de bienvenue -->
+    <string name="ongoing_session_welcome_two_names">Bienvenue %1$s &amp; %2$s !</string>
+    <string name="ongoing_session_welcome_one_name">Bienvenue %1$s !</string>
+    <string name="ongoing_session_welcome_generic">Bienvenue !</string>
 </resources>
