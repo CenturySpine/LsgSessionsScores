@@ -147,7 +147,10 @@ fun OngoingSessionScreen(
         ) {
             if (ongoingSession == null) {
                 Text(
-                    text = stringResource(R.string.ongoing_session_no_holes_message),
+                    text = stringResource(
+                        if (isParticipant) R.string.ongoing_session_no_holes_message_participant
+                        else R.string.ongoing_session_no_holes_message
+                    ),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -257,7 +260,10 @@ fun OngoingSessionScreen(
                 // Section des trous joués
                 if (playedHoles.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.ongoing_session_no_holes_message),
+                        text = stringResource(
+                            if (isParticipant) R.string.ongoing_session_no_holes_message_participant
+                            else R.string.ongoing_session_no_holes_message
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )

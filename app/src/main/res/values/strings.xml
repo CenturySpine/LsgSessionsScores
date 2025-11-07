@@ -126,6 +126,7 @@
     <string name="ongoing_session_scoring_info_icon_description">Scoring mode info</string>
     <string name="ongoing_session_button_add_hole">Add or associate a hole</string>
     <string name="ongoing_session_no_holes_message">No holes have been played yet. Press the button below to add one.</string>
+    <string name="ongoing_session_no_holes_message_participant">No hole has been set up yet for this session. Please wait for the administrator to add one.</string>
     <string name="ongoing_session_label_holes_played">Holes played:</string>
     <string name="ongoing_session_hole_prefix">Hole:</string>
     <string name="ongoing_session_delete_hole_icon_description">Delete played hole</string>
