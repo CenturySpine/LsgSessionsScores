@@ -111,7 +111,7 @@ fun OngoingSessionScreen(
             if (ongoingSession?.isOngoing == true) {
                 hasSeenActiveSession = true
                 sessionEndHandled = false
-            } else if (hasSeenActiveSession && !sessionEndHandled) {
+            } else if (ongoingSession?.isOngoing == false && hasSeenActiveSession && !sessionEndHandled) {
                 // Show toast and reset participant state, then navigate home
                 Toast.makeText(
                     context,
