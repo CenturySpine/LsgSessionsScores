@@ -48,6 +48,8 @@ fun SessionQrScreen(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = stringResource(R.string.session_qr_image_description)
             )
+            // Display the QR payload as plain text under the QR image
+            Text(text = payload, style = MaterialTheme.typography.bodyMedium)
             Text(stringResource(R.string.session_qr_instruction))
         }
         OutlinedButton(

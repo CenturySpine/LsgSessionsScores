@@ -23,6 +23,7 @@ export default function JoinPage() {
   const [raw, setRaw] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [manualCode, setManualCode] = useState<string>("")
 
     // Auth guard: redirect to /auth if unauthenticated
     useEffect(() => {
@@ -58,6 +59,7 @@ export default function JoinPage() {
   }, [])
 
 
+
   const parsePayload = useCallback((text: string | undefined | null) => {
     if (!text) return { ok: false, message: "QR vide" } as const
     const prefix = "LSGSESSION:"
@@ -68,6 +70,23 @@ export default function JoinPage() {
     if (!id) return { ok: false, message: "Identifiant de session manquant" } as const
     return { ok: true, id } as const
   }, [])
+
+  const handleManualSubmit = useCallback(() => {
+    const text = manualCode.trim()
+    if (!text) {
+      setError("Veuillez entrer un code.")
+      return
+    }
+    setRaw(text)
+    const parsed = parsePayload(text)
+    if (parsed.ok) {
+      setSessionId(parsed.id)
+      setError(null)
+      setScanning(false)
+    } else {
+      setError(parsed.message)
+    }
+  }, [manualCode, parsePayload])
 
   const onScan = useCallback((result: unknown) => {
     // Le composant peut renvoyer une string, un objet { rawValue }, ou un tableau de résultats
@@ -324,6 +343,33 @@ export default function JoinPage() {
               />
             </div>
           )}
+
+          <div style={{ marginTop: 16 }}>
+            <div style={{ textAlign: "center", color: "#6b7280", fontSize: 12, marginBottom: 8 }}>— ou —</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center" }}>
+              <input
+                type="text"
+                inputMode="text"
+                placeholder="Entrer le code du QR (ex: LSGSESSION:110)"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleManualSubmit() }}
+                style={{
+                  width: "100%",
+                  maxWidth: 420,
+                  padding: "8px 10px",
+                  border: "1px solid #D1D5DB",
+                  borderRadius: 8
+                }}
+              />
+              <button
+                onClick={handleManualSubmit}
+                style={{ padding: "8px 12px", border: "1px solid #D1D5DB", borderRadius: 8 }}
+              >
+                Valider
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -341,6 +387,7 @@ export default function JoinPage() {
               setLoadingTeams(false)
               setSelectedTeamId(null)
               setConfirmOpen(false)
+              setManualCode("")
             }}
             style={{ padding: "8px 12px", border: "1px solid #D1D5DB", borderRadius: 8 }}
           >
