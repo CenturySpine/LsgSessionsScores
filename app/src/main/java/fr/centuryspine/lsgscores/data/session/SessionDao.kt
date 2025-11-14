@@ -28,4 +28,9 @@ interface SessionDao {
     fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?>
 
     suspend fun getSessionsByGameZoneId(gameZoneId: Long): List<Session>
+
+    // Realtime stream of sessions (raw table stream); consumers should filter as needed
+//    fun getRealtimeSessions(): Flow<List<Session>>
+
+    val realtimeSessionFlow: Flow<List<Session>>
 }

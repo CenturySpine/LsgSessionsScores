@@ -102,32 +102,58 @@ fun OngoingSessionScreen(
     var selectedGameModeForInfo by remember { mutableStateOf<HoleGameMode?>(null) }
 
 
-    // Participant: detect session end (validated or deleted) and redirect with a toast
+    // Participant: detect session end (validated or deleted) via ViewModel events and redirect with a toast
     val context = LocalContext.current
     var hasSeenActiveSession by remember { mutableStateOf(false) }
     var sessionEndHandled by remember { mutableStateOf(false) }
-    LaunchedEffect(isParticipant, ongoingSession?.id, ongoingSession?.isOngoing) {
+    var endDialogReason by remember { mutableStateOf<SessionViewModel.SessionEvent.EndReason?>(null) }
+
+    // Track when we saw an active session to avoid reacting on first load
+    LaunchedEffect(ongoingSession?.isOngoing) {
+        if (isParticipant && ongoingSession?.isOngoing == true) {
+            hasSeenActiveSession = true
+            sessionEndHandled = false
+        }
+    }
+
+    // React to explicit end events from ViewModel (robust against transient nulls)
+    LaunchedEffect(isParticipant) {
         if (isParticipant) {
-            if (ongoingSession?.isOngoing == true) {
-                hasSeenActiveSession = true
-                sessionEndHandled = false
-            } else if (ongoingSession?.isOngoing == false && hasSeenActiveSession && !sessionEndHandled) {
-                // Show toast and reset participant state, then navigate home
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.ongoing_session_closed_dialog_message),
-                    Toast.LENGTH_LONG
-                ).show()
-                sessionViewModel.setParticipantTeam(null)
-                sessionViewModel.setParticipantSession(null)
-                sessionViewModel.setParticipantMode(false)
-                sessionEndHandled = true
-                navController.navigate(BottomNavItem.Home.route) {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
+            sessionViewModel.sessionEvents.collect { evt ->
+                if (!sessionEndHandled && hasSeenActiveSession && evt is SessionViewModel.SessionEvent.Ended) {
+                    endDialogReason = evt.reason
+                    sessionEndHandled = true
                 }
             }
         }
+    }
+
+    // End-of-session confirmation dialog (participant)
+    if (endDialogReason != null) {
+        val messageRes = when (endDialogReason) {
+            SessionViewModel.SessionEvent.EndReason.DELETED -> R.string.ongoing_session_deleted_message
+            SessionViewModel.SessionEvent.EndReason.VALIDATED -> R.string.ongoing_session_finished_message
+            else -> R.string.ongoing_session_closed_dialog_message
+        }
+        AlertDialog(
+            onDismissRequest = { /* Non-dismissable: require explicit confirmation */ },
+            title = { Text(text = stringResource(id = R.string.ongoing_session_closed_dialog_title)) },
+            text = { Text(text = stringResource(id = messageRes)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    endDialogReason = null
+                    sessionViewModel.setParticipantTeam(null)
+                    sessionViewModel.setParticipantSession(null)
+                    sessionViewModel.setParticipantMode(false)
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }) {
+                    Text(text = stringResource(id = R.string.ongoing_session_closed_dialog_button_ok))
+                }
+            }
+        )
     }
 
     // Teams of the session to detect missing scores

@@ -173,6 +173,10 @@ This action cannot be undone.</string>
     <string name="ongoing_session_closed_dialog_message">This session has been closed by the administrator. You will be redirected to the home page.</string>
     <string name="ongoing_session_closed_dialog_button_ok">OK</string>
 
+    <!-- OngoingSessionScreen - Participant End Reasons -->
+    <string name="ongoing_session_deleted_message">This session has been deleted by the administrator. You will be redirected to the home page.</string>
+    <string name="ongoing_session_finished_message">This session has been completed. You will be redirected to the home page.</string>
+
     <!-- PlayedHoleScoreScreen -->
     <string name="played_hole_score_title">Enter the strokes for each team</string>
     <string name="played_hole_score_button_cancel">Cancel</string>

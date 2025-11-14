@@ -143,11 +143,8 @@ class SessionDaoSupabase @Inject constructor(
     }
 
     @OptIn(SupabaseExperimental::class)
-    val flow: Flow<List<Session>> = supabase.from("countries").selectAsFlow(Session::id)
+    override val realtimeSessionFlow: Flow<List<Session>> = supabase.from("sessions").selectAsFlow(Session::id)
 
-    suspend fun test()
-    {
-        flow.collect {    for (session in it) {        println(session.id)    }}
+//    override fun getRealtimeSessions(): Flow<List<Session>> = realtimeSessionFlow
+
     }
-
-}

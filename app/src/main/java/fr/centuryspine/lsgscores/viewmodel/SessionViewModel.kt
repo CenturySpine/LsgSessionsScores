@@ -102,26 +102,18 @@ class SessionViewModel @Inject constructor(
     private val refreshCounter = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val ongoingSession: StateFlow<Session?> = combine(isParticipantMode, participantSessionId, selectedCityId, refreshCounter) { isPart, partId, cityId, _ ->
-        Triple(isPart, partId, cityId)
-    }.flatMapLatest { (isPart, partId, cityId) ->
-        when {
-            isPart && partId != null -> {
-                // Participant mode: actively poll the joined session by ID to reflect cross-device updates
-                flow {
-                    while (true) {
-                        emit(sessionRepository.getById(partId).firstOrNull())
-                        delay(1500)
-                    }
+    val ongoingSession: StateFlow<Session?> =
+        sessionRepository.realtimeSessionFlow
+            .map { sessions ->
+                val partId = participantSessionId.value
+                if (partId != null) {
+                    sessions.find { it.id == partId }
+                } else {
+                    val cityId = selectedCityId.value
+                    if (cityId != null) sessions.firstOrNull { it.cityId == cityId && it.isOngoing } else null
                 }
             }
-            cityId != null -> {
-                // Admin/owner mode: ongoing session for selected city
-                sessionRepository.getOngoingSessionFlowForCity(cityId)
-            }
-            else -> flowOf(null)
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     
     // Check if there's an ongoing session for the currently selected city
     val hasOngoingSessionForCurrentCity: StateFlow<Boolean> = combine(
@@ -186,6 +178,14 @@ class SessionViewModel @Inject constructor(
         holeGameModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Session end events to signal deletion/validation explicitly to UI
+    sealed class SessionEvent {
+        enum class EndReason { VALIDATED, DELETED }
+        data class Ended(val reason: EndReason) : SessionEvent()
+    }
+    private val _sessionEvents = kotlinx.coroutines.flow.MutableSharedFlow<SessionEvent>(extraBufferCapacity = 1)
+    val sessionEvents: kotlinx.coroutines.flow.Flow<SessionEvent> = _sessionEvents
+
     init {
         // Observe ongoing session separately (non-blocking)
         viewModelScope.launch {
@@ -203,6 +203,38 @@ class SessionViewModel @Inject constructor(
             }
         }
 
+        // Participant: detect explicit end events (validated or deleted) robustly
+        viewModelScope.launch {
+            var lastSession: Session? = null
+            ongoingSession.collect { current ->
+                val partMode = isParticipantMode.value
+                val partId = participantSessionId.value
+                if (!partMode || partId == null) {
+                    lastSession = null
+                    return@collect
+                }
+
+                if (current != null) {
+                    // Validation: session still exists but marked not ongoing
+                    if (lastSession?.isOngoing == true && current.isOngoing == false) {
+                        _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.VALIDATED))
+                    }
+                    lastSession = current
+                } else {
+                    // Null emission: could be deletion or transient. Confirm deletion.
+                    val wasOngoing = lastSession?.isOngoing == true
+                    if (wasOngoing) {
+                        // Small confirmation delay; recheck by ID
+                        delay(1200)
+                        val confirm = sessionRepository.getById(partId).firstOrNull()
+                        if (isParticipantMode.value && participantSessionId.value == partId && confirm == null) {
+                            _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.DELETED))
+                            lastSession = null
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

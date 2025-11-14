@@ -14,6 +14,8 @@ class SessionRepository(
 
     fun getById(id: Long): Flow<Session?> = sessionDao.getById(id)
 
+//    fun getRealtimeSessions(): Flow<List<Session>> = sessionDao.getRealtimeSessions()
+
     suspend fun insert(session: Session): Long {
         // Validate that GameZone exists
         val gameZone = gameZoneDao.getGameZoneById(session.gameZoneId)
@@ -37,6 +39,8 @@ class SessionRepository(
     suspend fun getOngoingSessionForCity(cityId: Long): Session? = sessionDao.getOngoingSessionForCity(cityId)
 
     fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?> = sessionDao.getOngoingSessionFlowForCity(cityId)
+
+    val realtimeSessionFlow: Flow<List<Session>> = sessionDao.realtimeSessionFlow
 
     suspend fun deleteSessionCascade(session: Session) {
         // 1. Récupérer tous les playedHoleIds de la session
