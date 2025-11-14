@@ -2,47 +2,26 @@
 
 package fr.centuryspine.lsgscores.ui
 
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import fr.centuryspine.lsgscores.BuildConfig
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.areas.AreasScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleDetailScreen
@@ -52,23 +31,9 @@ import fr.centuryspine.lsgscores.ui.home.HomeScreen
 import fr.centuryspine.lsgscores.ui.players.PlayerDetailScreen
 import fr.centuryspine.lsgscores.ui.players.PlayerFormScreen
 import fr.centuryspine.lsgscores.ui.players.PlayerListScreen
-import fr.centuryspine.lsgscores.ui.sessions.OngoingSessionScreen
-import fr.centuryspine.lsgscores.ui.sessions.PlayedHoleScoreScreen
-import fr.centuryspine.lsgscores.ui.sessions.SessionCreationScreen
-import fr.centuryspine.lsgscores.ui.sessions.SessionHistoryScreen
-import fr.centuryspine.lsgscores.ui.sessions.SessionTeamsScreen
-import fr.centuryspine.lsgscores.ui.sessions.SessionQrScreen
-import fr.centuryspine.lsgscores.ui.sessions.JoinSessionScannerScreen
-import fr.centuryspine.lsgscores.ui.sessions.JoinSessionTeamPickerScreen
+import fr.centuryspine.lsgscores.ui.sessions.*
 import fr.centuryspine.lsgscores.ui.settings.SettingsScreen
-import fr.centuryspine.lsgscores.viewmodel.CityViewModel
-import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
-import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
-import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
-import fr.centuryspine.lsgscores.viewmodel.PlayerViewModel
-import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
-import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
-import fr.centuryspine.lsgscores.viewmodel.AuthViewModel
+import fr.centuryspine.lsgscores.viewmodel.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -107,11 +72,9 @@ fun MainScreen(
     gameZoneViewModel: GameZoneViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
     cityViewModel: CityViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel,
-    supabase: io.github.jan.supabase.SupabaseClient
+    authViewModel: AuthViewModel
 ) {
     val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsStateWithLifecycle()
-    val isParticipant by sessionViewModel.isParticipantMode.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -148,90 +111,107 @@ fun MainScreen(
                 val currentRoute = navBackStackEntry?.destination?.route
                 val navigationContext = getCurrentNavigationContext(currentRoute)
 
-                // Drawer header
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.main_drawer_header),
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                    ) {
+                        // Drawer header
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.main_drawer_header),
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                drawerMainItems.forEach { item ->
-                    val isSelected = navigationContext == NavigationContext.DRAWER && (
-                            currentRoute == item.route ||
-                                    // Handle dynamic routes for drawer items
-                                    (item == DrawerNavItem.Players && currentRoute?.startsWith("user_detail/") == true) ||
-                                    (item == DrawerNavItem.Players && currentRoute == "add_user") ||
-                                    (item == DrawerNavItem.Holes && currentRoute?.startsWith("hole_detail/") == true) ||
-                                    (item == DrawerNavItem.Holes && currentRoute == "add_hole")
-                            )
+                        drawerMainItems.forEach { item ->
+                            val isSelected = navigationContext == NavigationContext.DRAWER && (
+                                    currentRoute == item.route ||
+                                            // Handle dynamic routes for drawer items
+                                            (item == DrawerNavItem.Players && currentRoute?.startsWith("user_detail/") == true) ||
+                                            (item == DrawerNavItem.Players && currentRoute == "add_user") ||
+                                            (item == DrawerNavItem.Holes && currentRoute?.startsWith("hole_detail/") == true) ||
+                                            (item == DrawerNavItem.Holes && currentRoute == "add_hole")
+                                    )
 
-                    NavigationDrawerItem(
-                        icon = {
-                            Icon(
-                                item.icon,
-                                contentDescription = stringResource(item.labelRes)
-                            )
-                        },
-                        label = { Text(stringResource(item.labelRes)) },
-                        selected = isSelected,
-                        onClick = {
-                            if (!hasCitySelected) {
-                                showNoCityAlert = true
-                            } else {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
+                            NavigationDrawerItem(
+                                icon = {
+                                    Icon(
+                                        item.icon,
+                                        contentDescription = stringResource(item.labelRes)
+                                    )
+                                },
+                                label = { Text(stringResource(item.labelRes)) },
+                                selected = isSelected,
+                                onClick = {
+                                    if (!hasCitySelected) {
+                                        showNoCityAlert = true
+                                    } else {
+                                        navController.navigate(item.route) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                                scope.launch {
-                                    drawerState.close()
-                                }
-                            }
-                        },
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
-                }
-
-                // Separator
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Drawer system items
-                drawerSystemItems.forEach { item ->
-                    val isSelected = navigationContext == NavigationContext.DRAWER &&
-                            currentRoute == item.route
-
-                    NavigationDrawerItem(
-                        icon = {
-                            Icon(
-                                item.icon,
-                                contentDescription = stringResource(item.labelRes)
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp)
                             )
-                        },
-                        label = { Text(stringResource(item.labelRes)) },
-                        selected = isSelected,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                            scope.launch {
-                                drawerState.close()
-                            }
-                        },
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                        }
+
+                        // Separator
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Drawer system items
+                        drawerSystemItems.forEach { item ->
+                            val isSelected = navigationContext == NavigationContext.DRAWER &&
+                                    currentRoute == item.route
+
+                            NavigationDrawerItem(
+                                icon = {
+                                    Icon(
+                                        item.icon,
+                                        contentDescription = stringResource(item.labelRes)
+                                    )
+                                },
+                                label = { Text(stringResource(item.labelRes)) },
+                                selected = isSelected,
+                                onClick = {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                    scope.launch {
+                                        drawerState.close()
+                                    }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp)
+                            )
+                        }
+                    }
+
+                    // version information (anchored at bottom)
+                    Text(
+                        text = BuildConfig.VERSION_NAME,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp),
+                        fontSize = 10.sp
                     )
                 }
+               
             }
         }
     ) {
@@ -428,14 +408,17 @@ fun MainScreen(
             }
         }
     }
-    // No city selected alert dialog
+
+    fun closeCityAlert(): () -> Unit = { showNoCityAlert = false }
+
+    // No city-selected alert dialog
     if (showNoCityAlert) {
         AlertDialog(
-            onDismissRequest = { showNoCityAlert = false },
+            onDismissRequest = closeCityAlert(),
             title = { Text(stringResource(R.string.no_city_alert_select_a_city)) },
             text = { Text(stringResource(R.string.no_city_alert_you_must_select_a_city)) },
             confirmButton = {
-                TextButton(onClick = { showNoCityAlert = false }) {
+                TextButton(onClick = closeCityAlert()) {
                     Text("OK")
                 }
             }

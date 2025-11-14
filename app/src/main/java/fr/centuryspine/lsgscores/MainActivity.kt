@@ -128,8 +128,7 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         navController = navController,
                         languageViewModel = languageViewModel,
-                        authViewModel = authViewModel,
-                        supabase = supabase
+                        authViewModel = authViewModel
                     )
                 }
             }
