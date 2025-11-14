@@ -18,71 +18,87 @@ import fr.centuryspine.lsgscores.R
 @Composable
 fun StandingsTable(
     standings: List<TeamStanding>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    wrapInCard: Boolean = true,
+    showTitle: Boolean = true
 ) {
     if (standings.isEmpty()) return
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+    if (wrapInCard) {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
+            StandingsTableContent(standings = standings, showTitle = showTitle)
+        }
+    } else {
+        StandingsTableContent(standings = standings, showTitle = showTitle)
+    }
+}
+
+@Composable
+private fun StandingsTableContent(
+    standings: List<TeamStanding>,
+    showTitle: Boolean
+) {
+    Column(
+        modifier = Modifier.padding(16.dp)
+    ) {
+        if (showTitle) {
             Text(
                 text = stringResource(R.string.standings_table_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
+        }
 
-            // Header row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.standings_table_header_pos),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(40.dp)
-                )
+        // Header row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.standings_table_header_pos),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.width(40.dp)
+            )
 
-                // Spacer identique à celui dans StandingRow
-                Spacer(modifier = Modifier.width(12.dp))
+            // Spacer identique à celui dans StandingRow
+            Spacer(modifier = Modifier.width(12.dp))
 
-                Text(
-                    text = stringResource(R.string.standings_table_header_team),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = stringResource(R.string.standings_table_header_strokes),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(60.dp),
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = stringResource(R.string.standings_table_header_score),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(60.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = stringResource(R.string.standings_table_header_team),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = stringResource(R.string.standings_table_header_strokes),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.width(60.dp),
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = stringResource(R.string.standings_table_header_score),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.width(60.dp),
+                textAlign = TextAlign.Center
+            )
+        }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(8.dp))
 
-            // Standings rows
-            standings.forEach { standing ->
-                StandingRow(standing = standing)
-                Spacer(modifier = Modifier.height(4.dp))
-            }
+        // Standings rows
+        standings.forEach { standing ->
+            StandingRow(standing = standing)
+            Spacer(modifier = Modifier.height(4.dp))
         }
     }
 }

@@ -7,4 +7,6 @@
     <string name="ongoing_session_welcome_two_names">Bienvenue %1$s &amp; %2$s !</string>
     <string name="ongoing_session_welcome_one_name">Bienvenue %1$s !</string>
     <string name="ongoing_session_welcome_generic">Bienvenue !</string>
+    <string name="standings_table_title">Classement</string>
+    <string name="standings_table_title_lead">1ere place : </string>
 </resources>

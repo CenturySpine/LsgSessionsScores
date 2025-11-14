@@ -183,7 +183,8 @@ This action cannot be undone.</string>
     <string name="played_hole_score_button_save">Save scores</string>
 
     <!-- StandingsTable -->
-    <string name="standings_table_title">Current Standings</string>
+    <string name="standings_table_title">Ranking</string>
+    <string name="standings_table_title_lead">Lead: </string>
     <string name="standings_table_header_pos">Pos</string>
     <string name="standings_table_header_team">Team</string>
     <string name="standings_table_header_strokes">Strokes</string>
