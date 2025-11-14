@@ -1,9 +1,9 @@
 "use client"
-import { supabase } from "@/lib/supabaseClient"
-import { useEffect, useState } from "react"
+import {supabase} from "@/lib/supabaseClient"
+import {useEffect, useState} from "react"
 import Link from "next/link"
-import { readLastSession, clearLastSession } from "@/lib/resume"
-import { ensureAppUser } from "@/lib/appUser"
+import {clearLastSession, readLastSession} from "@/lib/resume"
+import {ensureAppUser} from "@/lib/appUser"
 
 function GoogleIcon() {
   return (
@@ -18,11 +18,12 @@ function GoogleIcon() {
 //test
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [checking, setChecking] = useState(true)
+    const [, setChecking] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [resume, setResume] = useState<{ sid: string; tid: number } | null>(null)
   const [canResume, setCanResume] = useState(false)
   const [recheck, setRecheck] = useState(0)
+    const [apkInfo, setApkInfo] = useState<{ version: string | null; download_link: string | null } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -65,6 +66,39 @@ export default function Home() {
     if (last) setResume({ sid: last.sid, tid: last.tid })
     else setResume(null)
   }, [userId])
+
+    // Récupère la version d'application courante (is_current = true) depuis Supabase pour afficher le lien APK
+    useEffect(() => {
+        let cancelled = false
+        ;(async () => {
+            try {
+                const {data: rows, error} = await supabase
+                    .from("app_versions")
+                    .select("version, download_link")
+                    .eq("is_current", true)
+                    .limit(1)
+                if (cancelled) return
+                if (error) {
+                    setApkInfo(null)
+                    return
+                }
+                const row = Array.isArray(rows) && rows.length > 0 ? rows[0] as {
+                    version?: string;
+                    download_link?: string
+                } : null
+                if (row) {
+                    setApkInfo({version: row.version ?? null, download_link: row.download_link ?? null})
+                } else {
+                    setApkInfo(null)
+                }
+            } catch {
+                if (!cancelled) setApkInfo(null)
+            }
+        })()
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -192,28 +226,38 @@ export default function Home() {
             <span style={{ fontWeight: 500 }}>Scanner un QR de session</span>
           </Link>
 
-          <a
-            href="https://github.com/CenturySpine/LsgSessionsScores/releases/download/1.0.2/signed-lsgscores-release.apk"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 10,
-              background: '#2563eb',
-              color: '#fff',
-              padding: '10px 16px',
-              borderRadius: 8,
-              textDecoration: 'none',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <span style={{ fontWeight: 500 }}>Télécharger l'APK Android (v1.0.2)</span>
-          </a>
+            {apkInfo?.download_link ? (
+                <a
+                    href={apkInfo.download_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        background: '#2563eb',
+                        color: '#fff',
+                        padding: '10px 16px',
+                        borderRadius: 8,
+                        textDecoration: 'none',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                              strokeLinejoin="round"/>
+                        <path d="M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span
+                        style={{fontWeight: 500}}>Télécharger l'APK Android {apkInfo.version ? `(v${apkInfo.version})` : ''}</span>
+                </a>
+            ) : (
+                // Fallback discret quand la version n'est pas disponible
+                <div style={{color: '#6b7280', fontSize: 14}}>
+                    Lien de téléchargement indisponible pour le moment.
+                </div>
+            )}
 
           {resume && canResume && (
             <div style={{ marginTop: 12 }}>
