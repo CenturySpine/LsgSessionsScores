@@ -121,7 +121,8 @@ fun OngoingSessionScreen(
     LaunchedEffect(isParticipant) {
         if (isParticipant) {
             sessionViewModel.sessionEvents.collect { evt ->
-                if (!sessionEndHandled && hasSeenActiveSession && evt is SessionViewModel.SessionEvent.Ended) {
+                // Do not gate on hasSeenActiveSession: events are explicit (VALIDATED/DELETED)
+                if (!sessionEndHandled && evt is SessionViewModel.SessionEvent.Ended) {
                     endDialogReason = evt.reason
                     sessionEndHandled = true
                 }

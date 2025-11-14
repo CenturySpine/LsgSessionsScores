@@ -189,6 +189,9 @@ class SessionViewModel @Inject constructor(
     private val _sessionEvents = kotlinx.coroutines.flow.MutableSharedFlow<SessionEvent>(extraBufferCapacity = 1)
     val sessionEvents: kotlinx.coroutines.flow.Flow<SessionEvent> = _sessionEvents
 
+    // Keep a snapshot of the last observed session (can persist across participant mode changes)
+    private var lastSession: Session? = null
+
     init {
         // Observe ongoing session separately (non-blocking)
         viewModelScope.launch {
@@ -208,7 +211,6 @@ class SessionViewModel @Inject constructor(
 
         // Participant: detect explicit end events (validated or deleted) robustly
         viewModelScope.launch {
-            var lastSession: Session? = null
             ongoingSession.collect { current ->
                 val partMode = isParticipantMode.value
                 val partId = participantSessionId.value
@@ -219,10 +221,10 @@ class SessionViewModel @Inject constructor(
                 if (!partMode) {
                     android.util.Log.d(
                         "SessionViewModel",
-                        "[ongoingSession.collect] skip: participant mode inactive — reset lastSession"
+                        "[ongoingSession.collect] participant mode inactive — no event emission; keep lastSession snapshot"
                     )
-                    lastSession = null
-                    return@collect
+                    // Do not return: we still want to maintain a fresh snapshot of lastSession
+                    // so that if participant mode turns ON later, we can confirm end state.
                 }
 
                 if (current != null) {
@@ -236,7 +238,14 @@ class SessionViewModel @Inject constructor(
                             "SessionViewModel",
                             "[ongoingSession.collect] VALIDATION detected (last was ongoing, current not ongoing) → emit VALIDATED"
                         )
-                        _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.VALIDATED))
+                        if (partMode) {
+                            _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.VALIDATED))
+                        } else {
+                            android.util.Log.d(
+                                "SessionViewModel",
+                                "[ongoingSession.collect] participant mode inactive at validation detection → no emit"
+                            )
+                        }
                     }
                     android.util.Log.d(
                         "SessionViewModel",
@@ -251,34 +260,56 @@ class SessionViewModel @Inject constructor(
                     )
                     val wasOngoing = lastSession?.isOngoing == true
                     if (wasOngoing) {
-                        // Small confirmation delay; recheck by ID
-                        android.util.Log.d(
-                            "SessionViewModel",
-                            "[ongoingSession.collect] last was ongoing → delay 1200ms then confirm by ID (partId or lastSession.id)"
-                        )
-                        delay(1200)
-                        val idToCheck = partId ?: lastSession?.id
-                        val confirm = if (idToCheck != null) sessionRepository.getById(idToCheck).firstOrNull() else null
-                        android.util.Log.d(
-                            "SessionViewModel",
-                            "[ongoingSession.collect] confirm after delay: isParticipantMode=${isParticipantMode.value}, storedPartId=${participantSessionId.value}, idToCheck=${idToCheck}, fetchedSession=${confirm?.id}:${confirm?.isOngoing}"
-                        )
-                        val idStillMatches = when {
-                            partId != null -> participantSessionId.value == partId
-                            else -> lastSession?.id == idToCheck
-                        }
-                        if (isParticipantMode.value && idToCheck != null && idStillMatches && confirm == null) {
+                        if (!partMode) {
                             android.util.Log.d(
                                 "SessionViewModel",
-                                "[ongoingSession.collect] DELETION confirmed → emit DELETED and reset lastSession"
+                                "[ongoingSession.collect] last was ongoing but participant mode inactive → skip confirm now; will re-evaluate when mode turns ON"
                             )
-                            _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.DELETED))
-                            lastSession = null
                         } else {
+                            // Small confirmation delay; recheck by ID
                             android.util.Log.d(
                                 "SessionViewModel",
-                                "[ongoingSession.collect] Deletion not confirmed → keep lastSession as-is"
+                                "[ongoingSession.collect] last was ongoing → delay 1200ms then confirm by ID (partId or lastSession.id)"
                             )
+                            delay(1200)
+                            val idToCheck = partId ?: lastSession?.id
+                            val confirm = if (idToCheck != null) sessionRepository.getById(idToCheck).firstOrNull() else null
+                            android.util.Log.d(
+                                "SessionViewModel",
+                                "[ongoingSession.collect] confirm after delay: isParticipantMode=${isParticipantMode.value}, storedPartId=${participantSessionId.value}, idToCheck=${idToCheck}, fetchedSession=${confirm?.id}:${confirm?.isOngoing}"
+                            )
+                            val idStillMatches = when {
+                                partId != null -> participantSessionId.value == partId
+                                else -> lastSession?.id == idToCheck
+                            }
+                            if (isParticipantMode.value && idToCheck != null && idStillMatches) {
+                                if (confirm == null) {
+                                    android.util.Log.d(
+                                        "SessionViewModel",
+                                        "[ongoingSession.collect] DELETION confirmed → emit DELETED and reset lastSession"
+                                    )
+                                    _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.DELETED))
+                                    lastSession = null
+                                } else if (confirm.isOngoing == false) {
+                                    android.util.Log.d(
+                                        "SessionViewModel",
+                                        "[ongoingSession.collect] VALIDATION confirmed via recheck (session exists but not ongoing) → emit VALIDATED"
+                                    )
+                                    _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.VALIDATED))
+                                    // Update lastSession to a non-ongoing snapshot to avoid repeated emissions
+                                    lastSession = confirm
+                                } else {
+                                    android.util.Log.d(
+                                        "SessionViewModel",
+                                        "[ongoingSession.collect] Session still ongoing after recheck → ignore null emission"
+                                    )
+                                }
+                            } else {
+                                android.util.Log.d(
+                                    "SessionViewModel",
+                                    "[ongoingSession.collect] Recheck guard failed (mode/id mismatch) → keep lastSession as-is"
+                                )
+                            }
                         }
                     } else {
                         android.util.Log.d(
@@ -287,6 +318,69 @@ class SessionViewModel @Inject constructor(
                         )
                     }
                 }
+            }
+        }
+
+        // If participant mode toggles ON while the ongoingSession stream is currently null,
+        // but we previously saw an ongoing session (snapshot in lastSession), re-check directly
+        // to determine whether it was VALIDATED or DELETED.
+        viewModelScope.launch {
+            var previous: Boolean? = null
+            isParticipantMode.collect { mode ->
+                val current = ongoingSession.value
+                android.util.Log.d(
+                    "SessionViewModel",
+                    "[partMode.collect] mode=${mode} current=${current?.id}:${current?.isOngoing} last=${lastSession?.id}:${lastSession?.isOngoing}"
+                )
+                if (previous == false && mode == true) {
+                    // Mode just turned ON
+                    if (current == null && lastSession?.isOngoing == true) {
+                        android.util.Log.d(
+                            "SessionViewModel",
+                            "[partMode.collect] mode turned ON with current=null and last was ongoing → delay 1200ms then confirm by ID (participantSessionId or lastSession.id)"
+                        )
+                        delay(1200)
+                        val storedPartId = participantSessionId.value
+                        val idToCheck = storedPartId ?: lastSession?.id
+                        val confirm = if (idToCheck != null) sessionRepository.getById(idToCheck).firstOrNull() else null
+                        android.util.Log.d(
+                            "SessionViewModel",
+                            "[partMode.collect] confirm after delay: isParticipantMode=${isParticipantMode.value}, storedPartId=${storedPartId}, idToCheck=${idToCheck}, fetchedSession=${confirm?.id}:${confirm?.isOngoing}"
+                        )
+                        val idStillMatches = when {
+                            storedPartId != null -> participantSessionId.value == storedPartId
+                            else -> lastSession?.id == idToCheck
+                        }
+                        if (isParticipantMode.value && idToCheck != null && idStillMatches) {
+                            if (confirm == null) {
+                                android.util.Log.d(
+                                    "SessionViewModel",
+                                    "[partMode.collect] DELETION confirmed (on toggle) → emit DELETED and reset lastSession"
+                                )
+                                _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.DELETED))
+                                lastSession = null
+                            } else if (confirm.isOngoing == false) {
+                                android.util.Log.d(
+                                    "SessionViewModel",
+                                    "[partMode.collect] VALIDATION confirmed via recheck (on toggle) → emit VALIDATED"
+                                )
+                                _sessionEvents.tryEmit(SessionEvent.Ended(SessionEvent.EndReason.VALIDATED))
+                                lastSession = confirm
+                            } else {
+                                android.util.Log.d(
+                                    "SessionViewModel",
+                                    "[partMode.collect] Session still ongoing after recheck (on toggle) → no event"
+                                )
+                            }
+                        } else {
+                            android.util.Log.d(
+                                "SessionViewModel",
+                                "[partMode.collect] Recheck guard failed on toggle (mode/id mismatch) → no event"
+                            )
+                        }
+                    }
+                }
+                previous = mode
             }
         }
     }
