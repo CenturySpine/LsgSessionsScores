@@ -291,17 +291,7 @@ export default function OngoingSessionPage() {
     return arr
   }, [teams, scores])
 
-  // Determine current hole: first played hole where not all team scores are present
-  const currentPlayedHole = useMemo(() => {
-    if (teams.length === 0 || playedHoles.length === 0) return null
-    const byPh: Record<number, number> = {}
-    for (const s of scores) byPh[s.playedholeid] = (byPh[s.playedholeid] ?? 0) + 1
-    for (const ph of playedHoles) {
-      const count = byPh[ph.id] ?? 0
-      if (count < teams.length) return ph
-    }
-    return null
-  }, [teams.length, playedHoles, scores])
+  // Note: on ne met plus en avant un "trou en cours" côté site.
 
   // Build quick lookup: playedHoleId -> { teamId -> strokes }
   const scoresByPlayedHoleId = useMemo(() => {
@@ -358,22 +348,7 @@ export default function OngoingSessionPage() {
             </div>
           )}
 
-          {/* Current hole if any */}
-          <div style={{ background: "#f3f4f6", padding: 12, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Trou en cours</div>
-            {currentPlayedHole ? (
-              <div>
-                <div style={{ color: "#6b7280", fontSize: 12 }}>Position {currentPlayedHole.position}</div>
-                <div style={{ fontWeight: 500 }}>
-                  {holesById[currentPlayedHole.holeid]?.name ?? `Trou #${currentPlayedHole.holeid}`}
-                  {" "}
-                  <span style={{ color: "#6b7280", fontWeight: 400 }}>(par {holesById[currentPlayedHole.holeid]?.par ?? "?"})</span>
-                </div>
-              </div>
-            ) : (
-              <div style={{ color: "#6b7280" }}>Aucun trou en cours.</div>
-            )}
-          </div>
+          {/* Plus de section "Trou en cours" — on met en avant le dernier trou ajouté dans la liste ci-dessous. */}
 
           {/* Ranking */}
           <div style={{ background: "#f9fafb", padding: 12, borderRadius: 8 }}>
@@ -428,8 +403,9 @@ export default function OngoingSessionPage() {
               <div style={{ color: "#6b7280" }}>Aucun trou défini pour cette session.</div>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
-                {playedHoles.map((ph) => {
-                  const isCurrent = currentPlayedHole?.id === ph.id
+                {[...playedHoles].reverse().map((ph, idx) => {
+                  // Mettre le dernier trou ajouté (premier de la liste) en avant
+                  const isLatest = idx === 0
                   const href = selectedTeamId ? `/session/${session!.id}/hole/${ph.id}?teamId=${selectedTeamId}` : null
                   const holeScores = scoresByPlayedHoleId[ph.id] ?? {}
                   const missing = missingCountByPlayedHoleId[ph.id] ?? 0
@@ -467,8 +443,8 @@ export default function OngoingSessionPage() {
                   )
                   return (
                     <li key={ph.id} style={{
-                      background: isCurrent ? "#ECFDF5" : "#fff",
-                      border: isCurrent ? "2px solid #10B981" : "1px solid #E5E7EB",
+                      background: isLatest ? "#ECFDF5" : "#fff",
+                      border: isLatest ? "2px solid #10B981" : "1px solid #E5E7EB",
                       borderRadius: 8,
                       padding: 8
                     }}>

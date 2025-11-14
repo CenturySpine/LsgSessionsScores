@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
@@ -48,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -453,12 +456,22 @@ fun OngoingSessionScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    playedHoles.forEach { playedHole ->
+                    playedHoles.asReversed().forEachIndexed { index, playedHole ->
+                        val isLatest = index == 0
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .then(
+                                    if (isLatest) Modifier.border(
+                                        BorderStroke(2.dp, Color(0xFF10B981)),
+                                        shape = MaterialTheme.shapes.medium
+                                    ) else Modifier
+                                )
                                 .clickable { navController.navigate("played_hole_score/${playedHole.playedHoleId}") },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isLatest) Color(0xFFECFDF5) else MaterialTheme.colorScheme.surface
+                            )
                         ) {
                             Row(
                                 modifier = Modifier.padding(16.dp),
