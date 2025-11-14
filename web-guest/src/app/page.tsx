@@ -23,7 +23,11 @@ export default function Home() {
   const [resume, setResume] = useState<{ sid: string; tid: number } | null>(null)
   const [canResume, setCanResume] = useState(false)
   const [recheck, setRecheck] = useState(0)
-    const [apkInfo, setApkInfo] = useState<{ version: string | null; download_link: string | null } | null>(null)
+    const [apkInfo, setApkInfo] = useState<{
+        version: string | null;
+        download_link: string | null;
+        release_note_link: string | null
+    } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -74,7 +78,7 @@ export default function Home() {
             try {
                 const {data: rows, error} = await supabase
                     .from("app_versions")
-                    .select("version, download_link")
+                    .select("version, download_link, release_note_link")
                     .eq("is_current", true)
                     .limit(1)
                 if (cancelled) return
@@ -84,10 +88,15 @@ export default function Home() {
                 }
                 const row = Array.isArray(rows) && rows.length > 0 ? rows[0] as {
                     version?: string;
-                    download_link?: string
+                    download_link?: string;
+                    release_note_link?: string;
                 } : null
                 if (row) {
-                    setApkInfo({version: row.version ?? null, download_link: row.download_link ?? null})
+                    setApkInfo({
+                        version: row.version ?? null,
+                        download_link: row.download_link ?? null,
+                        release_note_link: row.release_note_link ?? null
+                    })
                 } else {
                     setApkInfo(null)
                 }
@@ -226,7 +235,20 @@ export default function Home() {
             <span style={{ fontWeight: 500 }}>Scanner un QR de session</span>
           </Link>
 
-            {apkInfo?.download_link ? (
+            <div
+                style={{
+                    width: '100%',
+                    border: '1px solid #133659',
+                    backgroundColor: '#dce7f2',
+                    borderRadius: 8,
+                    padding: 12,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                    alignItems: 'center'
+                }}
+            >
+                {apkInfo?.download_link ? (
                 <a
                     href={apkInfo.download_link}
                     target="_blank"
@@ -252,13 +274,35 @@ export default function Home() {
                     <span
                         style={{fontWeight: 500}}>Télécharger l'APK Android {apkInfo.version ? `(v${apkInfo.version})` : ''}</span>
                 </a>
-            ) : (
+                ) : (
                 // Fallback discret quand la version n'est pas disponible
-                <div style={{color: '#6b7280', fontSize: 14}}>
-                    Lien de téléchargement indisponible pour le moment.
+                    <div style={{color: '#6b7280', fontSize: 14}}>
+                        Lien de téléchargement indisponible pour le moment.
                 </div>
-            )}
+                )}
 
+                {apkInfo?.release_note_link ? (
+                    <a
+                        href={apkInfo.release_note_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            color: '#2563eb',
+                            textDecoration: 'none'
+                        }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 6h8v12H8z" stroke="currentColor" strokeWidth="2"/>
+                            <path d="M10 11h6M10 14h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        <span>Notes de version</span>
+                    </a>
+                ) : null}
+            </div>
           {resume && canResume && (
             <div style={{ marginTop: 12 }}>
               <Link
