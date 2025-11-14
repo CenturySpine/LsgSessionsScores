@@ -66,6 +66,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.flow.flowOf
 import android.widget.Toast
+import android.util.Log
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import fr.centuryspine.lsgscores.ui.common.RemoteImage
@@ -128,36 +129,30 @@ fun OngoingSessionScreen(
         }
     }
 
-    // End-of-session confirmation dialog (participant)
-    if (endDialogReason != null) {
-        val messageRes = when (endDialogReason) {
-            SessionViewModel.SessionEvent.EndReason.DELETED -> R.string.ongoing_session_deleted_message
-            SessionViewModel.SessionEvent.EndReason.VALIDATED -> R.string.ongoing_session_finished_message
-            else -> R.string.ongoing_session_closed_dialog_message
-        }
-        AlertDialog(
-            onDismissRequest = { /* Non-dismissable: require explicit confirmation */ },
-            title = { Text(text = stringResource(id = R.string.ongoing_session_closed_dialog_title)) },
-            text = { Text(text = stringResource(id = messageRes)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    endDialogReason = null
-                    sessionViewModel.setParticipantTeam(null)
-                    sessionViewModel.setParticipantSession(null)
-                    sessionViewModel.setParticipantMode(false)
-                    navController.navigate(BottomNavItem.Home.route) {
-                        popUpTo(0) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }) {
-                    Text(text = stringResource(id = R.string.ongoing_session_closed_dialog_button_ok))
-                }
+    // Participant: on session end, show a toast and return to Home automatically
+    LaunchedEffect(endDialogReason) {
+        endDialogReason?.let { reason ->
+            val messageRes = when (reason) {
+                SessionViewModel.SessionEvent.EndReason.DELETED -> R.string.ongoing_session_deleted_message
+                SessionViewModel.SessionEvent.EndReason.VALIDATED -> R.string.ongoing_session_finished_message
+                else -> R.string.ongoing_session_closed_dialog_message
             }
-        )
+            Toast.makeText(context, context.getString(messageRes), Toast.LENGTH_LONG).show()
+            // Reset participant state and navigate back home
+            sessionViewModel.setParticipantTeam(null)
+            sessionViewModel.setParticipantSession(null)
+            sessionViewModel.setParticipantMode(false)
+            navController.navigate(BottomNavItem.Home.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+            endDialogReason = null
+        }
     }
 
     // Teams of the session to detect missing scores
-    val teamsForSession by ((ongoingSession?.let { sessionViewModel.getTeamsWithPlayersForSession(it.id) } ?: flowOf(emptyList())))
+    val teamsForSession by ((ongoingSession?.let {
+        sessionViewModel.getTeamsWithPlayersForSession(it.id) } ?: flowOf(emptyList())))
         .collectAsState(initial = emptyList())
     val effectiveTeamId by sessionViewModel.effectiveUserTeamId.collectAsState()
 
@@ -176,6 +171,7 @@ fun OngoingSessionScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             if (ongoingSession == null) {
+                Log.d("OngoingSessionScreen", "session = null")
                 Text(
                     text = stringResource(
                         if (isParticipant) R.string.ongoing_session_no_holes_message_participant
@@ -185,6 +181,7 @@ fun OngoingSessionScreen(
                 )
             }
             ongoingSession?.let { session ->
+                Log.d("OngoingSessionScreen", "session = $session")
                 
                 // Bandeau de bienvenue: miniatures des joueurs + message localisé
                 run {
