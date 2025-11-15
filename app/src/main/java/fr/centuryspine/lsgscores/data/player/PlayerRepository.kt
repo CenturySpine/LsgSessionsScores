@@ -38,22 +38,6 @@ class PlayerRepository @Inject constructor(
         return lower.startsWith("http://") || lower.startsWith("https://")
     }
 
-    suspend fun insertPlayer(player: Player): Long = withContext(Dispatchers.IO) {
-        val cityId = appPreferences.getSelectedCityId()
-            ?: throw IllegalStateException("No city selected. Cannot add player without a selected city.")
-
-        val finalPhotoUrl = when {
-            player.photoUri.isNullOrBlank() -> null
-            isRemoteUrl(player.photoUri) -> player.photoUri
-            else -> storageHelper.uploadPlayerPhoto(player.photoUri.toUri())
-        }
-        val id = playerDao.insert(player.copy(cityId = cityId, photoUri = finalPhotoUrl))
-        if (!finalPhotoUrl.isNullOrBlank() && isRemoteUrl(finalPhotoUrl)) {
-            imageCacheManager.warmPlayerPhoto(finalPhotoUrl)
-        }
-        id
-    }
-
     suspend fun updatePlayer(player: Player) = withContext(Dispatchers.IO) {
         val existing = playerDao.getById(player.id)
         val newPhotoUrl = when {

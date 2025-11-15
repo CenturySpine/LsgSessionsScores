@@ -10,13 +10,7 @@ import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.user.UserInfo
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -109,18 +103,6 @@ class AuthViewModel @Inject constructor(
             .map { it == AuthUiState.Authenticated || it == AuthUiState.Checking }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    fun linkCurrentUserToPlayer(playerId: Long) {
-        viewModelScope.launch {
-            try {
-                val ok = appUserDao.linkToPlayer(playerId)
-                if (ok) {
-                    _linkedPlayerId.value = playerId
-                }
-            } catch (t: Throwable) {
-                Log.w("AuthVM", "linkCurrentUserToPlayer failed: ${t.message}")
-            }
-        }
-    }
 
     fun signInWithGoogle() {
         Log.d("AuthVM", "signInWithGoogle() called")

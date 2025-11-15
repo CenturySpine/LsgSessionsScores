@@ -79,29 +79,6 @@ class AppUserDaoSupabase @Inject constructor(
         }
     }
 
-    suspend fun linkToPlayer(playerId: Long): Boolean {
-        val userId = supabase.auth.currentSessionOrNull()?.user?.id ?: return false
-        return try {
-            // Check existing link
-            val existing = try {
-                supabase.postgrest[tableLink]
-                    .select { filter { eq("user_id", userId) } }
-                    .decodeList<UserPlayerLink>()
-                    .firstOrNull()
-            } catch (_: Throwable) { null }
-
-            val body = UserPlayerLink(userId = userId, playerId = playerId)
-            if (existing == null) {
-                try { supabase.postgrest[tableLink].insert(body) } catch (_: Throwable) {}
-            } else {
-                try { supabase.postgrest[tableLink].update(body) { filter { eq("user_id", userId) } } } catch (_: Throwable) {}
-            }
-            true
-        } catch (t: Throwable) {
-            Log.w("AppUserDao", "linkToPlayer failed: ${t.message}")
-            false
-        }
-    }
 }
 
 @kotlinx.serialization.Serializable

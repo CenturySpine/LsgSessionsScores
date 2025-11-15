@@ -33,7 +33,6 @@ import fr.centuryspine.lsgscores.ui.holes.HoleFormScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleListScreen
 import fr.centuryspine.lsgscores.ui.home.HomeScreen
 import fr.centuryspine.lsgscores.ui.players.PlayerDetailScreen
-import fr.centuryspine.lsgscores.ui.players.PlayerFormScreen
 import fr.centuryspine.lsgscores.ui.players.PlayerListScreen
 import fr.centuryspine.lsgscores.ui.sessions.*
 import fr.centuryspine.lsgscores.ui.settings.SettingsScreen
@@ -57,7 +56,6 @@ private fun getCurrentNavigationContext(currentRoute: String?): NavigationContex
                 currentRoute == DrawerNavItem.Settings.route ||
                 currentRoute?.startsWith("user_detail/") == true ||
                 currentRoute?.startsWith("hole_detail/") == true ||
-                currentRoute == "add_user" ||
                 currentRoute == "add_hole" -> NavigationContext.DRAWER
 
         // Other routes
@@ -136,7 +134,6 @@ fun MainScreen(
                                     currentRoute == item.route ||
                                             // Handle dynamic routes for drawer items
                                             (item == DrawerNavItem.Players && currentRoute?.startsWith("user_detail/") == true) ||
-                                            (item == DrawerNavItem.Players && currentRoute == "add_user") ||
                                             (item == DrawerNavItem.Holes && currentRoute?.startsWith("hole_detail/") == true) ||
                                             (item == DrawerNavItem.Holes && currentRoute == "add_hole")
                                     )
@@ -236,7 +233,6 @@ fun MainScreen(
                                 DrawerNavItem.Holes.route -> stringResource(R.string.main_topbar_title_holes)
                                 DrawerNavItem.SessionHistory.route -> stringResource(R.string.main_topbar_title_session_history)
                                 DrawerNavItem.Settings.route -> stringResource(R.string.main_topbar_title_settings)
-                                "add_user" -> stringResource(R.string.main_topbar_title_add_player)
                                 "add_hole" -> stringResource(R.string.main_topbar_title_add_hole)
                                 "new_session_teams" -> stringResource(R.string.main_topbar_title_select_teams)
                                 "user_detail/{userId}" -> stringResource(R.string.main_topbar_title_player_details)
@@ -383,9 +379,6 @@ fun MainScreen(
                 }
 
                 // Other routes (unchanged)
-                composable("add_user") {
-                    PlayerFormScreen(navController, playerViewModel)
-                }
                 composable("add_hole") {
                     HoleFormScreen(navController, holeViewModel, gameZoneViewModel)
                 }

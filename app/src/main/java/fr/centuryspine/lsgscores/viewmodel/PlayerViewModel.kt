@@ -18,25 +18,9 @@ class PlayerViewModel @Inject constructor(
 
     suspend fun getPlayerById(id: Long): Player? = repository.getPlayerById(id)
 
-    fun addPlayer(name: String, photoUri: String?, onPlayerAdded: () -> Unit) {
-        viewModelScope.launch {
-            repository.insertPlayer(Player(name = name, photoUri = photoUri))
-            onPlayerAdded()
-        }
-    }
     fun updatePlayer(player: Player) {
         viewModelScope.launch {
             repository.updatePlayer(player)
-        }
-    }
-    fun deletePlayer(player: Player, onSuccess: () -> Unit = {}) {
-        viewModelScope.launch {
-            try {
-                repository.deletePlayer(player)
-                onSuccess()
-            } catch (_: Exception) {
-                // Swallow for now; could expose error callback in the future
-            }
         }
     }
 

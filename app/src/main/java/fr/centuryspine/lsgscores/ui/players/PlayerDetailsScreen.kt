@@ -32,8 +32,7 @@ fun PlayerDetailScreen(
     playerViewModel: PlayerViewModel
 ) {
     val users by playerViewModel.players.collectAsState(initial = emptyList())
-    val user = users.find { it.id == userId }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    users.find { it.id == userId }
 
     // State for editing
     var isEditing by rememberSaveable { mutableStateOf(false) }
@@ -276,61 +275,13 @@ fun PlayerDetailScreen(
                         ) {
                             Text(stringResource(R.string.player_detail_button_edit))
                         }
-                        Button(
-                            onClick = { showDeleteDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                        ) {
-                            Text(stringResource(R.string.player_detail_button_delete))
-                        }
                     }
 
-                    Spacer(Modifier.height(16.dp))
-
-                    // Link the current authenticated user to this player
-                    run {
-                        val authViewModel: fr.centuryspine.lsgscores.viewmodel.AuthViewModel = androidx.hilt.navigation.compose.hiltViewModel()
-                        val currentUser by authViewModel.user.collectAsState()
-                        val linkedId by authViewModel.linkedPlayerId.collectAsState()
-                        if (currentUser != null) {
-                            val isLinkedToThis = linkedId == user.id
-                            Button(
-                                onClick = { authViewModel.linkCurrentUserToPlayer(user.id) },
-                                enabled = !isLinkedToThis
-                            ) {
-                                Text(
-                                    text = if (isLinkedToThis)
-                                        stringResource(id = R.string.player_linked_to_you)
-                                    else
-                                        stringResource(id = R.string.player_link_this_is_me)
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
     }
     }
 
-    // Confirmation dialog before deleting the user
-    if (showDeleteDialog && user != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(R.string.player_detail_dialog_title)) },
-            text = { Text(stringResource(R.string.player_detail_dialog_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteDialog = false
-                    playerViewModel.deletePlayer(user) {
-                        // Notify the list screen to refresh/remove locally and navigate back
-                        navController.previousBackStackEntry?.savedStateHandle?.set("deletedPlayerId", user.id)
-                        navController.popBackStack()
-                    }
-                }) { Text(stringResource(R.string.player_detail_dialog_button_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.player_detail_dialog_button_cancel)) }
-            }
-        )
-    }
+
 }
