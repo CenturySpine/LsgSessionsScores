@@ -1,17 +1,12 @@
 package fr.centuryspine.lsgscores.data.player
 
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,9 +29,9 @@ class PlayerDaoSupabase @Inject constructor(
                         .flatMapLatest {
                             flow {
                                 try {
-                                    val uid = currentUser.requireUserId()
+                                    currentUser.requireUserId()
                                     val list = supabase.postgrest["players"].select {
-                                        filter { eq("cityid", cityId); eq("user_id", uid) }
+                                        filter { eq("cityid", cityId); }
                                         order("name", Order.ASCENDING)
                                     }.decodeList<Player>()
                                     emit(list)
