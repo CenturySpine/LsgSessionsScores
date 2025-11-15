@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,7 +25,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import fr.centuryspine.lsgscores.BuildConfig
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.areas.AreasScreen
 import fr.centuryspine.lsgscores.ui.common.RemoteImage
@@ -36,6 +36,7 @@ import fr.centuryspine.lsgscores.ui.players.PlayerDetailScreen
 import fr.centuryspine.lsgscores.ui.players.PlayerListScreen
 import fr.centuryspine.lsgscores.ui.sessions.*
 import fr.centuryspine.lsgscores.ui.settings.SettingsScreen
+import fr.centuryspine.lsgscores.utils.AppVersionResolver
 import fr.centuryspine.lsgscores.viewmodel.*
 import kotlinx.coroutines.launch
 
@@ -204,8 +205,12 @@ fun MainScreen(
                     }
 
                     // version information (anchored at bottom)
+                    val context = LocalContext.current
+                    val localVersionName by remember(context) {
+                        mutableStateOf(AppVersionResolver.resolveLocalVersionName(context))
+                    }
                     Text(
-                        text = BuildConfig.VERSION_NAME,
+                        text = localVersionName,
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(16.dp),

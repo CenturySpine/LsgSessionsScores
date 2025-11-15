@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import fr.centuryspine.lsgscores.ui.MainScreen
 import fr.centuryspine.lsgscores.ui.theme.LsgScoresTheme
+import fr.centuryspine.lsgscores.utils.AppVersionResolver
 import fr.centuryspine.lsgscores.utils.LanguageManager
 import fr.centuryspine.lsgscores.viewmodel.AuthViewModel
 import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
@@ -41,16 +42,27 @@ class MainActivity : ComponentActivity() {
         // Avant toute autre action, vérifier la version courante côté BDD (Supabase)
         lifecycleScope.launch {
             val versionInfo = fetchCurrentVersionFromSupabaseSafely()
-            val localVersion = BuildConfig.VERSION_NAME
-            Log.d("MainActivity", "Local version=$localVersion, Remote version=${versionInfo?.version}")
 
-            if (versionInfo?.version == null) {
+            // Récupère la version installée depuis le PackageManager (source de vérité),
+            // avec repli sur BuildConfig.VERSION_NAME si indisponible.
+            val localVersionFromPkg = AppVersionResolver.resolveLocalVersionName(this@MainActivity)
+            val localVersionFromBuildConfig = BuildConfig.VERSION_NAME
+            val localVersion = localVersionFromPkg.ifBlank { localVersionFromBuildConfig }.trim()
+
+            val remoteVersion = versionInfo?.version?.trim()
+
+            Log.d(
+                "MainActivity",
+                "Local version (PackageInfo)=$localVersionFromPkg, (BuildConfig)=$localVersionFromBuildConfig, Remote version=$remoteVersion"
+            )
+
+            if (remoteVersion == null) {
                 showErrorDialogAndExit()
-            } else if (versionInfo.version != localVersion) {
+            } else if (remoteVersion != localVersion) {
                 // Versions différentes: afficher un dialogue bloquant proposant le lien de téléchargement, puis quitter
                 showOutdatedDialogAndExit(versionInfo)
             } else {
-                // Versions identiques OU échec de la requête -> on démarre normalement
+                // Versions identiques -> on démarre normalement
                 startNormalStartup()
             }
         }
@@ -105,6 +117,7 @@ class MainActivity : ComponentActivity() {
             null
         }
     }
+
 
     private fun startNormalStartup() {
         // Important: laisser Supabase Auth consommer les deeplinks OAuth si l'activité a été créée depuis un lien
@@ -162,7 +175,7 @@ class MainActivity : ComponentActivity() {
         val message = buildString {
             append("Votre version de l'application n'est pas à jour.\n\n")
             append("Version attendue: ${info.version ?: "?"}\n")
-            append("Version installée: ${BuildConfig.VERSION_NAME}\n\n")
+            append("Version installée: ${AppVersionResolver.resolveLocalVersionName(this@MainActivity)}\n\n")
             if (!downloadUrl.isNullOrBlank()) {
                 append("Lien de téléchargement:\n")
                 append(downloadUrl)
