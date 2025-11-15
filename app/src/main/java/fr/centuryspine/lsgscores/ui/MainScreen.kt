@@ -261,10 +261,8 @@ fun MainScreen(
                     val currentRoute = navBackStackEntry?.destination?.route
                     val navigationContext = getCurrentNavigationContext(currentRoute)
 
-                    // Charger l'id du joueur lié à l'utilisateur courant
-                    val linkedPlayerId by produceState<Long?>(initialValue = null) {
-                        value = sessionViewModel.getLinkedPlayerIdForCurrentUser()
-                    }
+                    // Id du joueur lié à l'utilisateur courant (réactif via AuthViewModel)
+                    val linkedPlayerId by authViewModel.linkedPlayerId.collectAsStateWithLifecycle()
                     // Charger le joueur (pour son image)
                     val linkedPlayer by produceState<fr.centuryspine.lsgscores.data.player.Player?>(
                         initialValue = null,
@@ -444,6 +442,7 @@ fun MainScreen(
                     JoinSessionTeamPickerScreen(
                         navController = navController,
                         sessionViewModel = sessionViewModel,
+                        authViewModel = authViewModel,
                         sessionId = sessionId
                     )
                 }

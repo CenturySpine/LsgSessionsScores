@@ -1,9 +1,11 @@
 package fr.centuryspine.lsgscores.data.authuser
 
 import android.util.Log
+import fr.centuryspine.lsgscores.data.player.Player
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -67,19 +69,90 @@ class AppUserDaoSupabase @Inject constructor(
             )
             if (existing == null) {
                 try { supabase.postgrest[tableUsers].insert(body) } catch (_: Throwable) {}
+                val defaultCityId = 1L
+                // Create default player and link it to the newly created app_user
+                try {
+                    val defaultName = displayName ?: email ?: "Player"
+
+                    // 1) Create a new player with cityid = 1 and no photo for this user
+                    try {
+                        supabase.postgrest["players"].insert(
+                            Player(
+                                name = defaultName,
+                                photoUri = null,
+                                cityId = defaultCityId,
+                                userId = id
+                            )
+                        )
+                    } catch (t: Throwable) {
+                        // Trace explicite si l'INSERT du player échoue (ligne 89 demandée)
+                        Log.w(
+                            "AppUserDao",
+                            "auto-create player: insert failed (user_id=" + id + ", name=" + defaultName + ", cityId=" + defaultCityId + "): " + t.message,
+                            t
+                        )
+                    }
+
+                    // 2) Retrieve the created player's id (follow the same safe pattern used elsewhere)
+                    val createdPlayer = try {
+                        supabase.postgrest["players"].select {
+                            filter { eq("user_id", id); eq("name", defaultName); eq("cityid", defaultCityId) }
+                            order("id", Order.DESCENDING)
+                            limit(1)
+                        }.decodeList<Player>().firstOrNull()
+                    } catch (t: Throwable) {
+                        Log.w(
+                            "AppUserDao",
+                            "auto-create player: select failed (user_id=" + id + ", name=" + defaultName + ", cityId=" + defaultCityId + "): " + t.message
+                        )
+                        null
+                    }
+
+                    val playerId = createdPlayer?.id
+                    if (playerId != null && playerId > 0) {
+                        // 3) Create the link in user_player_link (use typed body to avoid Any-serializer issues)
+                        try {
+                            supabase.postgrest[tableLink].insert(
+                                UserPlayerLink(userId = id, playerId = playerId)
+                            )
+                        } catch (t: Throwable) {
+                            Log.w(
+                                "AppUserDao",
+                                "auto-link user_player_link: insert failed (user_id=" + id + ", player_id=" + playerId + "): " + t.message,
+                                t
+                            )
+                            // If row exists, update it
+                            try {
+                                supabase.postgrest[tableLink].update(
+                                    UserPlayerLink(userId = id, playerId = playerId)
+                                ) { filter { eq("user_id", id) } }
+                            } catch (t2: Throwable) {
+                                Log.w(
+                                    "AppUserDao",
+                                    "auto-link user_player_link: update failed (user_id=" + id + ", player_id=" + playerId + "): " + t2.message,
+                                    t2
+                                )
+                            }
+                        }
+                    }
+                } catch (t: Throwable) {
+                    Log.w("AppUserDao", "auto-create player/link failed: ${t.message}")
+                }
             } else {
                 // Partial update: only send non-null fields to avoid overwriting existing values with nulls
-                val updateBody = mutableMapOf<String, Any>()
-                if (email != null) updateBody["email"] = email
-                if (displayName != null) updateBody["display_name"] = displayName
-                if (avatarUrl != null) updateBody["avatar_url"] = avatarUrl
-                if (provider != null) updateBody["provider"] = provider
-                if (updateBody.isNotEmpty()) {
+                val updateBody = AppUser(
+                    id = id,
+                    email = email,
+                    displayName = displayName,
+                    avatarUrl = avatarUrl,
+                    provider = provider
+                )
+
                     try {
                         supabase.postgrest[tableUsers].update(updateBody) { filter { eq("id", id) } }
                     } catch (_: Throwable) {
                     }
-                }
+
             }
             // Return row (best-effort)
             supabase.postgrest[tableUsers]

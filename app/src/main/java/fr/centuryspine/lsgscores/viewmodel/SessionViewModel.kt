@@ -16,38 +16,16 @@ import fr.centuryspine.lsgscores.data.holemode.HoleGameModeRepository
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import fr.centuryspine.lsgscores.data.scoring.ScoringMode
 import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
-import fr.centuryspine.lsgscores.data.session.PlayedHole
-import fr.centuryspine.lsgscores.data.session.PlayedHoleRepository
-import fr.centuryspine.lsgscores.data.session.PlayedHoleScore
-import fr.centuryspine.lsgscores.data.session.PlayedHoleScoreRepository
-import fr.centuryspine.lsgscores.data.session.Session
-import fr.centuryspine.lsgscores.data.session.SessionRepository
-import fr.centuryspine.lsgscores.data.session.SessionType
-import fr.centuryspine.lsgscores.data.session.Team
-import fr.centuryspine.lsgscores.data.session.TeamRepository
-import fr.centuryspine.lsgscores.data.session.TeamWithPlayers
+import fr.centuryspine.lsgscores.data.session.*
 import fr.centuryspine.lsgscores.domain.scoring.ScoringCalculator
 import fr.centuryspine.lsgscores.domain.scoring.ScoringCalculatorFactory
 import fr.centuryspine.lsgscores.ui.sessions.PdfScoreDisplayData
 import fr.centuryspine.lsgscores.ui.sessions.SessionPdfData
 import fr.centuryspine.lsgscores.ui.sessions.TeamPdfData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -90,10 +68,7 @@ class SessionViewModel @Inject constructor(
     fun setParticipantSession(sessionId: Long?) = appPreferences.setParticipantSessionId(sessionId)
     fun setParticipantTeam(teamId: Long?) = appPreferences.setParticipantTeamId(teamId)
 
-    // Linked player: returns the playerId associated to the current authenticated user, if any
-    suspend fun getLinkedPlayerIdForCurrentUser(): Long? = try {
-        appUserDao.getLinkedPlayerId()
-    } catch (_: Exception) { null }
+    // Note: linked player id is now exposed via AuthViewModel (linkedPlayerId StateFlow)
 
     var scoringModeId: Int? = null
         private set
@@ -186,8 +161,8 @@ class SessionViewModel @Inject constructor(
         enum class EndReason { VALIDATED, DELETED }
         data class Ended(val reason: EndReason) : SessionEvent()
     }
-    private val _sessionEvents = kotlinx.coroutines.flow.MutableSharedFlow<SessionEvent>(extraBufferCapacity = 1)
-    val sessionEvents: kotlinx.coroutines.flow.Flow<SessionEvent> = _sessionEvents
+    private val _sessionEvents = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 1)
+    val sessionEvents: Flow<SessionEvent> = _sessionEvents
 
     // Keep a snapshot of the last observed session (can persist across participant mode changes)
     private var lastSession: Session? = null

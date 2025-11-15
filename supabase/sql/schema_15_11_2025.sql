@@ -17,7 +17,7 @@ CREATE TABLE public.app_user
     provider     text,
     created_at   timestamp with time zone NOT NULL DEFAULT now(),
     updated_at   timestamp with time zone NOT NULL DEFAULT now(),
-    role_id      bigint                   NOT NULL DEFAULT 2,
+    role_id      bigint                   NOT NULL DEFAULT '2'::bigint,
     CONSTRAINT app_user_pkey PRIMARY KEY (id),
     CONSTRAINT app_user_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.app_roles (id)
 );
@@ -87,8 +87,7 @@ CREATE TABLE public.players
     photouri text,
     cityid   bigint                              NOT NULL DEFAULT 1,
     user_id  uuid                                NOT NULL,
-    CONSTRAINT players_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_players_city FOREIGN KEY (cityid) REFERENCES public.cities (id)
+    CONSTRAINT players_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.scoring_modes
 (
@@ -124,8 +123,8 @@ CREATE TABLE public.teams
     user_id   uuid                                NOT NULL,
     CONSTRAINT teams_pkey PRIMARY KEY (id),
     CONSTRAINT fk_teams_session FOREIGN KEY (sessionid) REFERENCES public.sessions (id),
-    CONSTRAINT fk_teams_player1 FOREIGN KEY (player1id) REFERENCES public.players (id),
-    CONSTRAINT fk_teams_player2 FOREIGN KEY (player2id) REFERENCES public.players (id)
+    CONSTRAINT teams_player1id_fkey FOREIGN KEY (player1id) REFERENCES public.players (id),
+    CONSTRAINT teams_player2id_fkey FOREIGN KEY (player2id) REFERENCES public.players (id)
 );
 CREATE TABLE public.user_player_link
 (
@@ -133,7 +132,5 @@ CREATE TABLE public.user_player_link
     player_id  bigint UNIQUE,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT user_player_link_pkey PRIMARY KEY (user_id),
-    CONSTRAINT user_player_link_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.app_user (id),
-    CONSTRAINT user_player_link_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players (id)
+    CONSTRAINT user_player_link_pkey PRIMARY KEY (user_id)
 );

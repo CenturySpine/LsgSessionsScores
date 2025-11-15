@@ -129,6 +129,13 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // Transverse helper to fetch the linked player id (prefer using linkedPlayerId StateFlow when possible)
+    suspend fun getLinkedPlayerIdForCurrentUser(): Long? = try {
+        appUserDao.getLinkedPlayerId()
+    } catch (_: Throwable) {
+        null
+    }
+
     // Delete account (purge user data and sign out). Emits state for UI.
     private val _deleteAccountState = MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
     val deleteAccountState: StateFlow<DeleteAccountState> = _deleteAccountState
