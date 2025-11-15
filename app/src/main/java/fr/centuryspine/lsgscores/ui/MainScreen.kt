@@ -2,13 +2,16 @@
 
 package fr.centuryspine.lsgscores.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,6 +27,7 @@ import androidx.navigation.navArgument
 import fr.centuryspine.lsgscores.BuildConfig
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.areas.AreasScreen
+import fr.centuryspine.lsgscores.ui.common.RemoteImage
 import fr.centuryspine.lsgscores.ui.holes.HoleDetailScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleFormScreen
 import fr.centuryspine.lsgscores.ui.holes.HoleListScreen
@@ -261,6 +265,18 @@ fun MainScreen(
                     val currentRoute = navBackStackEntry?.destination?.route
                     val navigationContext = getCurrentNavigationContext(currentRoute)
 
+                    // Charger l'id du joueur lié à l'utilisateur courant
+                    val linkedPlayerId by produceState<Long?>(initialValue = null) {
+                        value = sessionViewModel.getLinkedPlayerIdForCurrentUser()
+                    }
+                    // Charger le joueur (pour son image)
+                    val linkedPlayer by produceState<fr.centuryspine.lsgscores.data.player.Player?>(
+                        initialValue = null,
+                        key1 = linkedPlayerId
+                    ) {
+                        value = linkedPlayerId?.let { playerViewModel.getPlayerById(it) }
+                    }
+
                     bottomItems.forEach { item ->
                         val isEnabled = when (item) {
                             is BottomNavItem.NewSession -> !hasOngoingSessionForCurrentCity
@@ -298,6 +314,39 @@ fun MainScreen(
                             enabled = isEnabled
                         )
                     }
+
+                    // Élément supplémentaire: pastille du joueur courant (toujours présent pour un layout 4 colonnes)
+                    NavigationBarItem(
+                        icon = {
+                            val p = linkedPlayer
+                            if (p?.photoUri?.isNotBlank() == true) {
+                                RemoteImage(
+                                    url = p.photoUri,
+                                    contentDescription = "Photo ${'$'}{p.name}",
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                )
+                            }
+                        },
+                        selected = false,
+                        onClick = {
+                            linkedPlayerId?.let { id ->
+                                navController.navigate("user_detail/${id}") {
+                                    launchSingleTop = true
+                                }
+                            }
+                        },
+                        label = { Text("Profile") },
+                        enabled = linkedPlayerId != null
+                    )
                 }
             }
         ) { padding ->

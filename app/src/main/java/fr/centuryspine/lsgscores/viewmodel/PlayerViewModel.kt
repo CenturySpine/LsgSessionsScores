@@ -2,9 +2,9 @@ package fr.centuryspine.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.centuryspine.lsgscores.data.player.Player
 import fr.centuryspine.lsgscores.data.player.PlayerRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,6 +15,8 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel() {
 
     val players: Flow<List<Player>> = repository.getPlayersByCurrentCity()
+
+    suspend fun getPlayerById(id: Long): Player? = repository.getPlayerById(id)
 
     fun addPlayer(name: String, photoUri: String?, onPlayerAdded: () -> Unit) {
         viewModelScope.launch {

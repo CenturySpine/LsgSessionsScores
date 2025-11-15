@@ -28,6 +28,10 @@ class PlayerRepository @Inject constructor(
         }
     }
 
+    suspend fun getPlayerById(id: Long): Player? = withContext(Dispatchers.IO) {
+        playerDao.getById(id)
+    }
+
     private fun isRemoteUrl(s: String?): Boolean {
         if (s.isNullOrBlank()) return false
         val lower = s.trim().lowercase()
