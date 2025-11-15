@@ -19,10 +19,35 @@ class AppUserDaoSupabase @Inject constructor(
         val user = session?.user ?: return null
         val id = user.id
         val email = user.email
-        // Keep it simple and robust; metadata may be absent depending on provider
-        val displayName: String? = null
-        val avatarUrl: String? = null
-        val provider: String? = null
+
+        // Defensive extraction of metadata from Map/JSON-like structures used by jan-supabase
+        fun anyToStringCompat(value: Any?): String? {
+            if (value == null) return null
+            return when (value) {
+                is String -> value
+                is CharSequence -> value.toString()
+                is Number, is Boolean -> value.toString()
+                is Iterable<*> -> anyToStringCompat(value.firstOrNull())
+                else -> {
+                    // Fallback: toString(). If it's a JSON primitive string it may be quoted — strip quotes.
+                    val s = value.toString()
+                    if (s.length >= 2 && s.first() == '"' && s.last() == '"') s.substring(1, s.length - 1) else s
+                }
+            }?.takeIf { it.isNotBlank() }
+        }
+
+        fun extractString(meta: Any?, vararg keys: String): String? = try {
+            val m = meta as? Map<*, *> ?: return null
+            keys.asSequence()
+                .mapNotNull { k -> anyToStringCompat(m[k]) }
+                .firstOrNull()
+        } catch (_: Throwable) {
+            null
+        }
+
+        val displayName: String? = extractString(user.userMetadata, "full_name", "name")
+        val avatarUrl: String? = extractString(user.userMetadata, "avatar_url", "picture")
+        val provider: String? = extractString(user.appMetadata, "provider")
 
         return try {
             // Check if row exists
@@ -43,7 +68,18 @@ class AppUserDaoSupabase @Inject constructor(
             if (existing == null) {
                 try { supabase.postgrest[tableUsers].insert(body) } catch (_: Throwable) {}
             } else {
-                try { supabase.postgrest[tableUsers].update(body) { filter { eq("id", id) } } } catch (_: Throwable) {}
+                // Partial update: only send non-null fields to avoid overwriting existing values with nulls
+                val updateBody = mutableMapOf<String, Any>()
+                if (email != null) updateBody["email"] = email
+                if (displayName != null) updateBody["display_name"] = displayName
+                if (avatarUrl != null) updateBody["avatar_url"] = avatarUrl
+                if (provider != null) updateBody["provider"] = provider
+                if (updateBody.isNotEmpty()) {
+                    try {
+                        supabase.postgrest[tableUsers].update(updateBody) { filter { eq("id", id) } }
+                    } catch (_: Throwable) {
+                    }
+                }
             }
             // Return row (best-effort)
             supabase.postgrest[tableUsers]
