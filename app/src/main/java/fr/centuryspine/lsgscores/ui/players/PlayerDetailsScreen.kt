@@ -126,6 +126,8 @@ fun PlayerDetailScreen(
                 Text(stringResource(R.string.player_detail_not_found))
             }
         } else {
+            // Only allow edit if the displayed player belongs to the currently authenticated app user
+            val canEdit = remember(user.id) { playerViewModel.isCurrentAuthenticatedUser(user) }
             // EDIT MODE with sticky Save/Cancel
             if (isEditing) {
                 Box(
@@ -265,15 +267,17 @@ fun PlayerDetailScreen(
                         ) {
                             Text(stringResource(R.string.player_detail_button_back))
                         }
-                        Button(
-                            onClick = {
-                                // Activate edit mode, initialize values
-                                editedName = user.name
-                                editedPhotoPath = null
-                                isEditing = true
+                        if (canEdit) {
+                            Button(
+                                onClick = {
+                                    // Activate edit mode, initialize values
+                                    editedName = user.name
+                                    editedPhotoPath = null
+                                    isEditing = true
+                                }
+                            ) {
+                                Text(stringResource(R.string.player_detail_button_edit))
                             }
-                        ) {
-                            Text(stringResource(R.string.player_detail_button_edit))
                         }
                     }
 
