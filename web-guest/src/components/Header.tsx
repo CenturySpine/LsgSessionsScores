@@ -7,7 +7,7 @@ export default function Header() {
   const [email, setEmail] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [avatar, setAvatar] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
+    const [, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const router = useRouter()

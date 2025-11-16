@@ -1,7 +1,6 @@
 package fr.centuryspine.lsgscores.utils
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -9,15 +8,14 @@ import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
+import fr.centuryspine.lsgscores.data.hole.HoleDao
+import fr.centuryspine.lsgscores.data.player.PlayerDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
-import fr.centuryspine.lsgscores.data.player.PlayerDao
-import fr.centuryspine.lsgscores.data.hole.HoleDao
-import androidx.core.net.toUri
 
 /**
  * Centralized image cache manager that warms (prefetches) remote images into Coil's caches
@@ -113,7 +111,7 @@ class ImageCacheManager @Inject constructor(
         Log.d("ImageCache", "Enqueue prefetch for ${distinct.size} distinct URL(s)")
         distinct.forEach { rawUrl ->
             val signed = storageHelper.getSignedUrlForPublicUrl(rawUrl) ?: rawUrl
-            val key = stableCacheKey(rawUrl)
+            val key = ImageCacheKeyHelper.stableCacheKey(rawUrl)
             val request = ImageRequest.Builder(context)
                 .data(signed)
                 .memoryCacheKey(key)
@@ -135,32 +133,5 @@ class ImageCacheManager @Inject constructor(
         if (s.isNullOrBlank()) return false
         val lower = s.trim().lowercase()
         return lower.startsWith("http://") || lower.startsWith("https://")
-    }
-
-    private fun stableCacheKey(inputUrl: String): String {
-        return try {
-            val uri = inputUrl.toUri()
-            val path = uri.path ?: return inputUrl
-            val marker = "/storage/v1/object/"
-            val idx = path.indexOf(marker)
-            if (idx == -1) return inputUrl
-            val after = path.substring(idx + marker.length)
-            val parts = after.trimStart('/').split('/').filter { it.isNotEmpty() }
-            if (parts.size < 2) return inputUrl
-            val bucket: String
-            val objectPath: String
-            if (parts[0] == "sign") {
-                if (parts.size < 3) return inputUrl
-                bucket = parts[1]
-                objectPath = parts.drop(2).joinToString("/")
-            } else {
-                if (parts.size < 3) return inputUrl
-                bucket = parts[1]
-                objectPath = parts.drop(2).joinToString("/")
-            }
-            "supabase:${bucket.lowercase()}/${Uri.decode(objectPath)}"
-        } catch (_: Throwable) {
-            inputUrl
-        }
     }
 }

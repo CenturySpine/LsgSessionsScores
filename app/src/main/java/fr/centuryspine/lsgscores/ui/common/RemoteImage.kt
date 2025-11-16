@@ -1,24 +1,19 @@
 package fr.centuryspine.lsgscores.ui.common
 
-import android.net.Uri
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import fr.centuryspine.lsgscores.utils.ImageCacheKeyHelper
 import fr.centuryspine.lsgscores.utils.SupabaseStorageHelper
-import androidx.core.net.toUri
 
 /**
  * Remote image composable that prefers local cache.
@@ -37,7 +32,7 @@ fun RemoteImage(
     val context = LocalContext.current
 
     var targetUrl by remember(url) { mutableStateOf(url) }
-    val cacheKey = remember(url) { stableCacheKey(url) }
+    val cacheKey = remember(url) { ImageCacheKeyHelper.stableCacheKey(url) }
 
     // If it's a Supabase Storage URL and not yet signed, generate a signed URL
     LaunchedEffect(url) {
@@ -70,34 +65,6 @@ fun RemoteImage(
         placeholder = painterResource(id = android.R.drawable.ic_menu_report_image),
         error = painterResource(id = android.R.drawable.ic_menu_report_image)
     )
-}
-
-private fun stableCacheKey(inputUrl: String): String {
-    return try {
-        val uri = inputUrl.toUri()
-        val path = uri.path ?: return inputUrl
-        val marker = "/storage/v1/object/"
-        val idx = path.indexOf(marker)
-        if (idx == -1) return inputUrl
-        val after = path.substring(idx + marker.length) // e.g., "public/<bucket>/<object>" or "sign/<bucket>/<object>"
-        val parts = after.trimStart('/').split('/').filter { it.isNotEmpty() }
-        if (parts.size < 2) return inputUrl
-        val bucket: String
-        val objectPath: String
-        if (parts[0] == "sign") {
-            if (parts.size < 3) return inputUrl
-            bucket = parts[1]
-            objectPath = parts.drop(2).joinToString("/")
-        } else {
-            // parts[0] = visibility (public/authenticated), then bucket + object
-            if (parts.size < 3) return inputUrl
-            bucket = parts[1]
-            objectPath = parts.drop(2).joinToString("/")
-        }
-        "supabase:${bucket.lowercase()}/${Uri.decode(objectPath)}"
-    } catch (_: Throwable) {
-        inputUrl
-    }
 }
 
 @EntryPoint

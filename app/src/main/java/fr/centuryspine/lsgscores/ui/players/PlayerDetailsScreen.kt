@@ -265,7 +265,7 @@ fun PlayerDetailScreen(
                         ) {
                             Text(stringResource(R.string.player_detail_button_back))
                         }
-                        if (canEdit && user != null) {
+                        if (canEdit) {
                             Button(
                                 onClick = {
                                     // Activate edit mode, initialize values
