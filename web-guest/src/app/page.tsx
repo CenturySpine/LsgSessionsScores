@@ -290,7 +290,7 @@ export default function Home() {
                 }}>
                     Vous devez être inscrit à la campagne de test pour télécharger la version.
                     <br/>
-                    Cliquez sur le lien ce-dessus, si la page google play s'affiche, c'est que vous êtes inscrit.
+                    Cliquez sur le lien ci-dessus : si la page google play s'affiche, c'est que vous êtes inscrit.
                     <br/>
                     Dans le cas contraire, demandez au responsable de l'application ou téléchargez l'apk depuis GitHub avec le lien ci-dessous.
                 </span>
