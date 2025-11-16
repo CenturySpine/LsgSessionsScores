@@ -250,7 +250,7 @@ export default function Home() {
             >
                 {apkInfo?.download_link ? (
                 <a
-                    href={apkInfo.download_link}
+                    href="https://play.google.com/store/apps/details?id=fr.centuryspine.lsgscores"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -272,7 +272,7 @@ export default function Home() {
                         <path d="M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                     <span
-                        style={{fontWeight: 500}}>Télécharger l'APK Android {apkInfo.version ? `(v${apkInfo.version})` : ''}</span>
+                        style={{fontWeight: 500}}>Télécharger la version de test pour Android {apkInfo.version ? `(v${apkInfo.version})` : ''}</span>
                 </a>
                 ) : (
                 // Fallback discret quand la version n'est pas disponible
@@ -280,7 +280,20 @@ export default function Home() {
                         Lien de téléchargement indisponible pour le moment.
                 </div>
                 )}
-
+                <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: 11,
+                    color: "black",
+                    textDecoration: 'none'
+                }}>
+                    Vous devez être inscrit à la campagne de test pour télécharger la version.
+                    <br/>
+                    Cliquez sur le lien ce-dessus, si la page google play s'affiche, c'est que vous êtes inscrit.
+                    <br/>
+                    Dans le cas contraire, demandez au responsable de l'application ou téléchargez l'apk depuis GitHub avec le lien ci-dessous.
+                </span>
                 {apkInfo?.release_note_link ? (
                     <a
                         href={apkInfo.release_note_link}
@@ -300,6 +313,23 @@ export default function Home() {
                             <path d="M10 11h6M10 14h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                         </svg>
                         <span>Notes de version</span>
+                    </a>
+                ) : null}
+
+                {apkInfo?.download_link ? (
+                    <a href={apkInfo.download_link}
+                       target="_blank"
+                       rel="noopener noreferrer">
+                    <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 10,
+                        color: 'black',
+                        textDecoration: 'none'
+                    }}>
+                        Télécharger l'apk depuis GitHub
+                    </span>
                     </a>
                 ) : null}
             </div>

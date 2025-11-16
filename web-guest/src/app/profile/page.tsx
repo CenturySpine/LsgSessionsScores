@@ -15,6 +15,9 @@ export default function ProfilePage() {
     const [error, setError] = useState<string | null>(null)
     const [playerData, setPlayerData] = useState<PlayerData | null>(null)
     const [signedPhotoUrl, setSignedPhotoUrl] = useState<string | null>(null)
+    const [isEditing, setIsEditing] = useState(false)
+    const [editedName, setEditedName] = useState("")
+    const [isSaving, setIsSaving] = useState(false)
     const router = useRouter()
 
     useEffect(() => {
@@ -96,6 +99,44 @@ export default function ProfilePage() {
             mounted = false
         }
     }, [router])
+
+    const handleEdit = () => {
+        setEditedName(playerData?.name || "")
+        setIsEditing(true)
+    }
+
+    const handleCancel = () => {
+        setIsEditing(false)
+        setEditedName("")
+    }
+
+    const handleSave = async () => {
+        if (!playerData || !editedName.trim()) {
+            return
+        }
+
+        setIsSaving(true)
+
+        try {
+            const {error: updateError} = await supabase
+                .from("players")
+                .update({name: editedName.trim()})
+                .eq("id", playerData.id)
+
+            if (updateError) {
+                throw updateError
+            }
+
+            // Mettre à jour l'état local
+            setPlayerData({...playerData, name: editedName.trim()})
+            setIsEditing(false)
+            setEditedName("")
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
+        } finally {
+            setIsSaving(false)
+        }
+    }
 
     if (loading) {
         return (
@@ -239,7 +280,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Nom du joueur */}
-                    <div style={{textAlign: "center"}}>
+                    <div style={{textAlign: "center", width: "100%", maxWidth: "400px"}}>
                         <label style={{
                             display: "block",
                             fontSize: "14px",
@@ -249,14 +290,92 @@ export default function ProfilePage() {
                         }}>
                             Nom du joueur
                         </label>
-                        <p style={{
-                            fontSize: "24px",
-                            fontWeight: 600,
-                            color: "#111827",
-                            margin: 0
-                        }}>
-                            {playerData.name}
-                        </p>
+                        {isEditing ? (
+                            <div style={{display: "flex", flexDirection: "column", gap: "12px"}}>
+                                <input
+                                    type="text"
+                                    value={editedName}
+                                    onChange={(e) => setEditedName(e.target.value)}
+                                    disabled={isSaving}
+                                    style={{
+                                        fontSize: "18px",
+                                        fontWeight: 600,
+                                        color: "#111827",
+                                        padding: "8px 12px",
+                                        border: "2px solid #3B82F6",
+                                        borderRadius: "8px",
+                                        outline: "none",
+                                        textAlign: "center",
+                                        width: "100%"
+                                    }}
+                                />
+                                <div style={{display: "flex", gap: "8px", justifyContent: "center"}}>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving || !editedName.trim()}
+                                        style={{
+                                            padding: "8px 24px",
+                                            fontSize: "14px",
+                                            fontWeight: 500,
+                                            color: "#fff",
+                                            background: isSaving || !editedName.trim() ? "#9CA3AF" : "#10B981",
+                                            border: "none",
+                                            borderRadius: "8px",
+                                            cursor: isSaving || !editedName.trim() ? "not-allowed" : "pointer",
+                                            transition: "background 0.2s"
+                                        }}
+                                    >
+                                        {isSaving ? "Sauvegarde..." : "Sauvegarder"}
+                                    </button>
+                                    <button
+                                        onClick={handleCancel}
+                                        disabled={isSaving}
+                                        style={{
+                                            padding: "8px 24px",
+                                            fontSize: "14px",
+                                            fontWeight: 500,
+                                            color: "#374151",
+                                            background: "#E5E7EB",
+                                            border: "none",
+                                            borderRadius: "8px",
+                                            cursor: isSaving ? "not-allowed" : "pointer",
+                                            transition: "background 0.2s"
+                                        }}
+                                    >
+                                        Annuler
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{display: "flex", flexDirection: "column", gap: "12px", alignItems: "center"}}>
+                                <p style={{
+                                    fontSize: "24px",
+                                    fontWeight: 600,
+                                    color: "#111827",
+                                    margin: 0
+                                }}>
+                                    {playerData.name}
+                                </p>
+                                <button
+                                    onClick={handleEdit}
+                                    style={{
+                                        padding: "8px 24px",
+                                        fontSize: "14px",
+                                        fontWeight: 500,
+                                        color: "#fff",
+                                        background: "#3B82F6",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        cursor: "pointer",
+                                        transition: "background 0.2s"
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = "#2563EB"}
+                                    onMouseOut={(e) => e.currentTarget.style.background = "#3B82F6"}
+                                >
+                                    Éditer
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
