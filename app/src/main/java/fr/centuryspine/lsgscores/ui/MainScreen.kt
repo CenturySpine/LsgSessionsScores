@@ -268,12 +268,10 @@ fun MainScreen(
 
                     // Id du joueur lié à l'utilisateur courant (réactif via AuthViewModel)
                     val linkedPlayerId by authViewModel.linkedPlayerId.collectAsStateWithLifecycle()
-                    // Charger le joueur (pour son image)
-                    val linkedPlayer by produceState<fr.centuryspine.lsgscores.data.player.Player?>(
-                        initialValue = null,
-                        key1 = linkedPlayerId
-                    ) {
-                        value = linkedPlayerId?.let { playerViewModel.getPlayerById(it) }
+                    // Observer la liste des joueurs et extraire le joueur lié (réactif aux changements)
+                    val allPlayers by playerViewModel.players.collectAsStateWithLifecycle(initialValue = emptyList())
+                    val linkedPlayer = remember(linkedPlayerId, allPlayers) {
+                        linkedPlayerId?.let { id -> allPlayers.find { it.id == id } }
                     }
 
                     bottomItems.forEach { item ->
@@ -314,7 +312,6 @@ fun MainScreen(
                         )
                     }
 
-                    // Élément supplémentaire: pastille du joueur courant (toujours présent pour un layout 4 colonnes)
                     NavigationBarItem(
                         icon = {
                             val p = linkedPlayer
