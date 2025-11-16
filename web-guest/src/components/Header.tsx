@@ -1,7 +1,7 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
+import {useEffect, useRef, useState} from "react"
+import {useRouter} from "next/navigation"
+import {supabase} from "@/lib/supabaseClient"
 
 export default function Header() {
   const [email, setEmail] = useState<string | null>(null)
@@ -91,6 +91,11 @@ export default function Header() {
     router.push("/")
   }
 
+    const goProfile = () => {
+        setOpen(false)
+        router.push("/profile")
+    }
+
   const signOut = async () => {
     // keep last session resume persisted across logout; do not clear here
     await supabase.auth.signOut()
@@ -175,6 +180,19 @@ export default function Header() {
                     <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
                   </svg>
                 </button>
+
+                  <button onClick={goProfile} role="menuitem" style={{
+                      width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
+                  }}>
+                      <span style={{color: "#111827"}}>Profile</span>
+                      <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                           aria-hidden="true">
+                          <title>profile</title>
+                          <path
+                              d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                      </svg>
+                  </button>
 
                 <button onClick={signOut} role="menuitem" style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
