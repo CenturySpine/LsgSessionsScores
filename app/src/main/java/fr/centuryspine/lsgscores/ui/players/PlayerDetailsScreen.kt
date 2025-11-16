@@ -102,12 +102,14 @@ fun PlayerDetailScreen(
                                 (slideOutHorizontally(animationSpec = tween(duration)) { -it } +
                                         fadeOut(animationSpec = tween(duration)))
                     }
+
                     lastSwipeDirection > 0 -> {
                         (slideInHorizontally(animationSpec = tween(duration)) { -it } +
                                 fadeIn(animationSpec = tween(duration))) togetherWith
                                 (slideOutHorizontally(animationSpec = tween(duration)) { it } +
                                         fadeOut(animationSpec = tween(duration)))
                     }
+
                     else -> {
                         fadeIn(animationSpec = tween(duration)) togetherWith fadeOut(animationSpec = tween(duration))
                     }
@@ -115,19 +117,13 @@ fun PlayerDetailScreen(
             },
             label = "PlayerDetailTransition"
         ) { targetUserId ->
-        val user = users.find { it.id == targetUserId }
-        if (user == null) {
-            Box(
-                Modifier
-                    .padding(padding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(stringResource(R.string.player_detail_not_found))
-            }
-        } else {
+            val user = users.find { it.id == targetUserId }
+
             // Only allow edit if the displayed player belongs to the currently authenticated app user
-            val canEdit = remember(user.id) { playerViewModel.isCurrentAuthenticatedUser(user) }
+            val canEdit =
+                user != null &&
+                        remember(user.id) { playerViewModel.isCurrentAuthenticatedUser(user) }
+
             // EDIT MODE with sticky Save/Cancel
             if (isEditing) {
                 Box(
@@ -144,7 +140,7 @@ fun PlayerDetailScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Show an edited photo or current photo
-                        val photoToShow = editedPhotoPath ?: user.photoUri
+                        val photoToShow = editedPhotoPath ?: user?.photoUri
                         if (!photoToShow.isNullOrBlank()) {
                             fr.centuryspine.lsgscores.ui.common.RemoteImage(
                                 url = photoToShow,
@@ -192,6 +188,7 @@ fun PlayerDetailScreen(
                     ) {
                         Button(
                             onClick = {
+                                if (user == null) return@Button
                                 scope.launch {
                                     playerViewModel.updatePlayer(
                                         user.copy(
@@ -209,6 +206,7 @@ fun PlayerDetailScreen(
                         Spacer(Modifier.width(16.dp))
                         OutlinedButton(
                             onClick = {
+                                if (user == null) return@OutlinedButton
                                 isEditing = false
                                 editedName = user.name
                                 editedPhotoPath = null
@@ -228,17 +226,17 @@ fun PlayerDetailScreen(
                         .padding(horizontal = 24.dp, vertical = 8.dp)  // Moins d'espace vertical
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
-                )  {
+                ) {
                     // Player name above the photo
                     Text(
-                        text = user.name,
+                        text = user?.name ?: "unknown player",
                         style = MaterialTheme.typography.headlineMedium
                     )
 
                     Spacer(Modifier.height(32.dp))
 
                     // Photo below the name
-                    if (!user.photoUri.isNullOrBlank()) {
+                    if (!user?.photoUri.isNullOrBlank()) {
                         fr.centuryspine.lsgscores.ui.common.RemoteImage(
                             url = user.photoUri,
                             contentDescription = stringResource(R.string.player_detail_photo_description),
@@ -267,7 +265,7 @@ fun PlayerDetailScreen(
                         ) {
                             Text(stringResource(R.string.player_detail_button_back))
                         }
-                        if (canEdit) {
+                        if (canEdit && user != null) {
                             Button(
                                 onClick = {
                                     // Activate edit mode, initialize values
@@ -284,7 +282,7 @@ fun PlayerDetailScreen(
                 }
             }
         }
-    }
+
     }
 
 

@@ -39,9 +39,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "onCreate intent.data=${intent?.data}")
 
+        // En mode debug, on passe directement à startNormalStartup() sans vérifier la version
+//        if (BuildConfig.DEBUG) {
+//            Log.d("MainActivity", "DEBUG mode: skipping version check")
+//            startNormalStartup()
+//            return
+//        }
+
         // Avant toute autre action, vérifier la version courante côté BDD (Supabase)
         lifecycleScope.launch {
-            val versionInfo = fetchCurrentVersionFromSupabaseSafely()
+
+        val versionInfo = fetchCurrentVersionFromSupabaseSafely()
 
             // Récupère la version installée depuis le PackageManager (source de vérité),
             // avec repli sur BuildConfig.VERSION_NAME si indisponible.
