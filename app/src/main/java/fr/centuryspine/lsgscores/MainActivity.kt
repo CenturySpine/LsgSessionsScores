@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
         // Avant toute autre action, vérifier la version courante côté BDD (Supabase)
         lifecycleScope.launch {
 
-        val versionInfo = fetchCurrentVersionFromSupabaseSafely()
+            val versionInfo = fetchCurrentVersionFromSupabaseSafely()
 
             // Récupère la version installée depuis le PackageManager (source de vérité),
             // avec repli sur BuildConfig.VERSION_NAME si indisponible.

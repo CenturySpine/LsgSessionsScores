@@ -147,6 +147,7 @@ private fun StandingRow(
         )
     }
 }
+
 @Composable
 private fun PositionBadge(
     position: Int,

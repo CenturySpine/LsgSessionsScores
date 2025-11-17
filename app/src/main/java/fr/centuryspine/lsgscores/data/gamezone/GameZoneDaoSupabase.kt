@@ -29,13 +29,14 @@ class GameZoneDaoSupabase @Inject constructor(
                     }.decodeList<GameZone>()
                     emit(list)
                 }
+
                 else -> flowOf(emptyList())
             }
         }
 
     override suspend fun getAll(): List<GameZone> {
         val uid = currentUser.requireUserId()
-        return supabase.postgrest["game_zones"].select {  }.decodeList<GameZone>()
+        return supabase.postgrest["game_zones"].select { }.decodeList<GameZone>()
     }
 
     override suspend fun getGameZoneById(id: Long): GameZone? {
@@ -51,7 +52,8 @@ class GameZoneDaoSupabase @Inject constructor(
 
     override suspend fun insert(gameZone: GameZone): Long {
         val uid = currentUser.requireUserId()
-        val inserted = supabase.postgrest["game_zones"].insert(gameZone.copy(userId = uid)) { select() }.decodeSingle<GameZone>()
+        val inserted =
+            supabase.postgrest["game_zones"].insert(gameZone.copy(userId = uid)) { select() }.decodeSingle<GameZone>()
         return inserted.id
     }
 

@@ -287,11 +287,11 @@ fun AreasScreen(
             }
         )
     }
-    
+
     // Delete game zone confirmation dialog
     if (showDeleteZoneDialog && gameZoneToDelete != null) {
         AlertDialog(
-            onDismissRequest = { 
+            onDismissRequest = {
                 showDeleteZoneDialog = false
                 gameZoneToDelete = null
             },
@@ -307,7 +307,7 @@ fun AreasScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { 
+                TextButton(onClick = {
                     showDeleteZoneDialog = false
                     gameZoneToDelete = null
                 }) {
@@ -316,18 +316,18 @@ fun AreasScreen(
             }
         )
     }
-    
+
     // Error dialog for failed deletion
     gameZoneError?.let { errorMessage ->
         if (errorMessage.contains("holes")) {
             AlertDialog(
-                onDismissRequest = { 
+                onDismissRequest = {
                     gameZoneViewModel.clearError()
                 },
                 title = { Text(stringResource(R.string.delete_game_zone_error_title)) },
                 text = { Text(stringResource(R.string.delete_game_zone_error_has_holes)) },
                 confirmButton = {
-                    TextButton(onClick = { 
+                    TextButton(onClick = {
                         gameZoneViewModel.clearError()
                     }) {
                         Text(stringResource(R.string.delete_game_zone_ok_button))
@@ -336,13 +336,13 @@ fun AreasScreen(
             )
         } else if (errorMessage.contains("sessions")) {
             AlertDialog(
-                onDismissRequest = { 
+                onDismissRequest = {
                     gameZoneViewModel.clearError()
                 },
                 title = { Text(stringResource(R.string.delete_game_zone_error_title)) },
                 text = { Text(stringResource(R.string.delete_game_zone_error_has_sessions)) },
                 confirmButton = {
-                    TextButton(onClick = { 
+                    TextButton(onClick = {
                         gameZoneViewModel.clearError()
                     }) {
                         Text(stringResource(R.string.delete_game_zone_ok_button))

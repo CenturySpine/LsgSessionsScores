@@ -91,6 +91,7 @@ fun AuthGate(
                 CircularProgressIndicator()
             }
         }
+
         else -> {
             Log.d("AuthGate", "Rendering AuthScreen (no user)")
             AuthScreen(

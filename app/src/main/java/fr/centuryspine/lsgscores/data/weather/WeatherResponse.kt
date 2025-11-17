@@ -52,7 +52,6 @@ data class WeatherInfo(
 )
 
 
-
 interface WeatherService {
     @GET("weather")
     suspend fun getCurrentWeather(

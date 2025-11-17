@@ -64,7 +64,11 @@ private fun getCurrentNavigationContext(currentRoute: String?): NavigationContex
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, io.github.jan.supabase.annotations.SupabaseExperimental::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class,
+    io.github.jan.supabase.annotations.SupabaseExperimental::class
+)
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -217,7 +221,7 @@ fun MainScreen(
                         fontSize = 10.sp
                     )
                 }
-               
+
             }
         }
     ) {

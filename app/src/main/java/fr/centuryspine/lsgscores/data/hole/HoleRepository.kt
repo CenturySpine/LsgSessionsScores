@@ -85,8 +85,10 @@ class HoleRepository @Inject constructor(
                 when {
                     hole.startPhotoUri.isNullOrBlank() -> null
                     isRemoteUrl(hole.startPhotoUri) -> hole.startPhotoUri
-                    else -> storageHelper.uploadHolePhoto(SupabaseStorageHelper.PhotoType.START,
-                        hole.startPhotoUri.toUri())
+                    else -> storageHelper.uploadHolePhoto(
+                        SupabaseStorageHelper.PhotoType.START,
+                        hole.startPhotoUri.toUri()
+                    )
                 }
             }
             val endDeferred = async {

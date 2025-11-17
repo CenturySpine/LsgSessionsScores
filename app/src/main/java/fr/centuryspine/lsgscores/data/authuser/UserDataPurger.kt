@@ -36,7 +36,9 @@ class UserDataPurger @Inject constructor(
                     filter { eq("user_id", userId) }
                     // select only id
                 }.decodeList<IdOnly>().map { it.id }
-            } catch (_: Throwable) { emptyList() }
+            } catch (_: Throwable) {
+                emptyList()
+            }
 
             if (sessions.isEmpty()) {
                 Log.d(TAG, "[played_hole_scores] no sessions for user; nothing to delete")
@@ -50,7 +52,9 @@ class UserDataPurger @Inject constructor(
                     supabase.postgrest["played_holes"].select {
                         filter { eq("sessionid", sid) }
                     }.decodeList<IdOnly>().map { it.id }
-                } catch (_: Throwable) { emptyList() }
+                } catch (_: Throwable) {
+                    emptyList()
+                }
                 playedHoleIds.addAll(holes)
             }
 
@@ -169,7 +173,9 @@ class UserDataPurger @Inject constructor(
         // app_user uses id (PK) instead of user_id
         val before = try {
             supabase.postgrest["app_user"].select { filter { eq("id", userId) } }.decodeList<JsonObject>().size
-        } catch (_: Throwable) { 0 }
+        } catch (_: Throwable) {
+            0
+        }
         Log.d(TAG, "[app_user] rows for user before delete: $before")
         try {
             supabase.postgrest["app_user"].delete { filter { eq("id", userId) } }
@@ -179,7 +185,9 @@ class UserDataPurger @Inject constructor(
         }
         val after = try {
             supabase.postgrest["app_user"].select { filter { eq("id", userId) } }.decodeList<JsonObject>().size
-        } catch (_: Throwable) { 0 }
+        } catch (_: Throwable) {
+            0
+        }
         Log.d(TAG, "[app_user] rows for user after delete: $after")
         if (before > 0 && after > 0) {
             throw IllegalStateException("Failed to delete app_user row for user $userId")

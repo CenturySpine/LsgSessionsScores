@@ -32,9 +32,11 @@ class SessionDaoSupabase @Inject constructor(
             when (status) {
                 is SessionStatus.Authenticated -> flow {
                     val uid = currentUser.requireUserId()
-                    val list = supabase.postgrest["sessions"].select { filter { eq("user_id", uid) } }.decodeList<Session>()
+                    val list =
+                        supabase.postgrest["sessions"].select { filter { eq("user_id", uid) } }.decodeList<Session>()
                     emit(list)
                 }
+
                 else -> flowOf(emptyList())
             }
         }
@@ -51,7 +53,8 @@ class SessionDaoSupabase @Inject constructor(
 
     override suspend fun insert(session: Session): Long {
         val uid = currentUser.requireUserId()
-        val inserted = supabase.postgrest["sessions"].insert(session.copy(userId = uid)) { select() }.decodeSingle<Session>()
+        val inserted =
+            supabase.postgrest["sessions"].insert(session.copy(userId = uid)) { select() }.decodeSingle<Session>()
         return inserted.id
     }
 
@@ -99,13 +102,21 @@ class SessionDaoSupabase @Inject constructor(
 
     override suspend fun getOngoingSession(): Session? {
         val uid = currentUser.requireUserId()
-        val list = supabase.postgrest["sessions"].select { filter { eq("isongoing", true); eq("user_id", uid) } }.decodeList<Session>()
+        val list = supabase.postgrest["sessions"].select { filter { eq("isongoing", true); eq("user_id", uid) } }
+            .decodeList<Session>()
         return list.firstOrNull()
     }
 
     override suspend fun getOngoingSessionForCity(cityId: Long): Session? {
         val uid = currentUser.requireUserId()
-        val list = supabase.postgrest["sessions"].select { filter { eq("isongoing", true); eq("cityid", cityId); eq("user_id", uid) } }.decodeList<Session>()
+        val list = supabase.postgrest["sessions"].select {
+            filter {
+                eq("isongoing", true); eq("cityid", cityId); eq(
+                "user_id",
+                uid
+            )
+            }
+        }.decodeList<Session>()
         return list.firstOrNull()
     }
 
@@ -118,7 +129,14 @@ class SessionDaoSupabase @Inject constructor(
     override suspend fun clearOngoingSessionsForCity(cityId: Long) {
         val uid = currentUser.requireUserId()
         val body = buildJsonObject { put("isongoing", JsonPrimitive(false)) }
-        supabase.postgrest["sessions"].update(body) { filter { eq("isongoing", true); eq("cityid", cityId); eq("user_id", uid) } }
+        supabase.postgrest["sessions"].update(body) {
+            filter {
+                eq("isongoing", true); eq(
+                "cityid",
+                cityId
+            ); eq("user_id", uid)
+            }
+        }
     }
 
     override fun getOngoingSessionFlow(): Flow<Session?> =
@@ -139,7 +157,8 @@ class SessionDaoSupabase @Inject constructor(
 
     override suspend fun getSessionsByGameZoneId(gameZoneId: Long): List<Session> {
         val uid = currentUser.requireUserId()
-        return supabase.postgrest["sessions"].select { filter { eq("gamezoneid", gameZoneId); eq("user_id", uid) } }.decodeList<Session>()
+        return supabase.postgrest["sessions"].select { filter { eq("gamezoneid", gameZoneId); eq("user_id", uid) } }
+            .decodeList<Session>()
     }
 
     @OptIn(SupabaseExperimental::class)
@@ -147,4 +166,4 @@ class SessionDaoSupabase @Inject constructor(
 
 //    override fun getRealtimeSessions(): Flow<List<Session>> = realtimeSessionFlow
 
-    }
+}

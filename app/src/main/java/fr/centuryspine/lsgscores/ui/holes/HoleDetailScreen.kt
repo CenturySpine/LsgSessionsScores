@@ -389,7 +389,9 @@ fun HoleDetailScreen(
                 }) { Text(stringResource(R.string.hole_detail_dialog_button_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.hole_detail_dialog_button_cancel)) }
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                }) { Text(stringResource(R.string.hole_detail_dialog_button_cancel)) }
             }
         )
     }

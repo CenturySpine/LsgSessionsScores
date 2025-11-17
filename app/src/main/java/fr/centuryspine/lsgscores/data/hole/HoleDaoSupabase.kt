@@ -62,13 +62,14 @@ class HoleDaoSupabase @Inject constructor(
                                 }
                             }
                         }
+
                 else -> flowOf(emptyList())
             }
         }
 
     override suspend fun getAll(): List<Hole> {
         val uid = currentUser.requireUserId()
-        return supabase.postgrest["holes"].select {  }.decodeList<Hole>()
+        return supabase.postgrest["holes"].select { }.decodeList<Hole>()
     }
 
     override suspend fun getHolesByCityIdList(cityId: Long): List<Hole> {
@@ -142,21 +143,20 @@ class HoleDaoSupabase @Inject constructor(
                     }.decodeList<Hole>().firstOrNull()
                     if (hole != null) emit(hole)
                 }
+
                 else -> flow { /* emit nothing while unauthenticated */ }
             }
         }
 
     override fun getHoleByIdPublic(id: Long): Flow<Hole?> = flow {
-        val hole = supabase.postgrest["holes"].select {
-            }
-        }.decodeList<Hole>().firstOrNull()
+        val hole = supabase.postgrest["holes"].select().decodeList<Hole>().firstOrNull()
         emit(hole)
     }
 
     override suspend fun getHolesByGameZoneId(gameZoneId: Long): List<Hole> {
         val uid = currentUser.requireUserId()
         return supabase.postgrest["holes"].select {
-            filter { eq("gamezoneid", gameZoneId)}
+            filter { eq("gamezoneid", gameZoneId) }
             order("name", Order.ASCENDING)
         }.decodeList()
     }

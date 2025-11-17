@@ -13,6 +13,7 @@ object LanguageManager {
             AppPreferences.LANGUAGE_SYSTEM -> {
                 context.resources.configuration.locales[0]
             }
+
             AppPreferences.LANGUAGE_FRENCH -> Locale("fr")
             AppPreferences.LANGUAGE_ENGLISH -> Locale("en")
             else -> Locale("en") // Default fallback

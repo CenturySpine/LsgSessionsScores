@@ -36,8 +36,14 @@ object WeatherInfoAsJsonStringSerializer : KSerializer<WeatherInfo> {
                     elem is kotlinx.serialization.json.JsonPrimitive && elem.isString -> elem.content
                     else -> Json.encodeToString(JsonElement.serializer(), elem)
                 }
-                conv.toWeatherInfo(text) ?: WeatherInfo(0, "", "", 0) // fallback; structure will be overwritten by real data if present
+                conv.toWeatherInfo(text) ?: WeatherInfo(
+                    0,
+                    "",
+                    "",
+                    0
+                ) // fallback; structure will be overwritten by real data if present
             }
+
             else -> {
                 val text = decoder.decodeString()
                 conv.toWeatherInfo(text) ?: WeatherInfo(0, "", "", 0)

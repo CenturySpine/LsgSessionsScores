@@ -53,7 +53,7 @@ fun HoleListScreen(
     )
     var holeToDelete by remember { mutableStateOf<Hole?>(null) }
     var showDialog by remember { mutableStateOf(false) }
-    
+
 
     Scaffold(
         floatingActionButton = {
@@ -133,7 +133,9 @@ fun HoleListScreen(
                 }) { Text(stringResource(R.string.hole_list_dialog_button_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text(stringResource(R.string.hole_list_dialog_button_cancel)) }
+                TextButton(onClick = {
+                    showDialog = false
+                }) { Text(stringResource(R.string.hole_list_dialog_button_cancel)) }
             }
         )
     }

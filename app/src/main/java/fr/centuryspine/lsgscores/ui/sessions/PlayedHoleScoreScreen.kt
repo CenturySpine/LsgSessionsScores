@@ -242,7 +242,10 @@ private fun CompactSelectableChip(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
         color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
         contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-        border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        border = if (selected) null else androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline
+        ),
         tonalElevation = if (selected) 1.dp else 0.dp,
         onClick = onClick
     ) {
