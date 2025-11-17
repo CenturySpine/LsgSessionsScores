@@ -24,7 +24,7 @@ class GameZoneDaoSupabase @Inject constructor(
                 is SessionStatus.Authenticated -> flow {
                     val uid = currentUser.requireUserId()
                     val list = supabase.postgrest["game_zones"].select {
-                        filter { eq("cityid", cityId); eq("user_id", uid) }
+                        filter { eq("cityid", cityId); }
                         order("name", Order.ASCENDING)
                     }.decodeList<GameZone>()
                     emit(list)
@@ -35,14 +35,14 @@ class GameZoneDaoSupabase @Inject constructor(
 
     override suspend fun getAll(): List<GameZone> {
         val uid = currentUser.requireUserId()
-        return supabase.postgrest["game_zones"].select { filter { eq("user_id", uid) } }.decodeList<GameZone>()
+        return supabase.postgrest["game_zones"].select {  }.decodeList<GameZone>()
     }
 
     override suspend fun getGameZoneById(id: Long): GameZone? {
         return try {
             val uid = currentUser.requireUserId()
             supabase.postgrest["game_zones"].select {
-                filter { eq("id", id); eq("user_id", uid) }
+                filter { eq("id", id) }
             }.decodeList<GameZone>().firstOrNull()
         } catch (_: Throwable) {
             null
