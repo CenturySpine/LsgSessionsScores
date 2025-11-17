@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.GolfCourse
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -66,26 +68,30 @@ fun HoleListScreen(
                         fr.centuryspine.lsgscores.ui.common.RemoteImage(
                             url = holeItem.startPhotoUri,
                             contentDescription = stringResource(R.string.hole_list_photo_description),
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(36.dp)
+                                .clip(CircleShape)
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.GolfCourse,
                             contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(36.dp).clip(CircleShape)
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
                     if (!holeItem.endPhotoUri.isNullOrBlank()) {
                         fr.centuryspine.lsgscores.ui.common.RemoteImage(
                             url = holeItem.endPhotoUri,
                             contentDescription = stringResource(R.string.hole_list_photo_description),
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(36.dp).clip(CircleShape)
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.GolfCourse,
                             contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(36.dp).clip(CircleShape)
                         )
                     }
 
