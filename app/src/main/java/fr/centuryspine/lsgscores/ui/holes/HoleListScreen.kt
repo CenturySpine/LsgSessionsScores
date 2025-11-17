@@ -59,56 +59,71 @@ fun HoleListScreen(
                         .clickable { navController.navigate("hole_detail/${holeItem.id}") }
                         .padding(8.dp)
                 ) {
-
-                    Text(text = holeItem.name, style = MaterialTheme.typography.titleMedium)
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    if (!holeItem.startPhotoUri.isNullOrBlank()) {
-                        fr.centuryspine.lsgscores.ui.common.RemoteImage(
-                            url = holeItem.startPhotoUri,
-                            contentDescription = stringResource(R.string.hole_list_photo_description),
-                            modifier = Modifier.size(36.dp)
-                                .clip(CircleShape)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.GolfCourse,
-                            contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
-                            modifier = Modifier.size(36.dp).clip(CircleShape)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    if (!holeItem.endPhotoUri.isNullOrBlank()) {
-                        fr.centuryspine.lsgscores.ui.common.RemoteImage(
-                            url = holeItem.endPhotoUri,
-                            contentDescription = stringResource(R.string.hole_list_photo_description),
-                            modifier = Modifier.size(36.dp).clip(CircleShape)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.GolfCourse,
-                            contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
-                            modifier = Modifier.size(36.dp).clip(CircleShape)
-                        )
-                    }
-
-                    if (currentUserId != null && holeItem.userId == currentUserId) {
-                        IconButton(onClick = {
-                            holeToDelete = holeItem
-                            showDialog = true
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(R.string.hole_list_delete_icon_description),
-                                tint = MaterialTheme.colorScheme.error
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = holeItem.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.weight(1f)
                             )
+
+                            if (!holeItem.startPhotoUri.isNullOrBlank()) {
+                                fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                    url = holeItem.startPhotoUri,
+                                    contentDescription = stringResource(R.string.hole_list_photo_description),
+                                    modifier = Modifier.size(36.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Rounded.GolfCourse,
+                                    contentDescription = stringResource(R.string.hole_list_default_start_icon_description),
+                                    modifier = Modifier.size(36.dp).clip(CircleShape)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(4.dp))
+
+                            if (!holeItem.endPhotoUri.isNullOrBlank()) {
+                                fr.centuryspine.lsgscores.ui.common.RemoteImage(
+                                    url = holeItem.endPhotoUri,
+                                    contentDescription = stringResource(R.string.hole_list_photo_description),
+                                    modifier = Modifier.size(36.dp).clip(CircleShape)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Rounded.GolfCourse,
+                                    contentDescription = stringResource(R.string.hole_list_default_end_icon_description),
+                                    modifier = Modifier.size(36.dp).clip(CircleShape)
+                                )
+                            }
+
+                            if (currentUserId != null && holeItem.userId == currentUserId) {
+                                IconButton(onClick = {
+                                    holeToDelete = holeItem
+                                    showDialog = true
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.hole_list_delete_icon_description),
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-                HorizontalDivider()
             }
         }
     }
