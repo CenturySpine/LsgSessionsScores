@@ -79,7 +79,8 @@ fun MainScreen(
     gameZoneViewModel: GameZoneViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
     cityViewModel: CityViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    currentUserProvider: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) {
     val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -376,7 +377,7 @@ fun MainScreen(
                     PlayerListScreen(navController, playerViewModel)
                 }
                 composable(DrawerNavItem.Holes.route) {
-                    HoleListScreen(navController, holeViewModel)
+                    HoleListScreen(navController, holeViewModel, currentUserProvider)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
                     SessionHistoryScreen(sessionViewModel)
@@ -406,7 +407,9 @@ fun MainScreen(
                     val holeId = it.arguments?.getLong("holeId")
                     HoleDetailScreen(
                         navController = navController,
-                        holeId = holeId
+                        holeId = holeId,
+                        holeViewModel,
+                        currentUserProvider
                     )
                 }
                 composable(

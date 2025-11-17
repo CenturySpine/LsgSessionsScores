@@ -3,11 +3,11 @@ package fr.centuryspine.lsgscores
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -34,6 +34,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var supabase: SupabaseClient
+
+    @Inject
+    lateinit var currentUserProvider: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -149,7 +152,8 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         navController = navController,
                         languageViewModel = languageViewModel,
-                        authViewModel = authViewModel
+                        authViewModel = authViewModel,
+                        currentUserProvider = currentUserProvider
                     )
                 }
             }
@@ -202,7 +206,7 @@ class MainActivity : ComponentActivity() {
                 if (!downloadUrl.isNullOrBlank()) {
                     setNeutralButton("Ouvrir le lien") { _, _ ->
                         kotlin.runCatching {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl)))
+                            startActivity(Intent(Intent.ACTION_VIEW, downloadUrl.toUri()))
                         }.onFailure { e ->
                             Log.w("MainActivity", "Impossible d'ouvrir le lien: ${e.message}")
                         }
