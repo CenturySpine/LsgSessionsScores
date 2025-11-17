@@ -1,4 +1,5 @@
 package fr.centuryspine.lsgscores.data.session
+
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import kotlinx.coroutines.flow.Flow
 
@@ -8,7 +9,7 @@ class SessionRepository(
     private val playedHoleDao: PlayedHoleDao,
     private val playedHoleScoreDao: PlayedHoleScoreDao,
     private val gameZoneDao: GameZoneDao
-    ) {
+) {
 
     fun getAll(): Flow<List<Session>> = sessionDao.getAll()
 

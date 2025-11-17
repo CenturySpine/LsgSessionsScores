@@ -26,6 +26,7 @@ class TwoOneScoringCalculator : ScoringCalculator {
                     }
                 }
             }
+
             2 -> {
                 // Two leaders: each gets 1 point, check for a unique second place
                 val nextScores = sortedScores.filter { it.value > minScore }
@@ -41,6 +42,7 @@ class TwoOneScoringCalculator : ScoringCalculator {
                     }
                 }
             }
+
             else -> {
                 // Three or more tied for first: nobody scores
                 strokes.mapValues { 0 }

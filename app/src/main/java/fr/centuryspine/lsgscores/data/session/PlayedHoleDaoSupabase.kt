@@ -20,7 +20,8 @@ class PlayedHoleDaoSupabase @Inject constructor(
 
     override suspend fun insert(playedHole: PlayedHole): Long {
         val uid = currentUser.requireUserId()
-        val inserted = supabase.postgrest["played_holes"].insert(playedHole.copy(userId = uid)) { select() }.decodeSingle<PlayedHole>()
+        val inserted = supabase.postgrest["played_holes"].insert(playedHole.copy(userId = uid)) { select() }
+            .decodeSingle<PlayedHole>()
         return inserted.id
     }
 

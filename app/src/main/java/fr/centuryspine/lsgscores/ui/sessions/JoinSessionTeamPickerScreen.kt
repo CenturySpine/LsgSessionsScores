@@ -19,7 +19,8 @@ fun JoinSessionTeamPickerScreen(
     sessionId: Long
 ) {
     val session = sessionViewModel.getSessionById(sessionId).collectAsState(initial = null).value
-    val teamsWithPlayers = sessionViewModel.getTeamsWithPlayersForSession(sessionId).collectAsState(initial = emptyList()).value
+    val teamsWithPlayers =
+        sessionViewModel.getTeamsWithPlayersForSession(sessionId).collectAsState(initial = emptyList()).value
 
     var selectedTeamId by remember { mutableStateOf<Long?>(null) }
     var attemptedAutoJoin by remember { mutableStateOf(false) }

@@ -84,6 +84,7 @@ object RepositoryModule {
     ): SessionRepository {
         return SessionRepository(sessionDao, teamDao, playedHoleDao, playedHoleScoreDao, gameZoneDao)
     }
+
     @Provides
     @Singleton
     fun provideScoringModeRepository(scoringModeDao: fr.centuryspine.lsgscores.data.scoring.ScoringModeDao): ScoringModeRepository {

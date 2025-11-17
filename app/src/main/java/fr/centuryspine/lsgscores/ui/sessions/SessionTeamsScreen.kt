@@ -29,6 +29,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import kotlin.random.Random
 import androidx.compose.ui.res.painterResource
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionTeamsScreen(
@@ -119,7 +120,7 @@ fun SessionTeamsScreen(
                                     )
                                 )
                             }
-                            
+
                             // Error message integrated in the card (only in random mode)
                             if (isRandomMode) {
                                 Text(
@@ -131,7 +132,7 @@ fun SessionTeamsScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error,
 
-                                )
+                                    )
                             }
                         }
                     }

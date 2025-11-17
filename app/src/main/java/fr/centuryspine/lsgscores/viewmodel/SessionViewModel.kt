@@ -49,7 +49,9 @@ class SessionViewModel @Inject constructor(
 
     // Expose helpers for join flow
     fun getSessionById(sessionId: Long): Flow<Session?> = sessionRepository.getById(sessionId)
-    fun getTeamsWithPlayersForSession(sessionId: Long): Flow<List<TeamWithPlayers>> = teamRepository.getTeamsWithPlayersForSession(sessionId)
+    fun getTeamsWithPlayersForSession(sessionId: Long): Flow<List<TeamWithPlayers>> =
+        teamRepository.getTeamsWithPlayersForSession(sessionId)
+
     fun forceSelectCity(cityId: Long) = appPreferences.setSelectedCityId(cityId)
 
     // Expose the selected city ID as a StateFlow that observes changes from AppPreferences
@@ -92,7 +94,7 @@ class SessionViewModel @Inject constructor(
                 }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-    
+
     // Check if there's an ongoing session for the currently selected city
     val hasOngoingSessionForCurrentCity: StateFlow<Boolean> = combine(
         ongoingSession,
@@ -133,7 +135,7 @@ class SessionViewModel @Inject constructor(
 
     // State for session drafts per city
     private val _sessionDrafts = MutableStateFlow<Map<Long, SessionDraft>>(emptyMap())
-    
+
     // Current session draft for the selected city
     val sessionDraft: StateFlow<SessionDraft> = combine(
         _sessionDrafts,
@@ -161,6 +163,7 @@ class SessionViewModel @Inject constructor(
         enum class EndReason { VALIDATED, DELETED }
         data class Ended(val reason: EndReason) : SessionEvent()
     }
+
     private val _sessionEvents = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 1)
     val sessionEvents: Flow<SessionEvent> = _sessionEvents
 
@@ -174,7 +177,7 @@ class SessionViewModel @Inject constructor(
                 scoringModeId = session.scoringModeId
             }
         }
-        
+
         // Observe city changes and initialize drafts automatically
         viewModelScope.launch {
             selectedCityId.filterNotNull().collect { cityId ->
@@ -248,7 +251,8 @@ class SessionViewModel @Inject constructor(
                             )
                             delay(1200)
                             val idToCheck = partId ?: lastSession?.id
-                            val confirm = if (idToCheck != null) sessionRepository.getById(idToCheck).firstOrNull() else null
+                            val confirm =
+                                if (idToCheck != null) sessionRepository.getById(idToCheck).firstOrNull() else null
                             android.util.Log.d(
                                 "SessionViewModel",
                                 "[ongoingSession.collect] confirm after delay: isParticipantMode=${isParticipantMode.value}, storedPartId=${participantSessionId.value}, idToCheck=${idToCheck}, fetchedSession=${confirm?.id}:${confirm?.isOngoing}"
@@ -317,7 +321,8 @@ class SessionViewModel @Inject constructor(
                         delay(1200)
                         val storedPartId = participantSessionId.value
                         val idToCheck = storedPartId ?: lastSession?.id
-                        val confirm = if (idToCheck != null) sessionRepository.getById(idToCheck).firstOrNull() else null
+                        val confirm =
+                            if (idToCheck != null) sessionRepository.getById(idToCheck).firstOrNull() else null
                         android.util.Log.d(
                             "SessionViewModel",
                             "[partMode.collect] confirm after delay: isParticipantMode=${isParticipantMode.value}, storedPartId=${storedPartId}, idToCheck=${idToCheck}, fetchedSession=${confirm?.id}:${confirm?.isOngoing}"
@@ -617,7 +622,7 @@ class SessionViewModel @Inject constructor(
                     )
                 }
             }
-            
+
             // Bump refresh trigger so OngoingSession screen and bottom bar update immediately
             refreshCounter.update { it + 1 }
             onSessionCreated(sessionId)
@@ -655,8 +660,8 @@ class SessionViewModel @Inject constructor(
                     position = nextPosition
                 )
                 val playedHoleId = playedHoleRepository.insertPlayedHole(playedHole)
-               // Bump refresh so playedHolesWithScores re-collects data via ongoingSession
-               refreshCounter.update { it + 1 }
+                // Bump refresh so playedHolesWithScores re-collects data via ongoingSession
+                refreshCounter.update { it + 1 }
                 onPlayedHoleCreated(playedHoleId)
             }
         }
@@ -706,7 +711,7 @@ class SessionViewModel @Inject constructor(
             val gameZones = gameZoneDao.getGameZonesByCityId(cityId).first()
             val unknownZone = gameZones.firstOrNull { it.name == "Unknown Zone" }
             val fallbackGameZoneId = gameZones.firstOrNull()?.id ?: 1L
-            
+
             _sessionDrafts.update { drafts ->
                 if (!drafts.containsKey(cityId)) {
                     val newDraft = SessionDraft(gameZoneId = unknownZone?.id ?: fallbackGameZoneId)
@@ -813,6 +818,7 @@ class SessionViewModel @Inject constructor(
                             teamData.copy(position = index + 1)
                         }
                 }
+
                 else -> {
                     // Point-based modes: sort by total calculated score (descending - highest is best)
                     // Tie-breaker: team with fewer total strokes ranks higher when points are equal

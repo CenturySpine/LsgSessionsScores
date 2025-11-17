@@ -69,6 +69,7 @@ class AppPreferences(context: Context) {
         val id = prefs.getLong(KEY_PARTICIPANT_SESSION_ID, -1L)
         return if (id == -1L) null else id
     }
+
     fun setParticipantSessionId(sessionId: Long?) {
         if (sessionId == null) {
             prefs.edit { remove(KEY_PARTICIPANT_SESSION_ID) }
@@ -85,6 +86,7 @@ class AppPreferences(context: Context) {
         val id = prefs.getLong(KEY_PARTICIPANT_TEAM_ID, -1L)
         return if (id == -1L) null else id
     }
+
     fun setParticipantTeamId(teamId: Long?) {
         if (teamId == null) {
             prefs.edit { remove(KEY_PARTICIPANT_TEAM_ID) }

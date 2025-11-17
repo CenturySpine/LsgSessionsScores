@@ -48,6 +48,7 @@ class TeamDaoSupabase @Inject constructor(
                     }.decodeList<Team>()
                     emit(list)
                 }
+
                 else -> flowOf(emptyList())
             }
         }

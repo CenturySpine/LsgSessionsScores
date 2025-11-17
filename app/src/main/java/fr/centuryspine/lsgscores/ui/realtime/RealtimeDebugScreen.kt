@@ -63,7 +63,7 @@ fun RealtimeDebugScreen(
         supabase.from("played_holes").selectAsFlow(PlayedHole::id)
     }
 
-    
+
     // Realtime flow des scores par trou joué (played_hole_scores)
     val playedHoleScoresFlow: Flow<List<PlayedHoleScore>> = remember(supabase) {
         supabase.from("played_hole_scores").selectAsFlow(PlayedHoleScore::id)
@@ -100,7 +100,7 @@ fun RealtimeDebugScreen(
         val n2 = t.player2Id?.let { pid -> teamsPlayers[pid]?.name ?: "?${pid}" }
         return if (n2 != null) "[${n1}, ${n2}]" else "[${n1}]"
     }
-    
+
     // Factorisé: nettoyage des caches pour la session active (avec option de réinitialisation de l'ID de session)
     fun clearCachesForActiveSession(reason: String, resetSessionId: Boolean = true) {
         val sid = activeSessionId
@@ -173,7 +173,9 @@ fun RealtimeDebugScreen(
                             // Affichage des joueurs par équipe au format [nom_joueur1, nom_joueur2]
                             val teamPairs = sessionTeamsList.joinToString(separator = " | ") { t ->
                                 val n1 = playersList.firstOrNull { it.id == t.player1Id }?.name ?: "?${t.player1Id}"
-                                val n2 = t.player2Id?.let { pid -> playersList.firstOrNull { it.id == pid }?.name ?: "?${pid}" } ?: "—"
+                                val n2 = t.player2Id?.let { pid ->
+                                    playersList.firstOrNull { it.id == pid }?.name ?: "?${pid}"
+                                } ?: "—"
                                 "[${n1}, ${n2}]"
                             }
                             if (teamPairs.isNotBlank()) {
@@ -237,7 +239,7 @@ fun RealtimeDebugScreen(
                 insertedIds.forEach { id ->
                     val ph = currentById[id]
                     if (ph != null) {
-                        val holeName =  holes[ph.holeId]?.name ?: "Trou ${'$'}{ph.holeId}"
+                        val holeName = holes[ph.holeId]?.name ?: "Trou ${'$'}{ph.holeId}"
                         appendLog("[${now()}] [Realtime] played_holes INSERT — nom du trou='${holeName}'")
                     }
                 }

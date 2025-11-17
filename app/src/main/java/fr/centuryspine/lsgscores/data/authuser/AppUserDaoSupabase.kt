@@ -58,7 +58,9 @@ class AppUserDaoSupabase @Inject constructor(
                     .select { filter { eq("id", id) } }
                     .decodeList<AppUser>()
                     .firstOrNull()
-            } catch (_: Throwable) { null }
+            } catch (_: Throwable) {
+                null
+            }
 
             val body = AppUser(
                 id = id,
@@ -68,7 +70,10 @@ class AppUserDaoSupabase @Inject constructor(
                 provider = provider
             )
             if (existing == null) {
-                try { supabase.postgrest[tableUsers].insert(body) } catch (_: Throwable) {}
+                try {
+                    supabase.postgrest[tableUsers].insert(body)
+                } catch (_: Throwable) {
+                }
                 val defaultCityId = 1L
                 // Create default player and link it to the newly created app_user
                 try {
@@ -148,10 +153,10 @@ class AppUserDaoSupabase @Inject constructor(
                     provider = provider
                 )
 
-                    try {
-                        supabase.postgrest[tableUsers].update(updateBody) { filter { eq("id", id) } }
-                    } catch (_: Throwable) {
-                    }
+                try {
+                    supabase.postgrest[tableUsers].update(updateBody) { filter { eq("id", id) } }
+                } catch (_: Throwable) {
+                }
 
             }
             // Return row (best-effort)
@@ -170,9 +175,16 @@ class AppUserDaoSupabase @Inject constructor(
         var attempts = 0
         var userId: String? = null
         while (attempts < 6 && userId == null) {
-            userId = try { supabase.auth.currentSessionOrNull()?.user?.id } catch (_: Throwable) { null }
+            userId = try {
+                supabase.auth.currentSessionOrNull()?.user?.id
+            } catch (_: Throwable) {
+                null
+            }
             if (userId == null) {
-                try { kotlinx.coroutines.delay(250) } catch (_: Throwable) {}
+                try {
+                    kotlinx.coroutines.delay(250)
+                } catch (_: Throwable) {
+                }
                 attempts++
             }
         }

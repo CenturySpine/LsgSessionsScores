@@ -75,7 +75,12 @@ class WeatherRepository(private val apiKey: String) {
                     null
                 }
             } else {
-                Log.e(TAG, "Open‑Meteo current weather error: ${response.code()} - ${response.message()} - ${response.errorBody()?.safeString()}")
+                Log.e(
+                    TAG,
+                    "Open‑Meteo current weather error: ${response.code()} - ${response.message()} - ${
+                        response.errorBody()?.safeString()
+                    }"
+                )
                 null
             }
         } catch (e: Exception) {
@@ -126,7 +131,10 @@ class WeatherRepository(private val apiKey: String) {
                         }
                     }
                 } else {
-                    Log.w(TAG, "Open‑Meteo error: ${omResp.code()} - ${omResp.message()} - ${omResp.errorBody()?.safeString()}")
+                    Log.w(
+                        TAG,
+                        "Open‑Meteo error: ${omResp.code()} - ${omResp.message()} - ${omResp.errorBody()?.safeString()}"
+                    )
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Open‑Meteo fetch failed: ${e.message}")
@@ -155,9 +163,17 @@ class WeatherRepository(private val apiKey: String) {
                     )
                 }
             } else {
-                Log.e(TAG, "History API error: ${historyResp.code()} - ${historyResp.message()} - ${historyResp.errorBody()?.safeString()}")
+                Log.e(
+                    TAG,
+                    "History API error: ${historyResp.code()} - ${historyResp.message()} - ${
+                        historyResp.errorBody()?.safeString()
+                    }"
+                )
                 if (historyResp.code() == 401) {
-                    Log.e(TAG, "401 Unauthorized from History API: Key/plan may not include history access. See https://openweathermap.org/history.")
+                    Log.e(
+                        TAG,
+                        "401 Unauthorized from History API: Key/plan may not include history access. See https://openweathermap.org/history."
+                    )
                 }
             }
 
@@ -171,16 +187,27 @@ class WeatherRepository(private val apiKey: String) {
                 val bodyStr = responseV3.errorBody()?.safeString()
                 Log.e(TAG, "Historical Weather API v3 error: ${code} - ${msg} - ${bodyStr}")
                 if (code == 401) {
-                    Log.e(TAG, "401 Unauthorized from One Call 3.0: your API key/plan likely doesn't include historical data. See https://openweathermap.org/api/one-call-3 for plan requirements.")
+                    Log.e(
+                        TAG,
+                        "401 Unauthorized from One Call 3.0: your API key/plan likely doesn't include historical data. See https://openweathermap.org/api/one-call-3 for plan requirements."
+                    )
                 }
                 // 4) Fallback: try legacy v2.5 endpoint (may be unavailable or deprecated)
                 val responseV2 = serviceV2.getHistoricalWeather(latitude, longitude, unixTimestamp, apiKey)
                 if (responseV2.isSuccessful) {
                     parseHistoricalBody(responseV2.body())
                 } else {
-                    Log.e(TAG, "Historical Weather API v2.5 error: ${responseV2.code()} - ${responseV2.message()} - ${responseV2.errorBody()?.safeString()}")
+                    Log.e(
+                        TAG,
+                        "Historical Weather API v2.5 error: ${responseV2.code()} - ${responseV2.message()} - ${
+                            responseV2.errorBody()?.safeString()
+                        }"
+                    )
                     if (responseV2.code() == 401) {
-                        Log.e(TAG, "401 Unauthorized from One Call 2.5: Most free keys are not authorized for Time Machine. You may need a different API key/plan (One Call 3.0, History API).")
+                        Log.e(
+                            TAG,
+                            "401 Unauthorized from One Call 2.5: Most free keys are not authorized for Time Machine. You may need a different API key/plan (One Call 3.0, History API)."
+                        )
                     }
                     null
                 }
@@ -208,7 +235,8 @@ class WeatherRepository(private val apiKey: String) {
                         bestDiff = diff
                         bestIdx = index
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
             bestIdx
         } catch (_: Exception) {
@@ -262,4 +290,8 @@ class WeatherRepository(private val apiKey: String) {
     }
 }
 
-private fun ResponseBody.safeString(): String = try { string() } catch (_: Exception) { "" }
+private fun ResponseBody.safeString(): String = try {
+    string()
+} catch (_: Exception) {
+    ""
+}

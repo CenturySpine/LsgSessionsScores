@@ -831,7 +831,9 @@ private fun generateAndSharePdf(
                 for (word in words) {
                     val candidate = if (current.isEmpty()) word else current.toString() + " " + word
                     if (p.measureText(candidate) <= maxWidth) {
-                        if (current.isEmpty()) current.append(word) else { current.append(" "); current.append(word) }
+                        if (current.isEmpty()) current.append(word) else {
+                            current.append(" "); current.append(word)
+                        }
                     } else {
                         if (current.isNotEmpty()) {
                             lines.add(current.toString())
@@ -868,10 +870,13 @@ private fun generateAndSharePdf(
 
             // Pre-compute wrapped hole name lines to know header height
             val headerCellInnerWidth = scoreColWidth - 2 * cellPadding
+
             data class HeaderCol(val wrappedNameLines: List<String>, val gameMode: String)
+
             val headerCols = pdfData.playedHoles.map { playedHole ->
                 val holeDetail = pdfData.holesDetails[playedHole.holeId]
-                val holeName = holeDetail?.name?.takeIf { it.isNotBlank() } ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
+                val holeName = holeDetail?.name?.takeIf { it.isNotBlank() }
+                    ?: "${context.getString(R.string.pdf_hole_prefix)} ${playedHole.position}"
                 val gameModeName = pdfData.holeGameModes[playedHole.gameModeId.toLong()] ?: ""
                 HeaderCol(wrapText(holeName, boldPaint, headerCellInnerWidth), gameModeName)
             }
@@ -879,7 +884,8 @@ private fun generateAndSharePdf(
 
             // Compute dynamic header height considering both hole name lines + game mode and wrapped left header
             val teamHeaderInnerWidth = teamNameColWidth - 2 * cellPadding
-            val teamHeaderLines = wrapText(context.getString(R.string.pdf_header_team_players), boldPaint, teamHeaderInnerWidth)
+            val teamHeaderLines =
+                wrapText(context.getString(R.string.pdf_header_team_players), boldPaint, teamHeaderInnerWidth)
             val tableHeaderHeight = lineSpacing * maxOf(maxNameLines + 1.2f, teamHeaderLines.size.toFloat())
 
             val tableTopY = yPosition + 4f
@@ -1212,7 +1218,7 @@ private fun generateAndShareImageExport(
 
             // BOTTOM LEFT - Results Summary (start from bottom and go up)
             val bottomMargin = mutableBitmap.height - margin
-            var resultsY = bottomMargin -  40f // Leave space for footer
+            var resultsY = bottomMargin - 40f // Leave space for footer
 
 // Calculate max width of team names for proper alignment
             val maxNameWidth = pdfData.teams.maxOfOrNull { teamData ->

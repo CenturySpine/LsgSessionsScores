@@ -68,7 +68,7 @@ class GameZoneViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun clearError() {
         _error.value = null
     }

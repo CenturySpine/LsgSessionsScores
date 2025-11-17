@@ -32,7 +32,9 @@ class SupabaseStorageHelper @Inject constructor(
 
     suspend fun uploadHolePhoto(type: PhotoType, uri: Uri): String {
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
-        val segment = when (type) { PhotoType.START -> "start"; PhotoType.END -> "end" }
+        val segment = when (type) {
+            PhotoType.START -> "start"; PhotoType.END -> "end"
+        }
         val path = "hole_${segment}_${UUID.randomUUID()}.$ext"
         return uploadToBucket(uri, holesBucketName, path)
     }

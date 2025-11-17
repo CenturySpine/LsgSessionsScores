@@ -1,34 +1,15 @@
 package fr.centuryspine.lsgscores.ui.areas
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -43,8 +24,10 @@ import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
 @Composable
 fun AreasScreen(
     gameZoneViewModel: GameZoneViewModel,
-    cityViewModel: CityViewModel
+    cityViewModel: CityViewModel,
+    currentUserProvider: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) {
+    val currentUserId = currentUserProvider.userIdOrNull()
 
     // Cities state
     val cities by cityViewModel.cities.collectAsState(initial = emptyList())
@@ -92,12 +75,13 @@ fun AreasScreen(
                         text = stringResource(R.string.areas_label_manage_cities),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    IconButton(onClick = { showAddCityDialog = true }) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.add_city_content_description)
-                        )
-                    }
+
+//                    IconButton(onClick = { showAddCityDialog = true }) {
+//                        Icon(
+//                            Icons.Filled.Add,
+//                            contentDescription = stringResource(R.string.add_city_content_description)
+//                        )
+//                    }
                 }
 
                 if (cities.isEmpty()) {
@@ -133,12 +117,12 @@ fun AreasScreen(
                         text = stringResource(R.string.settings_label_manage_game_zones),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    IconButton(onClick = { showAddZoneDialog = true }) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.add_game_zone_content_description)
-                        )
-                    }
+//                    IconButton(onClick = { showAddZoneDialog = true }) {
+//                        Icon(
+//                            Icons.Filled.Add,
+//                            contentDescription = stringResource(R.string.add_game_zone_content_description)
+//                        )
+//                    }
                 }
 
                 if (gameZones.isEmpty()) {
@@ -151,6 +135,7 @@ fun AreasScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         gameZones.forEach { gameZone ->
                             GameZoneItem(
+                                currentUserId,
                                 gameZone = gameZone,
                                 onEditClick = { editingGameZone = it },
                                 onDeleteClick = {
@@ -287,11 +272,11 @@ fun AreasScreen(
             }
         )
     }
-    
+
     // Delete game zone confirmation dialog
     if (showDeleteZoneDialog && gameZoneToDelete != null) {
         AlertDialog(
-            onDismissRequest = { 
+            onDismissRequest = {
                 showDeleteZoneDialog = false
                 gameZoneToDelete = null
             },
@@ -307,7 +292,7 @@ fun AreasScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { 
+                TextButton(onClick = {
                     showDeleteZoneDialog = false
                     gameZoneToDelete = null
                 }) {
@@ -316,18 +301,18 @@ fun AreasScreen(
             }
         )
     }
-    
+
     // Error dialog for failed deletion
     gameZoneError?.let { errorMessage ->
         if (errorMessage.contains("holes")) {
             AlertDialog(
-                onDismissRequest = { 
+                onDismissRequest = {
                     gameZoneViewModel.clearError()
                 },
                 title = { Text(stringResource(R.string.delete_game_zone_error_title)) },
                 text = { Text(stringResource(R.string.delete_game_zone_error_has_holes)) },
                 confirmButton = {
-                    TextButton(onClick = { 
+                    TextButton(onClick = {
                         gameZoneViewModel.clearError()
                     }) {
                         Text(stringResource(R.string.delete_game_zone_ok_button))
@@ -336,13 +321,13 @@ fun AreasScreen(
             )
         } else if (errorMessage.contains("sessions")) {
             AlertDialog(
-                onDismissRequest = { 
+                onDismissRequest = {
                     gameZoneViewModel.clearError()
                 },
                 title = { Text(stringResource(R.string.delete_game_zone_error_title)) },
                 text = { Text(stringResource(R.string.delete_game_zone_error_has_sessions)) },
                 confirmButton = {
-                    TextButton(onClick = { 
+                    TextButton(onClick = {
                         gameZoneViewModel.clearError()
                     }) {
                         Text(stringResource(R.string.delete_game_zone_ok_button))
@@ -372,14 +357,15 @@ private fun CityItem(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = { onEditClick(city) }) {
-            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit_city_content_description))
-        }
+//        IconButton(onClick = { onEditClick(city) }) {
+//            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit_city_content_description))
+//        }
     }
 }
 
 @Composable
 fun GameZoneItem(
+    currentUserId: String?,
     gameZone: GameZone,
     onEditClick: (GameZone) -> Unit,
     onDeleteClick: (GameZone) -> Unit,
@@ -399,18 +385,20 @@ fun GameZoneItem(
             modifier = Modifier.weight(1f)
         )
         Row {
-            IconButton(onClick = { onEditClick(gameZone) }) {
-                Icon(
-                    Icons.Filled.Edit,
-                    contentDescription = stringResource(R.string.edit_game_zone_content_description)
-                )
-            }
-            IconButton(onClick = { onDeleteClick(gameZone) }) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = stringResource(R.string.delete_game_zone_content_description),
-                    tint = MaterialTheme.colorScheme.error
-                )
+            if (currentUserId != null && gameZone.userId == currentUserId) {
+                IconButton(onClick = { onEditClick(gameZone) }) {
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.edit_game_zone_content_description)
+                    )
+                }
+                IconButton(onClick = { onDeleteClick(gameZone) }) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.delete_game_zone_content_description),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }

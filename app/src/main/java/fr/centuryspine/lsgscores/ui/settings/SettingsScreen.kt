@@ -123,10 +123,11 @@ fun SettingsScreen(
             Button(onClick = {
                 val url = context.getString(R.string.settings_privacy_policy_url)
                 try {
-                    val viewIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
-                        addCategory(android.content.Intent.CATEGORY_BROWSABLE)
-                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
+                    val viewIntent =
+                        android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
+                            addCategory(android.content.Intent.CATEGORY_BROWSABLE)
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
                     val chooser = android.content.Intent.createChooser(
                         viewIntent,
                         context.getString(R.string.settings_privacy_policy)

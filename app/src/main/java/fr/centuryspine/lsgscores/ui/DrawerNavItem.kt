@@ -20,16 +20,19 @@ sealed class DrawerNavItem(
         R.string.drawer_nav_players,
         Icons.Filled.Person
     )
+
     object Holes : DrawerNavItem(
         "hole_list",
         R.string.drawer_nav_holes,
         Icons.Rounded.GolfCourse
     )
+
     object SessionHistory : DrawerNavItem(
         "session_history",
         R.string.drawer_nav_session_history,
         Icons.Filled.History
     )
+
     object Settings : DrawerNavItem(
         "settings",
         R.string.drawer_nav_settings,

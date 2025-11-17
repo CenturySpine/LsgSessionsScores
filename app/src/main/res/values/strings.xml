@@ -125,8 +125,11 @@
     <string name="ongoing_session_date_format">%s session</string>
     <string name="ongoing_session_scoring_info_icon_description">Scoring mode info</string>
     <string name="ongoing_session_button_add_hole">Add or associate a hole</string>
-    <string name="ongoing_session_no_holes_message">No holes have been played yet. Press the button below to add one.</string>
-    <string name="ongoing_session_no_holes_message_participant">No hole has been set up yet for this session. Please wait for the administrator to add one.</string>
+    <string name="ongoing_session_no_holes_message">No holes have been played yet. Press the button below to add one.
+    </string>
+    <string name="ongoing_session_no_holes_message_participant">No hole has been set up yet for this session. Please
+        wait for the administrator to add one.
+    </string>
     <string name="ongoing_session_label_holes_played">Holes played:</string>
     <string name="ongoing_session_hole_prefix">Hole:</string>
     <string name="ongoing_session_delete_hole_icon_description">Delete played hole</string>
@@ -145,37 +148,49 @@
 
     <!-- OngoingSessionScreen - Delete Session Dialog -->
     <string name="ongoing_session_delete_dialog_title">Delete session</string>
-    <string name="ongoing_session_delete_dialog_message">This will permanently delete the session and all its related data:
-• Teams
-• Played holes
-• Scores
+    <string name="ongoing_session_delete_dialog_message">This will permanently delete the session and all its related
+        data:
+        • Teams
+        • Played holes
+        • Scores
 
-This action cannot be undone.</string>
+        This action cannot be undone.
+    </string>
     <string name="ongoing_session_delete_dialog_button_delete">Delete</string>
     <string name="ongoing_session_delete_dialog_button_cancel">Cancel</string>
 
     <!-- OngoingSessionScreen - Delete Played Hole Dialog -->
     <string name="ongoing_session_delete_hole_dialog_title">Delete played hole</string>
-    <string name="ongoing_session_delete_hole_dialog_message">This will permanently delete this played hole and all its scores.
+    <string name="ongoing_session_delete_hole_dialog_message">This will permanently delete this played hole and all its
+        scores.
 
-This action cannot be undone.</string>
+        This action cannot be undone.
+    </string>
     <string name="ongoing_session_delete_hole_dialog_button_delete">Delete</string>
     <string name="ongoing_session_delete_hole_dialog_button_cancel">Cancel</string>
 
     <!-- OngoingSessionScreen - Validate Session Dialog -->
     <string name="ongoing_session_validate_dialog_title">Complete session</string>
-    <string name="ongoing_session_validate_dialog_message">This will mark the session as completed. You\'ll be able to view it in the sessions history.</string>
+    <string name="ongoing_session_validate_dialog_message">This will mark the session as completed. You\'ll be able to
+        view it in the sessions history.
+    </string>
     <string name="ongoing_session_validate_dialog_button_complete">Complete</string>
     <string name="ongoing_session_validate_dialog_button_cancel">Cancel</string>
 
     <!-- OngoingSessionScreen - Participant Session Closed Dialog -->
     <string name="ongoing_session_closed_dialog_title">Session closed</string>
-    <string name="ongoing_session_closed_dialog_message">This session has been closed by the administrator. You will be redirected to the home page.</string>
+    <string name="ongoing_session_closed_dialog_message">This session has been closed by the administrator. You will be
+        redirected to the home page.
+    </string>
     <string name="ongoing_session_closed_dialog_button_ok">OK</string>
 
     <!-- OngoingSessionScreen - Participant End Reasons -->
-    <string name="ongoing_session_deleted_message">This session has been deleted by the administrator. You will be redirected to the home page.</string>
-    <string name="ongoing_session_finished_message">This session has been completed. You will be redirected to the home page.</string>
+    <string name="ongoing_session_deleted_message">This session has been deleted by the administrator. You will be
+        redirected to the home page.
+    </string>
+    <string name="ongoing_session_finished_message">This session has been completed. You will be redirected to the home
+        page.
+    </string>
 
     <!-- PlayedHoleScoreScreen -->
     <string name="played_hole_score_title">Enter the strokes for each team</string>
@@ -184,7 +199,7 @@ This action cannot be undone.</string>
 
     <!-- StandingsTable -->
     <string name="standings_table_title">Ranking</string>
-    <string name="standings_table_title_lead">Lead: </string>
+    <string name="standings_table_title_lead">Lead:</string>
     <string name="standings_table_header_pos">Pos</string>
     <string name="standings_table_header_team">Team</string>
     <string name="standings_table_header_strokes">Strokes</string>
@@ -229,28 +244,43 @@ This action cannot be undone.</string>
 
     <!-- Scoring Modes -->
     <string name="scoring_mode_stroke_play_name">Stroke Play</string>
-    <string name="scoring_mode_stroke_play_description">Each player\'s or team\'s score is the total number of strokes. The lowest total wins.</string>
+    <string name="scoring_mode_stroke_play_description">Each player\'s or team\'s score is the total number of strokes.
+        The lowest total wins.
+    </string>
     <string name="scoring_mode_match_play_name">Match Play</string>
-    <string name="scoring_mode_match_play_description">On each hole, the player or team with the lowest unique number of strokes scores 1 point. All others score 0 points.</string>
+    <string name="scoring_mode_match_play_description">On each hole, the player or team with the lowest unique number of
+        strokes scores 1 point. All others score 0 points.
+    </string>
     <string name="scoring_mode_redistribution_name">Redistribution</string>
-    <string name="scoring_mode_redistribution_description">If a single player is first, they get 2 points and a solo second gets 1 point. If two tie for first, they get 1 point each and a solo second gets 1 point. Three or more tied for first: nobody gets any points.</string>
+    <string name="scoring_mode_redistribution_description">If a single player is first, they get 2 points and a solo
+        second gets 1 point. If two tie for first, they get 1 point each and a solo second gets 1 point. Three or more
+        tied for first: nobody gets any points.
+    </string>
     <string name="scoring_mode_info_title">Scoring Mode Information</string>
     <string name="scoring_mode_info_icon_description">Scoring mode information</string>
 
     <!-- Game Modes -->
-    <string name="game_mode_individual_description">Each player in the team plays their own ball. The lowest number of strokes wins the hole.</string>
-    <string name="game_mode_scramble_description">Each player in the team plays a ball, then the best ball is chosen for the next shot. The team continues from the position of the best shot.</string>
-    <string name="game_mode_greensome_description">Both players in the team tee off, select the best drive, then alternate shots with the selected ball until the hole is completed.</string>
-    <string name="game_mode_best_ball_description">Each player in the team plays their own ball on each hole. The best score among teammates is the team\'s score for that hole.</string>
+    <string name="game_mode_individual_description">Each player in the team plays their own ball. The lowest number of
+        strokes wins the hole.
+    </string>
+    <string name="game_mode_scramble_description">Each player in the team plays a ball, then the best ball is chosen for
+        the next shot. The team continues from the position of the best shot.
+    </string>
+    <string name="game_mode_greensome_description">Both players in the team tee off, select the best drive, then
+        alternate shots with the selected ball until the hole is completed.
+    </string>
+    <string name="game_mode_best_ball_description">Each player in the team plays their own ball on each hole. The best
+        score among teammates is the team\'s score for that hole.
+    </string>
     <string name="game_mode_info_title">Game Mode Information</string>
-    <string name="export_session_to_pdf_content_description" >Export</string>
-    <string name="pdf_session_name_prefix" >Session:</string>
-    <string name="pdf_start_time_prefix" >Start:</string>
-    <string name="pdf_end_time_prefix" >end:</string>
+    <string name="export_session_to_pdf_content_description">Export</string>
+    <string name="pdf_session_name_prefix">Session:</string>
+    <string name="pdf_start_time_prefix">Start:</string>
+    <string name="pdf_end_time_prefix">end:</string>
     <string name="pdf_session_type_prefix">Type:</string>
     <string name="pdf_scoring_mode_prefix">Scoring Mode:</string>
     <string name="pdf_comment_prefix">Commentaire:</string>
-    <string name="share_session_pdf_title" >Share session PDF</string>
+    <string name="share_session_pdf_title">Share session PDF</string>
     <string name="pdf_generation_failed_toast_message">PDF generation failed</string>
     <string name="exporting_pdf_toast_message">Export session PDF</string>
     <string name="pdf_header_team_players">Players / Holes (Score - strokes)</string>
@@ -283,7 +313,9 @@ This action cannot be undone.</string>
 
     <string name="session_history_delete_icon_description">Delete session</string>
     <string name="session_history_delete_dialog_title">Delete session</string>
-    <string name="session_history_delete_dialog_message">Are you sure you want to permanently delete this session?\n\nThis will delete:\n• All teams\n• All played holes\n• All scores\n\nThis action cannot be undone.</string>
+    <string name="session_history_delete_dialog_message">Are you sure you want to permanently delete this
+        session?\n\nThis will delete:\n• All teams\n• All played holes\n• All scores\n\nThis action cannot be undone.
+    </string>
     <string name="session_history_delete_dialog_button_delete">Delete</string>
     <string name="session_history_delete_dialog_button_cancel">Cancel</string>
 
@@ -296,7 +328,8 @@ This action cannot be undone.</string>
     <!-- SessionTeamsScreen - Random mode -->
     <string name="session_teams_mode_manual">Manual mode</string>
     <string name="session_teams_mode_random">Random mode</string>
-    <string name="session_teams_random_helper">Select an even number of players (minimum 4) to create random teams</string>
+    <string name="session_teams_random_helper">Select an even number of players (minimum 4) to create random teams
+    </string>
     <string name="session_teams_error_odd_number">Please select an even number of players</string>
     <string name="session_teams_button_create_random">Create random teams</string>
     <string name="no_city_alert_select_a_city">Select a city</string>
@@ -320,15 +353,19 @@ This action cannot be undone.</string>
     <string name="city_name_label">City Name</string>
     <string name="edit_city_dialog_title">Edit City</string>
     <string name="edit_city_content_description">Edit city</string>
-    
+
     <!-- AreasScreen - Delete GameZone -->
     <string name="delete_game_zone_delete_button">Delete</string>
     <string name="delete_game_zone_ok_button">OK</string>
     <string name="delete_game_zone_dialog_title">Delete Game Zone</string>
     <string name="delete_game_zone_dialog_message">Are you sure you want to delete the game zone \"%s\"?</string>
     <string name="delete_game_zone_error_title">Cannot Delete Game Zone</string>
-    <string name="delete_game_zone_error_has_holes">This game zone cannot be deleted because it has associated holes. Please delete all holes first.</string>
-    <string name="delete_game_zone_error_has_sessions">This game zone cannot be deleted because it has associated sessions. Please delete all sessions first.</string>
+    <string name="delete_game_zone_error_has_holes">This game zone cannot be deleted because it has associated holes.
+        Please delete all holes first.
+    </string>
+    <string name="delete_game_zone_error_has_sessions">This game zone cannot be deleted because it has associated
+        sessions. Please delete all sessions first.
+    </string>
 
     <!-- Authentication -->
     <string name="auth_required_title">Sign-in required</string>
@@ -343,7 +380,7 @@ This action cannot be undone.</string>
     <string name="player_link_this_is_me">This is me</string>
     <string name="player_linked_to_you">Linked to your account</string>
 
-    
+
     <!-- SessionHistory - Edit session -->
     <string name="session_history_edit_icon_description">Edit session</string>
     <string name="edit_session_title">Edit session</string>
@@ -361,16 +398,20 @@ This action cannot be undone.</string>
     <string name="edit_session_start_time_label">Start time</string>
     <string name="edit_session_end_time_label">End time (optional)</string>
     <string name="edit_session_clear_end_time">Clear</string>
-    
+
     <!-- Settings - Legal -->
     <string name="settings_section_legal">Legal</string>
     <string name="settings_privacy_policy">Privacy policy</string>
-    <string name="settings_privacy_policy_url">https://qgrfxhvgoqcumxhsyjoa.supabase.co/storage/v1/object/public/PublicDocs/lsgscore_privacy_policy.html</string>
-    
+    <string name="settings_privacy_policy_url">
+        https://qgrfxhvgoqcumxhsyjoa.supabase.co/storage/v1/object/public/PublicDocs/lsgscore_privacy_policy.html
+    </string>
+
     <!-- Settings - Delete account -->
     <string name="settings_delete_account_button">Delete my account</string>
     <string name="settings_delete_account_confirm_title">Delete your account?</string>
-    <string name="settings_delete_account_confirm_message">This will permanently delete your account and ALL your data. This action cannot be undone. Do you want to continue?</string>
+    <string name="settings_delete_account_confirm_message">This will permanently delete your account and ALL your data.
+        This action cannot be undone. Do you want to continue?
+    </string>
     <string name="settings_delete_account_confirm_confirm">Delete</string>
     <string name="settings_delete_account_confirm_cancel">Cancel</string>
     <string name="settings_delete_account_success_toast">Your account and data have been deleted.</string>
@@ -381,7 +422,7 @@ This action cannot be undone.</string>
     <string name="session_qr_no_session">No ongoing session</string>
     <string name="session_qr_image_description">Session QR code</string>
     <string name="session_qr_instruction">Scan this code to join the session</string>
-    
+
     <!-- OngoingSessionScreen - Welcome banner -->
     <string name="ongoing_session_welcome_two_names">Welcome %1$s &amp; %2$s!</string>
     <string name="ongoing_session_welcome_one_name">Welcome %1$s!</string>

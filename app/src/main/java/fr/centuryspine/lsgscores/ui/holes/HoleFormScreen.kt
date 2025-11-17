@@ -51,7 +51,7 @@ fun HoleFormScreen(
 ) {
 
     val gameZones by gameZoneViewModel.gameZones.collectAsState(initial = emptyList())
-    
+
 
     var showNameError by remember { mutableStateOf(false) }
 
@@ -202,12 +202,9 @@ fun HoleFormScreen(
                     onClick = {
                         if (name.isBlank()) {
                             showNameError = true
-                        }
-                        else if(selectedGameZone == null)
-                        {
+                        } else if (selectedGameZone == null) {
                             showNameError = true
-                        }
-                        else {
+                        } else {
                             showNameError = false
                             val hole = Hole(
                                 name = name,
@@ -215,7 +212,7 @@ fun HoleFormScreen(
                                 description = description.takeIf { it.isNotBlank() },
                                 distance = distance.toIntOrNull(),
                                 par = par.toIntOrNull() ?: 3,
-                                startPhotoUri =startPhotoPath,
+                                startPhotoUri = startPhotoPath,
                                 endPhotoUri = endPhotoPath
                             )
                             holeViewModel.addHole(hole)

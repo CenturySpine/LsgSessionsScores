@@ -40,6 +40,7 @@ class PlayerDaoSupabase @Inject constructor(
                                 }
                             }
                         }
+
                 else -> flowOf(emptyList())
             }
         }
@@ -63,7 +64,8 @@ class PlayerDaoSupabase @Inject constructor(
 
     override suspend fun getById(id: Long): Player? {
         val uid = currentUser.requireUserId()
-        return supabase.postgrest["players"].select { filter { eq("id", id); eq("user_id", uid) } }.decodeList<Player>().firstOrNull()
+        return supabase.postgrest["players"].select { filter { eq("id", id); eq("user_id", uid) } }.decodeList<Player>()
+            .firstOrNull()
     }
 
     override fun insert(player: Player): Long = runBlocking {

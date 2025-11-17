@@ -66,7 +66,7 @@ fun SessionCreationScreen(
     val sessionDraft by sessionViewModel.sessionDraft.collectAsState()
     val scoringModes by sessionViewModel.scoringModes.collectAsState()
     val gameZones by gameZoneViewModel.gameZones.collectAsState()
-    
+
 
     // For the dropdown scoring mode
     var showScoringModeInfo by remember { mutableStateOf(false) }
@@ -125,7 +125,8 @@ fun SessionCreationScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = selectedGameZone?.name ?: stringResource(R.string.session_creation_select_game_zone_placeholder),
+                    value = selectedGameZone?.name
+                        ?: stringResource(R.string.session_creation_select_game_zone_placeholder),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.session_creation_label_game_zone)) },

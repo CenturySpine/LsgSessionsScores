@@ -46,13 +46,16 @@ class AuthViewModel @Inject constructor(
                         // Reset manual sign-out flag once authenticated again
                         _signedOutManually.value = false
                     }
+
                     is SessionStatus.NotAuthenticated -> {
                         Log.d("AuthVM", "SessionStatus=NotAuthenticated")
                         _linkedPlayerId.value = null
                     }
+
                     is SessionStatus.LoadingFromStorage -> {
                         Log.d("AuthVM", "SessionStatus=LoadingFromStorage")
                     }
+
                     else -> {
                         Log.d("AuthVM", "SessionStatus=${status::class.simpleName}")
                     }
@@ -92,6 +95,7 @@ class AuthViewModel @Inject constructor(
                         delay(2000)
                         emit(AuthUiState.NotAuthenticated)
                     }
+
                     else -> emit(AuthUiState.Checking)
                 }
             }
@@ -140,7 +144,9 @@ class AuthViewModel @Inject constructor(
     private val _deleteAccountState = MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
     val deleteAccountState: StateFlow<DeleteAccountState> = _deleteAccountState
 
-    fun resetDeleteAccountState() { _deleteAccountState.value = DeleteAccountState.Idle }
+    fun resetDeleteAccountState() {
+        _deleteAccountState.value = DeleteAccountState.Idle
+    }
 
     fun deleteAccount() {
         Log.d("AuthVM", "deleteAccount() called")
@@ -149,7 +155,10 @@ class AuthViewModel @Inject constructor(
             try {
                 userDataPurger.purgeAllForCurrentUser()
                 // After data purge, sign out the user from auth
-                try { supabase.auth.signOut() } catch (_: Throwable) {}
+                try {
+                    supabase.auth.signOut()
+                } catch (_: Throwable) {
+                }
                 _deleteAccountState.value = DeleteAccountState.Success
             } catch (t: Throwable) {
                 Log.e("AuthVM", "deleteAccount() failed: ${t.message}", t)

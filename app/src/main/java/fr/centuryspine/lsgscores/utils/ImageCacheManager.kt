@@ -59,22 +59,41 @@ class ImageCacheManager @Inject constructor(
         scope.launch {
             try {
                 // Players
-                val players = try { playerDao.getPlayersByCityIdList(cityId) } catch (_: Throwable) { emptyList() }
+                val players = try {
+                    playerDao.getPlayersByCityIdList(cityId)
+                } catch (_: Throwable) {
+                    emptyList()
+                }
                 val playerUrls = players.mapNotNull { it.photoUri }.filter { isRemoteUrl(it) }
                 val playersCount = playerUrls.size
 
                 // Holes
-                val holes = try { holeDao.getHolesByCityIdList(cityId) } catch (_: Throwable) { emptyList() }
+                val holes = try {
+                    holeDao.getHolesByCityIdList(cityId)
+                } catch (_: Throwable) {
+                    emptyList()
+                }
                 var holeStartCount = 0
                 var holeEndCount = 0
                 val holeUrls = buildList<String> {
                     holes.forEach { h ->
-                        h.startPhotoUri?.let { if (isRemoteUrl(it)) { add(it); holeStartCount++ } }
-                        h.endPhotoUri?.let { if (isRemoteUrl(it)) { add(it); holeEndCount++ } }
+                        h.startPhotoUri?.let {
+                            if (isRemoteUrl(it)) {
+                                add(it); holeStartCount++
+                            }
+                        }
+                        h.endPhotoUri?.let {
+                            if (isRemoteUrl(it)) {
+                                add(it); holeEndCount++
+                            }
+                        }
                     }
                 }
                 val total = playersCount + holeStartCount + holeEndCount
-                Log.i("ImageCache", "WarmAllForCity(cityId=$cityId): players=$playersCount, holeStart=$holeStartCount, holeEnd=$holeEndCount, total=$total")
+                Log.i(
+                    "ImageCache",
+                    "WarmAllForCity(cityId=$cityId): players=$playersCount, holeStart=$holeStartCount, holeEnd=$holeEndCount, total=$total"
+                )
 
                 warmUrls(playerUrls + holeUrls)
             } catch (t: Throwable) {

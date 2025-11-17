@@ -14,6 +14,7 @@ class PlayedHoleRepository(
     suspend fun insertPlayedHole(playedHole: PlayedHole): Long {
         return playedHoleDao.insert(playedHole)
     }
+
     fun getPlayedHoleById(playedHoleId: Long): Flow<PlayedHole?> {
         return playedHoleDao.getById(playedHoleId)
     }

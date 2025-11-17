@@ -19,7 +19,8 @@ class PlayedHoleScoreDaoSupabase @Inject constructor(
 
     override suspend fun insert(score: PlayedHoleScore): Long {
         // Legacy insert (kept for compatibility); prefer upsert()
-        val inserted = supabase.postgrest["played_hole_scores"].insert(score) { select() }.decodeSingle<PlayedHoleScore>()
+        val inserted =
+            supabase.postgrest["played_hole_scores"].insert(score) { select() }.decodeSingle<PlayedHoleScore>()
         return inserted.id
     }
 

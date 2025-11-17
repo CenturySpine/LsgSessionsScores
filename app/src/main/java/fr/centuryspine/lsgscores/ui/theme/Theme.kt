@@ -27,6 +27,7 @@ fun LsgScoresTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> selectedTheme.darkColors
         else -> selectedTheme.lightColors
     }

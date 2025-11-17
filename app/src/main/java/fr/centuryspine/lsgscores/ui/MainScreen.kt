@@ -64,7 +64,11 @@ private fun getCurrentNavigationContext(currentRoute: String?): NavigationContex
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, io.github.jan.supabase.annotations.SupabaseExperimental::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class,
+    io.github.jan.supabase.annotations.SupabaseExperimental::class
+)
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -75,7 +79,8 @@ fun MainScreen(
     gameZoneViewModel: GameZoneViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
     cityViewModel: CityViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    currentUserProvider: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) {
     val hasOngoingSessionForCurrentCity by sessionViewModel.hasOngoingSessionForCurrentCity.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -217,7 +222,7 @@ fun MainScreen(
                         fontSize = 10.sp
                     )
                 }
-               
+
             }
         }
     ) {
@@ -372,7 +377,7 @@ fun MainScreen(
                     PlayerListScreen(navController, playerViewModel)
                 }
                 composable(DrawerNavItem.Holes.route) {
-                    HoleListScreen(navController, holeViewModel)
+                    HoleListScreen(navController, holeViewModel, currentUserProvider)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
                     SessionHistoryScreen(sessionViewModel)
@@ -402,7 +407,9 @@ fun MainScreen(
                     val holeId = it.arguments?.getLong("holeId")
                     HoleDetailScreen(
                         navController = navController,
-                        holeId = holeId
+                        holeId = holeId,
+                        holeViewModel,
+                        currentUserProvider
                     )
                 }
                 composable(
@@ -426,7 +433,7 @@ fun MainScreen(
                 }
 
                 composable(DrawerNavItem.Areas.route) {
-                    AreasScreen(gameZoneViewModel, cityViewModel)
+                    AreasScreen(gameZoneViewModel, cityViewModel, currentUserProvider)
                 }
 
                 // QR and Join routes

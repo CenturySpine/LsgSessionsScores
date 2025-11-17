@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalGetImage::class)
 @file:Suppress("UnsafeOptInUsageError")
+
 package fr.centuryspine.lsgscores.ui.sessions
 
 import android.Manifest
