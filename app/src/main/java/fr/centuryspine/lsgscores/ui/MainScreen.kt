@@ -433,7 +433,7 @@ fun MainScreen(
                 }
 
                 composable(DrawerNavItem.Areas.route) {
-                    AreasScreen(gameZoneViewModel, cityViewModel)
+                    AreasScreen(gameZoneViewModel, cityViewModel, currentUserProvider)
                 }
 
                 // QR and Join routes
