@@ -1,5 +1,6 @@
 package fr.centuryspine.lsgscores.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,6 @@ class CityViewModel @Inject constructor(
     val cities = cityRepository.getAllCities()
 
     private val _selectedCityId = MutableStateFlow<Long?>(null)
-    val selectedCityId: StateFlow<Long?> = _selectedCityId.asStateFlow()
     private val _hasCitySelected = MutableStateFlow(false)
     val hasCitySelected: StateFlow<Boolean> = _hasCitySelected.asStateFlow()
 
@@ -54,10 +54,13 @@ class CityViewModel @Inject constructor(
                     val player = playerDao.getById(playerId)
                     if (player != null) {
                         val city = cityRepository.getCityById(player.cityId)
-                        _authenticatedUserCityName.value = city?.name
+                            ?: throw Exception("City not found")
+                        _authenticatedUserCityName.value = city.name
+                        selectCity(city.id)
                     }
                 }
             } catch (e: Exception) {
+                Log.e("CityViewModel", "loadAuthenticatedUserCity: ${e.message}", e)
                 // Si une erreur se produit, on laisse la valeur à null
                 _authenticatedUserCityName.value = null
             }
