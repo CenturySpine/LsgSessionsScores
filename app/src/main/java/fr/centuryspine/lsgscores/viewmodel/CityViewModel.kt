@@ -3,8 +3,10 @@ package fr.centuryspine.lsgscores.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import fr.centuryspine.lsgscores.data.authuser.AppUserDaoSupabase
 import fr.centuryspine.lsgscores.data.city.City
 import fr.centuryspine.lsgscores.data.city.CityRepository
+import fr.centuryspine.lsgscores.data.player.PlayerDao
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +18,9 @@ import javax.inject.Inject
 class CityViewModel @Inject constructor(
     private val cityRepository: CityRepository,
     private val appPreferences: AppPreferences,
-    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
+    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager,
+    private val appUserDao: AppUserDaoSupabase,
+    private val playerDao: PlayerDao
 ) : ViewModel() {
 
     val cities = cityRepository.getAllCities()
@@ -26,12 +30,36 @@ class CityViewModel @Inject constructor(
     private val _hasCitySelected = MutableStateFlow(false)
     val hasCitySelected: StateFlow<Boolean> = _hasCitySelected.asStateFlow()
 
+    private val _authenticatedUserCityName = MutableStateFlow<String?>(null)
+    val authenticatedUserCityName: StateFlow<String?> = _authenticatedUserCityName.asStateFlow()
+
     init {
         // Observe changes to selectedCityIdFlow reactively
         viewModelScope.launch {
             appPreferences.selectedCityIdFlow.collect { cityId ->
                 _selectedCityId.value = cityId
                 _hasCitySelected.value = cityId != null
+            }
+        }
+
+        // Load authenticated user's city name
+        loadAuthenticatedUserCity()
+    }
+
+    private fun loadAuthenticatedUserCity() {
+        viewModelScope.launch {
+            try {
+                val playerId = appUserDao.getLinkedPlayerId()
+                if (playerId != null) {
+                    val player = playerDao.getById(playerId)
+                    if (player != null) {
+                        val city = cityRepository.getCityById(player.cityId)
+                        _authenticatedUserCityName.value = city?.name
+                    }
+                }
+            } catch (e: Exception) {
+                // Si une erreur se produit, on laisse la valeur à null
+                _authenticatedUserCityName.value = null
             }
         }
     }
