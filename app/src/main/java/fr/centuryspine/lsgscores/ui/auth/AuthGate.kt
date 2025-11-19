@@ -4,20 +4,15 @@ import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import fr.centuryspine.lsgscores.viewmodel.AuthUiState
 import fr.centuryspine.lsgscores.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
@@ -30,6 +25,7 @@ fun AuthGate(
     val user by authViewModel.user.collectAsStateWithLifecycle()
     val authUi by authViewModel.authUiState.collectAsStateWithLifecycle()
     val signedOut by authViewModel.signedOutManually.collectAsStateWithLifecycle()
+    val needsCitySelection by authViewModel.needsCitySelection.collectAsStateWithLifecycle()
 
     // Sticky: once we've seen a non-null user in this session, keep the app content visible
     // during transient restores/refreshes so we don't unmount the UI tree.
@@ -77,6 +73,17 @@ fun AuthGate(
             AuthScreen(
                 onGoogle = { authViewModel.signInWithGoogle() },
                 onFacebook = null
+            )
+        }
+        // If user is authenticated but needs city selection, show the city selection dialog
+        (user != null || hadUser) && needsCitySelection -> {
+            Log.d("AuthGate", "Rendering CitySelectionDialog (user needs city selection)")
+            CitySelectionDialog(
+                authViewModel = authViewModel,
+                onCitySelected = {
+                    // City selected and player created successfully
+                    Log.d("AuthGate", "City selected, proceeding to app content")
+                }
             )
         }
         // Keep app content mounted if authenticated OR if we previously had a user (sticky) during transient restores

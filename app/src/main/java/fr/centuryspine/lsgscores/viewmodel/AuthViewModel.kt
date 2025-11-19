@@ -29,6 +29,10 @@ class AuthViewModel @Inject constructor(
     private val _signedOutManually = MutableStateFlow(false)
     val signedOutManually: StateFlow<Boolean> = _signedOutManually
 
+    // Track whether the current authenticated user needs city selection (no linked player)
+    private val _needsCitySelection = MutableStateFlow(false)
+    val needsCitySelection: StateFlow<Boolean> = _needsCitySelection
+
     init {
         // Trace session status changes for debugging and ensure app_user row exists
         viewModelScope.launch {
@@ -38,8 +42,16 @@ class AuthViewModel @Inject constructor(
                         Log.d("AuthVM", "SessionStatus=Authenticated userId=${status.session.user?.id}")
                         try {
                             appUserDao.ensureUserRow()
-                            // Warm linked state as well
-                            _linkedPlayerId.value = appUserDao.getLinkedPlayerId()
+                            // Check if user has a linked player
+                            val hasPlayer = appUserDao.hasLinkedPlayer()
+                            _needsCitySelection.value = !hasPlayer
+
+                            if (hasPlayer) {
+                                // Warm linked state as well
+                                _linkedPlayerId.value = appUserDao.getLinkedPlayerId()
+                            } else {
+                                _linkedPlayerId.value = null
+                            }
                         } catch (t: Throwable) {
                             Log.w("AuthVM", "ensureUserRow/getLinked failed: ${t.message}")
                         }
@@ -50,6 +62,7 @@ class AuthViewModel @Inject constructor(
                     is SessionStatus.NotAuthenticated -> {
                         Log.d("AuthVM", "SessionStatus=NotAuthenticated")
                         _linkedPlayerId.value = null
+                        _needsCitySelection.value = false
                     }
 
                     is SessionStatus.LoadingFromStorage -> {
@@ -164,6 +177,25 @@ class AuthViewModel @Inject constructor(
                 Log.e("AuthVM", "deleteAccount() failed: ${t.message}", t)
                 _deleteAccountState.value = DeleteAccountState.Error(t.message)
             }
+        }
+    }
+
+    // Create player with selected city for first-time users
+    suspend fun createPlayerWithCity(cityId: Long): Boolean {
+        Log.d("AuthVM", "createPlayerWithCity() called with cityId=$cityId")
+        return try {
+            val success = appUserDao.createPlayerForCurrentUser(cityId)
+            if (success) {
+                _needsCitySelection.value = false
+                _linkedPlayerId.value = appUserDao.getLinkedPlayerId()
+                Log.d("AuthVM", "Player created successfully with cityId=$cityId")
+            } else {
+                Log.w("AuthVM", "Failed to create player with cityId=$cityId")
+            }
+            success
+        } catch (t: Throwable) {
+            Log.e("AuthVM", "createPlayerWithCity() failed: ${t.message}", t)
+            false
         }
     }
 }
