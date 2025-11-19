@@ -9,7 +9,7 @@ interface CityDao {
 
     suspend fun getCityById(cityId: Long): City?
 
-    suspend fun insert(city: City): Long
+    suspend fun insert(city: City): City
 
     suspend fun update(city: City)
 }

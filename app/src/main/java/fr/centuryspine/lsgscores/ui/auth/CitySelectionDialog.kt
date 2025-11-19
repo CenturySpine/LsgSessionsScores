@@ -2,6 +2,8 @@ package fr.centuryspine.lsgscores.ui.auth
 
 import android.app.Activity
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +31,9 @@ fun CitySelectionDialog(
     var selectedCity by remember { mutableStateOf<City?>(null) }
     var expanded by remember { mutableStateOf(false) }
     var isCreating by remember { mutableStateOf(false) }
+    var showNewCityInput by remember { mutableStateOf(false) }
+    var newCityName by remember { mutableStateOf("") }
+    var showConfirmationDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -63,58 +68,101 @@ fun CitySelectionDialog(
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                // City dropdown
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded && !isCreating }
+                // City dropdown with edit icon
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedTextField(
-                        value = selectedCity?.name ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Ville") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        enabled = !isCreating
-                    )
-                    ExposedDropdownMenu(
+                    ExposedDropdownMenuBox(
                         expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                        onExpandedChange = { expanded = !expanded && !isCreating && !showNewCityInput },
+                        modifier = Modifier.weight(1f)
                     ) {
-                        cities.forEach { city ->
-                            DropdownMenuItem(
-                                text = { Text(city.name) },
-                                onClick = {
-                                    selectedCity = city
-                                    expanded = false
-                                }
-                            )
+                        OutlinedTextField(
+                            value = selectedCity?.name ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Ville") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth(),
+                            enabled = !isCreating && !showNewCityInput
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            cities.forEach { city ->
+                                DropdownMenuItem(
+                                    text = { Text(city.name) },
+                                    onClick = {
+                                        selectedCity = city
+                                        expanded = false
+                                    }
+                                )
+                            }
                         }
                     }
+
+                    IconButton(
+                        onClick = {
+                            showNewCityInput = !showNewCityInput
+                            if (showNewCityInput) {
+                                selectedCity = null
+                                newCityName = ""
+                            }
+                        },
+                        enabled = !isCreating
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Créer une nouvelle ville"
+                        )
+                    }
+                }
+
+                // New city input field (conditionally visible)
+                if (showNewCityInput) {
+                    OutlinedTextField(
+                        value = newCityName,
+                        onValueChange = { newCityName = it },
+                        label = { Text("Nouvelle ville") },
+                        placeholder = { Text("Nom de la ville") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCreating,
+                        singleLine = true
+                    )
                 }
 
                 // Validation button
                 Button(
                     onClick = {
-                        val cityId = selectedCity?.id
-                        if (cityId != null) {
-                            isCreating = true
-                            scope.launch {
-                                val success = authViewModel.createPlayerWithCity(cityId)
-                                if (success) {
-                                    onCitySelected()
-                                } else {
-                                    // Failed to create player - exit app
-                                    (context as? Activity)?.finishAffinity()
-                                    exitProcess(0)
+                        if (showNewCityInput && newCityName.isNotBlank()) {
+                            // Show confirmation dialog for new city
+                            showConfirmationDialog = true
+                        } else {
+                            val cityId = selectedCity?.id
+                            if (cityId != null) {
+                                isCreating = true
+                                scope.launch {
+                                    val success = authViewModel.createPlayerWithCity(cityId)
+                                    if (success) {
+                                        cityViewModel.loadAuthenticatedUserCity()
+                                        onCitySelected()
+
+                                    } else {
+                                        // Failed to create player - exit app
+                                        (context as? Activity)?.finishAffinity()
+                                        exitProcess(0)
+                                    }
                                 }
                             }
                         }
                     },
-                    enabled = selectedCity != null && !isCreating,
+                    enabled = (selectedCity != null || (showNewCityInput && newCityName.isNotBlank())) && !isCreating,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     if (isCreating) {
@@ -136,5 +184,52 @@ fun CitySelectionDialog(
                 }
             }
         }
+    }
+
+    // Confirmation dialog for new city creation
+    if (showConfirmationDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isCreating) showConfirmationDialog = false },
+            title = { Text("Confirmer la création de ville") },
+            text = { Text("Voulez-vous créer la ville \"$newCityName\" ?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isCreating = true
+                        scope.launch {
+                            // Create the city
+                            val createdCity = cityViewModel.addCity(newCityName)
+                            if (createdCity != null) {
+                                // City created successfully, now create the player
+                                val success = authViewModel.createPlayerWithCity(createdCity.id)
+                                if (success) {
+                                    cityViewModel.loadAuthenticatedUserCity()
+                                    onCitySelected()
+                                } else {
+                                    // Failed to create player - exit app
+                                    (context as? Activity)?.finishAffinity()
+                                    exitProcess(0)
+                                }
+                            } else {
+                                // Failed to create city - exit app
+                                (context as? Activity)?.finishAffinity()
+                                exitProcess(0)
+                            }
+                        }
+                    },
+                    enabled = !isCreating
+                ) {
+                    Text("Confirmer")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmationDialog = false },
+                    enabled = !isCreating
+                ) {
+                    Text("Annuler")
+                }
+            }
+        )
     }
 }

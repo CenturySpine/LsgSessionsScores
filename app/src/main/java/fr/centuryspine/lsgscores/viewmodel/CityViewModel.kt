@@ -46,24 +46,32 @@ class CityViewModel @Inject constructor(
         loadAuthenticatedUserCity()
     }
 
-    private fun loadAuthenticatedUserCity() {
+    fun loadAuthenticatedUserCity() {
         viewModelScope.launch {
-            try {
-                val playerId = appUserDao.getLinkedPlayerId()
-                if (playerId != null) {
-                    val player = playerDao.getById(playerId)
-                    if (player != null) {
-                        val city = cityRepository.getCityById(player.cityId)
-                            ?: throw Exception("City not found")
-                        _authenticatedUserCityName.value = city.name
-                        selectCity(city.id)
-                    }
+            loadAuthUserCity()
+        }
+    }
+
+    suspend fun loadAuthUserCity() {
+        Log.d("CityViewModel", "loadAuthUserCity() called")
+        try {
+            val playerId = appUserDao.getLinkedPlayerId()
+            Log.d("CityViewModel", "playerId: $playerId")
+            if (playerId != null) {
+                val player = playerDao.getById(playerId)
+                Log.d("CityViewModel", "player: $player")
+                if (player != null) {
+                    val city = cityRepository.getCityById(player.cityId)
+                        ?: throw Exception("City not found")
+                    Log.d("CityViewModel", "city: ${city.name}")
+                    _authenticatedUserCityName.value = city.name
+                    selectCity(city.id)
                 }
-            } catch (e: Exception) {
-                Log.e("CityViewModel", "loadAuthenticatedUserCity: ${e.message}", e)
-                // Si une erreur se produit, on laisse la valeur à null
-                _authenticatedUserCityName.value = null
             }
+        } catch (e: Exception) {
+            Log.e("CityViewModel", "loadAuthenticatedUserCity: ${e.message}", e)
+            // Si une erreur se produit, on laisse la valeur à null
+            _authenticatedUserCityName.value = null
         }
     }
 
@@ -77,11 +85,16 @@ class CityViewModel @Inject constructor(
         }
     }
 
-    fun addCity(name: String) {
-        if (name.isNotBlank()) {
-            viewModelScope.launch {
+    suspend fun addCity(name: String): City? {
+        return if (name.isNotBlank()) {
+            try {
                 cityRepository.insert(City(name = name))
+            } catch (e: Exception) {
+                Log.e("CityViewModel", "addCity: ${e.message}", e)
+                null
             }
+        } else {
+            null
         }
     }
 

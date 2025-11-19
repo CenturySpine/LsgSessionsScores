@@ -19,6 +19,7 @@ import fr.centuryspine.lsgscores.data.city.City
 import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import fr.centuryspine.lsgscores.viewmodel.CityViewModel
 import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +46,7 @@ fun AreasScreen(
 
     val gameZoneError by gameZoneViewModel.error.collectAsState()
 
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -164,7 +166,9 @@ fun AreasScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    cityViewModel.addCity(newCityName)
+                    scope.launch {
+                        cityViewModel.addCity(newCityName)
+                    }
                     newCityName = ""
                     showAddCityDialog = false
                 }) {
