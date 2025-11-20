@@ -66,7 +66,7 @@ fun HomeScreen(
             // Display city name for authenticated user's player
             if (authenticatedUserCityName != null) {
                 Text(
-                    text = authenticatedUserCityName!!,
+                    text = authenticatedUserCityName,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
