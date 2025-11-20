@@ -1,6 +1,7 @@
 package fr.centuryspine.lsgscores.ui.settings
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,12 +18,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.hilt.navigation.compose.hiltViewModel
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.theme.availableThemes
 import fr.centuryspine.lsgscores.viewmodel.LanguageOption
 import fr.centuryspine.lsgscores.viewmodel.LanguageViewModel
 import fr.centuryspine.lsgscores.viewmodel.ThemeViewModel
+import kotlin.system.exitProcess
 
 @SuppressLint("UseKtx")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,7 +108,7 @@ fun SettingsScreen(
                         isSelected = selectedLanguage == language.code,
                         onLanguageSelected = {
                             languageViewModel.setLanguage(language.code)
-                            (context as android.app.Activity).recreate()
+                            (context as Activity).recreate()
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -158,6 +159,11 @@ fun SettingsScreen(
                         android.widget.Toast.LENGTH_LONG
                     ).show()
                     authViewModel.resetDeleteAccountState()
+                    try {
+                        (ctx as? Activity)?.finishAffinity()
+                    } catch (_: Throwable) {
+                    }
+                    exitProcess(0)
                 }
             }
 
