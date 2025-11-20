@@ -39,8 +39,6 @@ class SessionRepository(
 
     suspend fun getOngoingSessionForCity(cityId: Long): Session? = sessionDao.getOngoingSessionForCity(cityId)
 
-    fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?> = sessionDao.getOngoingSessionFlowForCity(cityId)
-
     val realtimeSessionFlow: Flow<List<Session>> = sessionDao.realtimeSessionFlow
 
     suspend fun deleteSessionCascade(session: Session) {

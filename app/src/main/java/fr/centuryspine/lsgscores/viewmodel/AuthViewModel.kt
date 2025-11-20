@@ -198,6 +198,22 @@ class AuthViewModel @Inject constructor(
             false
         }
     }
+
+    // Force a refresh of the linked player id from the backend/DB.
+    // Useful when another scope (e.g., a dialog-scoped ViewModel) created the player
+    // and the current instance wasn't updated yet.
+    fun refreshLinkedPlayerId() {
+        viewModelScope.launch {
+            try {
+                val id = appUserDao.getLinkedPlayerId()
+                _linkedPlayerId.value = id
+                _needsCitySelection.value = (id == null)
+                Log.d("AuthVM", "refreshLinkedPlayerId() -> $id")
+            } catch (t: Throwable) {
+                Log.w("AuthVM", "refreshLinkedPlayerId() failed: ${t.message}")
+            }
+        }
+    }
 }
 
 sealed class DeleteAccountState {

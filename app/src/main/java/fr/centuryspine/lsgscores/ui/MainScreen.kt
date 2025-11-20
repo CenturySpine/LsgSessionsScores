@@ -90,6 +90,16 @@ fun MainScreen(
     val hasCitySelected by cityViewModel.hasCitySelected.collectAsStateWithLifecycle()  // lifecycle-aware
     var showNoCityAlert by remember { mutableStateOf(false) }  // Add this
 
+    // Ensure the linked player id is refreshed after first city selection (new user flow)
+    val linkedPlayerIdForRefresh by authViewModel.linkedPlayerId.collectAsStateWithLifecycle()
+    LaunchedEffect(hasCitySelected, linkedPlayerIdForRefresh) {
+        if (hasCitySelected && linkedPlayerIdForRefresh == null) {
+            // The player may have been created by another AuthViewModel instance (e.g., Dialog scope)
+            // Force a refresh so the profile button becomes enabled immediately
+            authViewModel.refreshLinkedPlayerId()
+        }
+    }
+
     // Bottom bar items (only 3 now)
     val bottomItems = listOf(
         BottomNavItem.Home,
