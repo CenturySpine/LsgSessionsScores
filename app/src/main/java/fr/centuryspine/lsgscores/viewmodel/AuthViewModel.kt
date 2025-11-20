@@ -9,6 +9,7 @@ import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.user.UserInfo
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,7 +26,7 @@ class AuthViewModel @Inject constructor(
     private val _linkedPlayerId = MutableStateFlow<Long?>(null)
     val linkedPlayerId: StateFlow<Long?> = _linkedPlayerId
 
-    // Track manual sign-out to bypass debounce
+    // Track manual sign-out to bypass debouncing
     private val _signedOutManually = MutableStateFlow(false)
     val signedOutManually: StateFlow<Boolean> = _signedOutManually
 
@@ -42,12 +43,12 @@ class AuthViewModel @Inject constructor(
                         Log.d("AuthVM", "SessionStatus=Authenticated userId=${status.session.user?.id}")
                         try {
                             appUserDao.ensureUserRow()
-                            // Check if user has a linked player
+                            // Check if a user has a linked player
                             val hasPlayer = appUserDao.hasLinkedPlayer()
                             _needsCitySelection.value = !hasPlayer
 
                             if (hasPlayer) {
-                                // Warm linked state as well
+                                // Warm-linked state as well
                                 _linkedPlayerId.value = appUserDao.getLinkedPlayerId()
                             } else {
                                 _linkedPlayerId.value = null
@@ -55,7 +56,7 @@ class AuthViewModel @Inject constructor(
                         } catch (t: Throwable) {
                             Log.w("AuthVM", "ensureUserRow/getLinked failed: ${t.message}")
                         }
-                        // Reset manual sign-out flag once authenticated again
+                        // Reset the manual sign-out flag once authenticated again
                         _signedOutManually.value = false
                     }
 
@@ -88,7 +89,8 @@ class AuthViewModel @Inject constructor(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    // UI-facing auth state with debounce on transient NotAuthenticated
+    // UI-facing auth state with debouncing on transient NotAuthenticated
+    @OptIn(ExperimentalCoroutinesApi::class)
     val authUiState: StateFlow<AuthUiState> =
         combine(supabase.auth.sessionStatus, signedOutManually) { status, signedOut ->
             Pair(status, signedOut)
@@ -104,7 +106,7 @@ class AuthViewModel @Inject constructor(
                     is SessionStatus.NotAuthenticated -> {
                         // Grace window: emit Checking first, then NotAuthenticated if it persists
                         emit(AuthUiState.Checking)
-                        // 2 seconds debounce; adjust if needed
+                        // 2-second debounce; adjust if needed
                         delay(2000)
                         emit(AuthUiState.NotAuthenticated)
                     }
@@ -113,12 +115,6 @@ class AuthViewModel @Inject constructor(
                 }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AuthUiState.Checking)
-
-    // Keep a simple boolean for legacy collectors that expect loading/authenticated
-    val isAuthenticatedOrLoading: StateFlow<Boolean> =
-        authUiState
-            .map { it == AuthUiState.Authenticated || it == AuthUiState.Checking }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
 
     fun signInWithGoogle() {
@@ -153,7 +149,7 @@ class AuthViewModel @Inject constructor(
         null
     }
 
-    // Delete account (purge user data and sign out). Emits state for UI.
+    // Delete an account (purge user data and sign out). Emits state for UI.
     private val _deleteAccountState = MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
     val deleteAccountState: StateFlow<DeleteAccountState> = _deleteAccountState
 

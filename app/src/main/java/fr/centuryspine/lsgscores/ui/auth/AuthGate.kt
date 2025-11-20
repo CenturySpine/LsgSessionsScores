@@ -8,7 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -32,7 +31,7 @@ fun AuthGate(
     var hadUser by rememberSaveable("auth_had_user") { mutableStateOf(false) }
 
     // Detect app resuming to foreground and give a brief grace window to avoid flashing Auth
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var isResuming by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
