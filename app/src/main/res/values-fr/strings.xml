@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="auth_welcome_text">LSG scores</string>
+
     <!-- OngoingSessionScreen - Participant specific message -->
     <string name="ongoing_session_no_holes_message_participant">L’administrateur de la session n’a pas encore créé de
         trou à jouer.

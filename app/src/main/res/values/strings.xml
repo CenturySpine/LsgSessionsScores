@@ -5,6 +5,7 @@
 
     <!-- HomeScreen -->
     <string name="home_welcome_text">Welcome to LSG scores!</string>
+    <string name="auth_welcome_text">LSG scores</string>
     <string name="home_logo_description">App logo</string>
 
     <!-- MainScreen - Navigation -->
@@ -368,7 +369,6 @@
     </string>
 
     <!-- Authentication -->
-    <string name="auth_required_title">Sign-in required</string>
     <string name="auth_sign_in_google">Sign in with Google</string>
     <string name="auth_sign_in_facebook_coming_soon">Sign in with Facebook (coming soon)</string>
 

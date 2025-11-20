@@ -1,11 +1,7 @@
 package fr.centuryspine.lsgscores.ui.auth
 
 import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,11 +27,12 @@ fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(id = R.string.auth_required_title),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
+                text = stringResource(R.string.auth_welcome_text),
+                style = MaterialTheme.typography.headlineMedium
             )
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(24.dp))
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(onClick = {
                 Log.d("AuthScreen", "Google button clicked")
                 onGoogle()
@@ -43,7 +40,7 @@ fun AuthScreen(
                 Text(stringResource(id = R.string.auth_sign_in_google))
             }
             if (onFacebook != null) {
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Button(onClick = {
                     Log.d("AuthScreen", "Facebook button clicked")
                     onFacebook()
