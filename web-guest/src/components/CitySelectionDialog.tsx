@@ -108,6 +108,7 @@ export default function CitySelectionDialog({onCompleted}: { onCompleted: () => 
                             value={selectedCityId ?? ''}
                             onChange={(e) => setSelectedCityId(e.target.value ? Number(e.target.value) : null)}
                             disabled={loading}
+                            aria-label="Sélection de la ville"
                             style={{flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #D1D5DB'}}
                         >
                             <option value="" disabled>Sélectionner une ville…</option>
@@ -197,8 +198,8 @@ export default function CitySelectionDialog({onCompleted}: { onCompleted: () => 
                         justifyContent: 'center',
                         zIndex: 60
                     }}>
-                        <div style={{background: '#fff', padding: 20, borderRadius: 10, maxWidth: 360}}>
-                            <div style={{fontWeight: 600, marginBottom: 8}}>Confirmer la création</div>
+                        <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" style={{background: '#fff', padding: 20, borderRadius: 10, maxWidth: 360}}>
+                            <div id="confirm-title" style={{fontWeight: 600, marginBottom: 8}}>Confirmer la création</div>
                             <div style={{color: '#374151', marginBottom: 16}}>Créer la ville « {newCityName} » ?</div>
                             <div style={{display: 'flex', gap: 8, justifyContent: 'flex-end'}}>
                                 <button onClick={() => setConfirmCreate(false)} disabled={loading} style={{
