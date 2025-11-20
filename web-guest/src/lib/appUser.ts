@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient"
+import {supabase} from "./supabaseClient"
 
 /**
  * Ensure an app_user row exists for the currently authenticated Supabase user.
@@ -39,7 +39,16 @@ export async function ensureAppUser(): Promise<void> {
 
     if (!exists) {
       // Insert new row for current user id (allowed by RLS: id must equal auth.uid())
-      await supabase.from("app_user").insert({ id, email, display_name, avatar_url, provider })
+        try {
+            await supabase.from("app_user").insert({id, email, display_name, avatar_url, provider})
+        } catch (_e) {
+            // If insert fails, bail out silently to avoid breaking UX
+            return
+        }
+
+        // Ne pas créer automatiquement de joueur ici.
+        // La création du joueur (avec sélection de la ville) est gérée par CitySelectionGate/Dialog côté UI.
+
       return
     }
 

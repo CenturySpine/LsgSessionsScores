@@ -37,11 +37,11 @@ class CityDaoSupabase @Inject constructor(
         }
     }
 
-    override suspend fun insert(city: City): Long {
-        // Insert and return the assigned id
+    override suspend fun insert(city: City): City {
+        // Insert and return the inserted city object
         val inserted = supabase.postgrest["cities"].insert(city) { select() }
             .decodeSingle<City>()
-        return inserted.id
+        return inserted
     }
 
     override suspend fun update(city: City) {

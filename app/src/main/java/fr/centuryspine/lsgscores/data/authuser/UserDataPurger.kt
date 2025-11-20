@@ -98,6 +98,8 @@ class UserDataPurger @Inject constructor(
             safeDeleteStrict("teams", uid)
             safeDeleteStrict("sessions", uid)
 
+            safeDeleteUserLinkStrict(uid)
+
             // 2) Player data
             safeDeleteStrict("players", uid)
 
@@ -106,7 +108,7 @@ class UserDataPurger @Inject constructor(
             safeDeleteStrict("game_zones", uid)
 
             // 4) Strict deletion now that RLS allows DELETE
-            safeDeleteUserLinkStrict(uid)
+
             safeDeleteAppUserStrict(uid)
         } catch (t: Throwable) {
             Log.e(TAG, "purgeAllForCurrentUser failed: ${t.message}", t)

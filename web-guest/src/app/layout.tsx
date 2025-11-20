@@ -1,4 +1,5 @@
 import Header from "@/components/Header"
+import CitySelectionGate from "@/components/CitySelectionGate"
 
 export const metadata = {
   title: 'Lsgscores (Web)',
@@ -15,9 +16,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <body style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
         <Header />
-        <div style={{ margin: '0 auto', padding: '0 16px' }}>
-          {children}
-        </div>
+        <CitySelectionGate>
+            <div style={{margin: '0 auto', padding: '0 16px'}}>
+                {children}
+            </div>
+        </CitySelectionGate>
       </body>
     </html>
   )
