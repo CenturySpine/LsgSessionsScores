@@ -9,36 +9,9 @@ import kotlin.math.roundToInt
 class WeatherRepository(private val apiKey: String) {
 
     companion object {
-        private const val BASE_URL_V2 = "https://api.openweathermap.org/data/2.5/"
-        private const val BASE_URL_V3 = "https://api.openweathermap.org/data/3.0/"
-        private const val BASE_URL_HISTORY = "https://history.openweathermap.org/data/2.5/"
         private const val BASE_URL_OPEN_METEO = "https://archive-api.open-meteo.com/"
         private const val BASE_URL_OPEN_METEO_FORECAST = "https://api.open-meteo.com/"
         private const val TAG = "WeatherRepository"
-    }
-
-    private val serviceV2: WeatherService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL_V2)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(WeatherService::class.java)
-    }
-
-    private val serviceV3: WeatherService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL_V3)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(WeatherService::class.java)
-    }
-
-    private val serviceHistory: HistoryWeatherService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL_HISTORY)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(HistoryWeatherService::class.java)
     }
 
     private val serviceOpenMeteo: OpenMeteoService by lazy {
@@ -91,7 +64,8 @@ class WeatherRepository(private val apiKey: String) {
 
     suspend fun getHistoricalWeather(latitude: Double, longitude: Double, unixTimestamp: Long): WeatherInfo? {
         return try {
-            // 1) Try Open‑Meteo Archive API first (free, no key required)
+            // Use Open‑Meteo Archive API only (no OpenWeatherMap usage)
+            var result: WeatherInfo? = null
             try {
                 val zdt = java.time.ZonedDateTime.ofInstant(
                     java.time.Instant.ofEpochSecond(unixTimestamp),
@@ -122,7 +96,7 @@ class WeatherRepository(private val apiKey: String) {
                             val code = codes?.getOrNull(idx) ?: 0
                             val description = mapOpenMeteoCodeToDescription(code)
                             val icon = mapOpenMeteoCodeToIcon(code)
-                            return WeatherInfo(
+                            result = WeatherInfo(
                                 temperature = tempC.roundToInt(),
                                 description = description,
                                 iconCode = icon,
@@ -140,78 +114,7 @@ class WeatherRepository(private val apiKey: String) {
                 Log.w(TAG, "Open‑Meteo fetch failed: ${e.message}")
             }
 
-            // 2) Fallback: OpenWeather History host
-            val historyResp = serviceHistory.getCityHistory(
-                latitude = latitude,
-                longitude = longitude,
-                start = unixTimestamp,
-                end = unixTimestamp,
-                apiKey = apiKey
-            )
-            if (historyResp.isSuccessful) {
-                val list = historyResp.body()?.list.orEmpty()
-                val item = list.minByOrNull { kotlin.math.abs((it.dt ?: unixTimestamp) - unixTimestamp) }
-                val main = item?.main
-                val wind = item?.wind
-                val w = item?.weather?.firstOrNull()
-                if (main != null) {
-                    return WeatherInfo(
-                        temperature = main.temp.roundToInt(),
-                        description = w?.description ?: "Unknown",
-                        iconCode = w?.icon ?: "01d",
-                        windSpeedKmh = ((wind?.speed ?: 0.0) * 3.6).roundToInt()
-                    )
-                }
-            } else {
-                Log.e(
-                    TAG,
-                    "History API error: ${historyResp.code()} - ${historyResp.message()} - ${
-                        historyResp.errorBody()?.safeString()
-                    }"
-                )
-                if (historyResp.code() == 401) {
-                    Log.e(
-                        TAG,
-                        "401 Unauthorized from History API: Key/plan may not include history access. See https://openweathermap.org/history."
-                    )
-                }
-            }
-
-            // 3) Fallback: One Call 3.0 Time Machine
-            val responseV3 = serviceV3.getHistoricalWeather(latitude, longitude, unixTimestamp, apiKey)
-            if (responseV3.isSuccessful) {
-                parseHistoricalBody(responseV3.body())
-            } else {
-                val code = responseV3.code()
-                val msg = responseV3.message()
-                val bodyStr = responseV3.errorBody()?.safeString()
-                Log.e(TAG, "Historical Weather API v3 error: ${code} - ${msg} - ${bodyStr}")
-                if (code == 401) {
-                    Log.e(
-                        TAG,
-                        "401 Unauthorized from One Call 3.0: your API key/plan likely doesn't include historical data. See https://openweathermap.org/api/one-call-3 for plan requirements."
-                    )
-                }
-                // 4) Fallback: try legacy v2.5 endpoint (may be unavailable or deprecated)
-                val responseV2 = serviceV2.getHistoricalWeather(latitude, longitude, unixTimestamp, apiKey)
-                if (responseV2.isSuccessful) {
-                    parseHistoricalBody(responseV2.body())
-                } else {
-                    Log.e(
-                        TAG,
-                        "Historical Weather API v2.5 error: ${responseV2.code()} - ${responseV2.message()} - ${
-                            responseV2.errorBody()?.safeString()
-                        }"
-                    )
-                    if (responseV2.code() == 401) {
-                        Log.e(
-                            TAG,
-                            "401 Unauthorized from One Call 2.5: Most free keys are not authorized for Time Machine. You may need a different API key/plan (One Call 3.0, History API)."
-                        )
-                    }
-                    null
-                }
-            }
+            result
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch historical weather", e)
             null
@@ -274,19 +177,6 @@ class WeatherRepository(private val apiKey: String) {
         80, 81, 82 -> "09d" // showers
         95, 96, 99 -> "11d" // thunder
         else -> "01d"
-    }
-
-    private fun parseHistoricalBody(body: OneCallTimemachineResponse?): WeatherInfo? {
-        val current = body?.current ?: return null
-        val temp = current.temp ?: return null
-        val windSpeed = current.windSpeed ?: 0.0
-        val firstWeather = current.weather?.firstOrNull()
-        return WeatherInfo(
-            temperature = temp.roundToInt(),
-            description = firstWeather?.description ?: "Unknown",
-            iconCode = firstWeather?.icon ?: "01d",
-            windSpeedKmh = (windSpeed * 3.6).roundToInt()
-        )
     }
 }
 
