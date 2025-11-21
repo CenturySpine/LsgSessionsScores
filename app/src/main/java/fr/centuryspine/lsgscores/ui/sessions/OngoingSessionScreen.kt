@@ -472,8 +472,15 @@ fun OngoingSessionScreen(
                                                     text = ": ",
                                                     style = MaterialTheme.typography.bodySmall
                                                 )
+                                                // Display rule: in Stroke Play (scoring mode id = 1), only show the calculated score.
+                                                // For other modes, show both values as "strokes - calculatedScore".
+                                                val scoreText = when {
+                                                    result == null -> "-"
+                                                    currentScoringMode?.id == 1 -> "${result.calculatedScore}"
+                                                    else -> "${result.strokes} - ${result.calculatedScore}"
+                                                }
                                                 Text(
-                                                    text = if (result == null) "-" else "${result.strokes} - ${result.calculatedScore}",
+                                                    text = scoreText,
                                                     style = MaterialTheme.typography.bodySmall
                                                 )
                                             }

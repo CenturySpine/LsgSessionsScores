@@ -36,7 +36,7 @@ class SessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val teamRepository: TeamRepository,
     private val holeRepository: HoleRepository,
-    scoringModeRepository: ScoringModeRepository,
+    private val scoringModeRepository: ScoringModeRepository,
     private val playedHoleRepository: PlayedHoleRepository,
     private val holeGameModeRepository: HoleGameModeRepository,
     private val playedHoleScoreRepository: PlayedHoleScoreRepository,
@@ -458,7 +458,8 @@ class SessionViewModel @Inject constructor(
                         teamName = teamName,
                         totalStrokes = totals.first,
                         totalScore = totals.second,
-                        position = 0 // Will be set after sorting
+                        position = 0, // Will be set after sorting
+                        scoringModeId = scoringModeId
                     )
                 }
 
@@ -482,6 +483,11 @@ class SessionViewModel @Inject constructor(
     val scoringModes: StateFlow<List<ScoringMode>> =
         scoringModeRepository.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    suspend fun scoringMode(id: Int): ScoringMode? {
+        return scoringModeRepository.getById(id).firstOrNull()
+    }
 
     // All completed sessions filtered by selected city; re-collect on refreshCounter to force refresh with Supabase-backed DAO
     @OptIn(ExperimentalCoroutinesApi::class)

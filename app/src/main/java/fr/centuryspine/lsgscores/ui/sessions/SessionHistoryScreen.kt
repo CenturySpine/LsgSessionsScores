@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.graphics.pdf.PdfDocument
-import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,13 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.graphics.toColorInt
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.session.Session
@@ -58,6 +57,7 @@ fun SessionHistoryScreen(
     sessionViewModel: SessionViewModel
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsStateWithLifecycle()
+    val scoringModes by sessionViewModel.scoringModes.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var sessionToDelete by remember { mutableStateOf<Session?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -107,8 +107,13 @@ fun SessionHistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(completedSessions, key = { it.id }) { session ->
+                    // Compute localized scoring mode label to display next to date/time using cached list
+                    val scoringModeLabel = scoringModes
+                        .firstOrNull { it.id == session.scoringModeId }
+                        ?.getLocalizedName(context)
                     SessionHistoryCard(
                         session = session,
+                        scoringModeLabel = scoringModeLabel,
                         onExportClick = { selectedSession ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             generateAndSharePdf(context, selectedSession, sessionViewModel)
@@ -369,6 +374,7 @@ fun SessionHistoryScreen(
 @Composable
 private fun SessionHistoryCard(
     session: Session,
+    scoringModeLabel: String? = null,
     onExportClick: (Session) -> Unit,
     onExportPhoto: (Session, String) -> Unit,
     onDeleteClick: (Session) -> Unit,
@@ -382,192 +388,191 @@ private fun SessionHistoryCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                val currentLocale = Locale.getDefault()
-                val datePattern = stringResource(R.string.session_history_date_format_pattern)
-                val formattedDate = session.dateTime.format(
-                    DateTimeFormatter.ofPattern(datePattern, currentLocale)
-                )
-                val formattedTime = session.dateTime.format(
-                    DateTimeFormatter.ofPattern("HH:mm", currentLocale)
-                )
-                val displayDate = if (currentLocale.language == "fr") {
-                    formattedDate.replaceFirstChar { it.uppercase() }
-                } else {
-                    formattedDate
-                }
+            // First line: Date - Start time (no "at" label), full width
+            val currentLocale = Locale.getDefault()
+            val datePattern = stringResource(R.string.session_history_date_format_pattern)
+            val formattedDate = session.dateTime.format(
+                DateTimeFormatter.ofPattern(datePattern, currentLocale)
+            )
+            val formattedTime = session.dateTime.format(
+                DateTimeFormatter.ofPattern("HH:mm", currentLocale)
+            )
+            val displayDate = if (currentLocale.language == "fr") {
+                formattedDate.replaceFirstChar { it.uppercase() }
+            } else {
+                formattedDate
+            }
 
-                Text(
-                    text = displayDate,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            // Append scoring mode label (e.g., Stroke play, Match play) on the same line as date/time
+            val headerText = if (scoringModeLabel.isNullOrBlank()) {
+                "$displayDate - $formattedTime"
+            } else {
+                "$displayDate - $formattedTime - $scoringModeLabel"
+            }
+            Text(
+                text = headerText,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Second line: duration (value only) + weather + actions (share/edit/delete)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Duration (only the value, no label), shown if end time exists
+                session.endDateTime?.let { endTime ->
+                    val duration = Duration.between(session.dateTime, endTime)
+                    val hours = duration.toHours()
+                    val minutes = duration.toMinutes() % 60
+                    val durationText = when {
+                        hours > 0 -> if (minutes > 0) stringResource(
+                            R.string.session_history_duration_hours_minutes,
+                            hours,
+                            minutes
+                        ) else stringResource(R.string.session_history_duration_hours, hours)
+
+                        else -> stringResource(R.string.session_history_duration_minutes, minutes)
+                    }
                     Text(
-                        text = "${stringResource(R.string.session_history_time_prefix)} $formattedTime",
+                        text = durationText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    session.endDateTime?.let { endTime ->
-                        val duration = Duration.between(session.dateTime, endTime)
-                        val hours = duration.toHours()
-                        val minutes = duration.toMinutes() % 60
-                        val durationText = when {
-                            hours > 0 -> if (minutes > 0) stringResource(
-                                R.string.session_history_duration_hours_minutes,
-                                hours,
-                                minutes
-                            )
-                            else stringResource(R.string.session_history_duration_hours, hours)
+                }
 
-                            else -> stringResource(
-                                R.string.session_history_duration_minutes,
-                                minutes
+                // Weather info (icon + temperature + wind)
+                session.weatherData?.let { weather ->
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        WeatherIcon(
+                            weatherInfo = weather,
+                            size = 32.dp
+                        )
+                        Column {
+                            Text(
+                                text = "${weather.temperature}°C",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${weather.windSpeedKmh} km/h",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Text(
-                            text = stringResource(R.string.session_history_separator),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${stringResource(R.string.session_history_duration_prefix)} $durationText",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
-            }
-            session.weatherData?.let { weather ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    WeatherIcon(
-                        weatherInfo = weather,
-                        size = 32.dp
-                    )
-                    Column {
-                        Text(
-                            text = "${weather.temperature}°C",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "${weather.windSpeedKmh} km/h",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-            // Export menu
-            var showExportMenu by remember { mutableStateOf(false) }
-            val launchCamera = usePhotoCameraLauncher { photoPath ->
-                photoPath?.let { onExportPhoto(session, it) }
-            }
-            val launchGallery = usePhotoGalleryLauncher { photoPath ->
-                photoPath?.let { onExportPhoto(session, it) }
-            }
 
-            Box {
-                IconButton(onClick = { showExportMenu = true }) {
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Export menu (Share)
+                var showExportMenu by remember { mutableStateOf(false) }
+                val launchCamera = usePhotoCameraLauncher { photoPath ->
+                    photoPath?.let { onExportPhoto(session, it) }
+                }
+                val launchGallery = usePhotoGalleryLauncher { photoPath ->
+                    photoPath?.let { onExportPhoto(session, it) }
+                }
+
+                Box {
+                    IconButton(onClick = { showExportMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.session_history_export_menu_description)
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showExportMenu,
+                        onDismissRequest = { showExportMenu = false }
+                    ) {
+                        // Camera export option
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(stringResource(R.string.session_history_export_camera))
+                                }
+                            },
+                            onClick = {
+                                showExportMenu = false
+                                launchCamera()
+                            }
+                        )
+
+                        // Gallery export option
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(stringResource(R.string.session_history_export_gallery))
+                                }
+                            },
+                            onClick = {
+                                showExportMenu = false
+                                launchGallery()
+                            }
+                        )
+
+                        HorizontalDivider()
+
+                        // PDF export option
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.PictureAsPdf,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(stringResource(R.string.session_history_export_pdf))
+                                }
+                            },
+                            onClick = {
+                                showExportMenu = false
+                                onExportClick(session)
+                            }
+                        )
+                    }
+                }
+
+                // Edit button
+                IconButton(onClick = { onEditClick(session) }) {
                     Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(R.string.session_history_export_menu_description)
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.session_history_edit_icon_description)
                     )
                 }
 
-                DropdownMenu(
-                    expanded = showExportMenu,
-                    onDismissRequest = { showExportMenu = false }
-                ) {
-                    // Camera export option
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.baseline_camera_alt_24),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.session_history_export_camera))
-                            }
-                        },
-                        onClick = {
-                            showExportMenu = false
-                            launchCamera()
-                        }
-                    )
-
-                    // Gallery export option
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.session_history_export_gallery))
-                            }
-                        },
-                        onClick = {
-                            showExportMenu = false
-                            launchGallery()
-                        }
-                    )
-
-                    HorizontalDivider()
-
-                    // PDF export option
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.PictureAsPdf,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.session_history_export_pdf))
-                            }
-                        },
-                        onClick = {
-                            showExportMenu = false
-                            onExportClick(session)
-                        }
+                // Delete button
+                IconButton(onClick = { onDeleteClick(session) }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.session_history_delete_icon_description),
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
-            }
-
-            // Edit button
-            IconButton(onClick = { onEditClick(session) }) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = stringResource(R.string.session_history_edit_icon_description)
-                )
-            }
-
-            // Delete button
-            IconButton(onClick = { onDeleteClick(session) }) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.session_history_delete_icon_description),
-                    tint = MaterialTheme.colorScheme.error
-                )
             }
         }
     }
@@ -739,8 +744,9 @@ private fun generateAndSharePdf(
             currentY += lineSpacing
 
             // Scoring Mode
-            val scoringMode = try {
-                sessionViewModel.scoringModes.first().find { it.id == pdfData.session.scoringModeId }
+            val scoringMode =
+                try {
+                    sessionViewModel.scoringMode(pdfData.session.scoringModeId)
             } catch (_: Exception) {
                 null
             }
@@ -821,6 +827,9 @@ private fun generateAndSharePdf(
                 (availableWidthForTable - teamNameColWidth - totalColWidth) / numHoles.coerceAtLeast(
                     1
                 )
+
+            // In strokeplay (id = 1), hide strokes/coups values in the table
+            val hideStrokes = (pdfData.session.scoringModeId == 1)
 
             // Helper to wrap text within a max width
             fun wrapText(text: String, p: Paint, maxWidth: Float): List<String> {
@@ -970,30 +979,43 @@ private fun generateAndSharePdf(
 
                     if (scoreData != null) {
                         val scoreString = scoreData.calculatedScore.toString()
-                        val strokesString = "(${scoreData.strokes})"
-                        val separator = " - "
+                        if (hideStrokes) {
+                            // Only draw calculated score, centered
+                            val scoreWidth = boldPaint.measureText(scoreString)
+                            val textX = currentX + (scoreColWidth - scoreWidth) / 2
+                            canvas.drawText(
+                                scoreString,
+                                textX,
+                                rowCenterY - textCenterOffsetYBoldPaint,
+                                boldPaint
+                            )
+                        } else {
+                            // Draw score - (strokes)
+                            val strokesString = "(${scoreData.strokes})"
+                            val separator = " - "
 
-                        val scoreWidth = boldPaint.measureText(scoreString)
-                        val separatorWidth = paint.measureText(separator)
-                        val strokesWidth = italicPaint.measureText(strokesString)
-                        val totalTextWidth = scoreWidth + separatorWidth + strokesWidth
+                            val scoreWidth = boldPaint.measureText(scoreString)
+                            val separatorWidth = paint.measureText(separator)
+                            val strokesWidth = italicPaint.measureText(strokesString)
+                            val totalTextWidth = scoreWidth + separatorWidth + strokesWidth
 
-                        var textX = currentX + (scoreColWidth - totalTextWidth) / 2
-                        canvas.drawText(
-                            scoreString,
-                            textX,
-                            rowCenterY - textCenterOffsetYBoldPaint,
-                            boldPaint
-                        )
-                        textX += scoreWidth
-                        canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
-                        textX += separatorWidth
-                        canvas.drawText(
-                            strokesString,
-                            textX,
-                            rowCenterY - textCenterOffsetYItalicPaint,
-                            italicPaint
-                        )
+                            var textX = currentX + (scoreColWidth - totalTextWidth) / 2
+                            canvas.drawText(
+                                scoreString,
+                                textX,
+                                rowCenterY - textCenterOffsetYBoldPaint,
+                                boldPaint
+                            )
+                            textX += scoreWidth
+                            canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
+                            textX += separatorWidth
+                            canvas.drawText(
+                                strokesString,
+                                textX,
+                                rowCenterY - textCenterOffsetYItalicPaint,
+                                italicPaint
+                            )
+                        }
                     } else {
                         val scoreText = "-"
                         val textWidth = paint.measureText(scoreText)
@@ -1009,30 +1031,42 @@ private fun generateAndSharePdf(
 
                 // Draw total
                 val totalScoreString = teamData.totalCalculatedScore.toString()
-                val totalStrokesString = "(${teamData.totalStrokes})"
-                val separator = " - "
+                if (hideStrokes) {
+                    // Only total score, centered
+                    val totalScoreWidth = boldPaint.measureText(totalScoreString)
+                    val textX = currentX + (totalColWidth - totalScoreWidth) / 2
+                    canvas.drawText(
+                        totalScoreString,
+                        textX,
+                        rowCenterY - textCenterOffsetYBoldPaint,
+                        boldPaint
+                    )
+                } else {
+                    val totalStrokesString = "(${teamData.totalStrokes})"
+                    val separator = " - "
 
-                val totalScoreWidth = boldPaint.measureText(totalScoreString)
-                val separatorWidth = paint.measureText(separator)
-                val totalStrokesWidth = italicPaint.measureText(totalStrokesString)
-                val totalTextWidth = totalScoreWidth + separatorWidth + totalStrokesWidth
+                    val totalScoreWidth = boldPaint.measureText(totalScoreString)
+                    val separatorWidth = paint.measureText(separator)
+                    val totalStrokesWidth = italicPaint.measureText(totalStrokesString)
+                    val totalTextWidth = totalScoreWidth + separatorWidth + totalStrokesWidth
 
-                var textX = currentX + (totalColWidth - totalTextWidth) / 2
-                canvas.drawText(
-                    totalScoreString,
-                    textX,
-                    rowCenterY - textCenterOffsetYBoldPaint,
-                    boldPaint
-                )
-                textX += totalScoreWidth
-                canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
-                textX += separatorWidth
-                canvas.drawText(
-                    totalStrokesString,
-                    textX,
-                    rowCenterY - textCenterOffsetYItalicPaint,
-                    italicPaint
-                )
+                    var textX = currentX + (totalColWidth - totalTextWidth) / 2
+                    canvas.drawText(
+                        totalScoreString,
+                        textX,
+                        rowCenterY - textCenterOffsetYBoldPaint,
+                        boldPaint
+                    )
+                    textX += totalScoreWidth
+                    canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
+                    textX += separatorWidth
+                    canvas.drawText(
+                        totalStrokesString,
+                        textX,
+                        rowCenterY - textCenterOffsetYItalicPaint,
+                        italicPaint
+                    )
+                }
 
                 canvas.drawLine(
                     xMargin,
@@ -1141,6 +1175,8 @@ private fun generateAndShareImageExport(
             // Get session data and weather info
             val pdfData = sessionViewModel.loadSessionPdfData(session).first()
             val weatherInfo = session.weatherData ?: sessionViewModel.getCurrentWeatherInfo()
+            // In strokeplay (id = 1), hide strokes/coups in the image export
+            val hideStrokes = (pdfData.session.scoringModeId == 1)
 
             // Load the base image
             val originalBitmap = BitmapFactory.decodeFile(imagePath)
@@ -1233,7 +1269,11 @@ private fun generateAndShareImageExport(
                 val resultText = "${teamData.position}. ${teamData.teamName}"
                 canvas.drawText(resultText, margin, resultsY, smallTextPaint)
 
-                val scoreText = "${teamData.totalCalculatedScore} - ${teamData.totalStrokes}"
+                val scoreText = if (hideStrokes) {
+                    "${teamData.totalCalculatedScore}"
+                } else {
+                    "${teamData.totalCalculatedScore} - ${teamData.totalStrokes}"
+                }
                 canvas.drawText(scoreText, scoreStartX, resultsY, smallTextPaint)
 
                 resultsY -= lineHeight // Go UP instead of down
