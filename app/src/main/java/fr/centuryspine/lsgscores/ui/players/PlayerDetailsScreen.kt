@@ -5,15 +5,18 @@ package fr.centuryspine.lsgscores.ui.players
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -119,6 +122,18 @@ fun PlayerDetailScreen(
         ) { targetUserId ->
             val user = users.find { it.id == targetUserId }
 
+            // City name loading state for the displayed user
+            var cityName by remember(targetUserId) { mutableStateOf<String?>(null) }
+            LaunchedEffect(user?.cityId) {
+                cityName = if (user != null) {
+                    try {
+                        playerViewModel.getCityNameById(user.cityId)
+                    } catch (t: Throwable) {
+                        null
+                    }
+                } else null
+            }
+
             // Only allow edit if the displayed player belongs to the currently authenticated app user
             val canEdit =
                 user != null &&
@@ -223,29 +238,23 @@ fun PlayerDetailScreen(
                     Modifier
                         .then(swipeModifier)
                         .padding(padding)
-                        .padding(horizontal = 24.dp, vertical = 8.dp)  // Moins d'espace vertical
+                        .padding(horizontal = 24.dp, vertical = 8.dp)  // Less vertical spacing
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Player name above the photo
-                    Text(
-                        text = user?.name ?: "unknown player",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    Spacer(Modifier.height(32.dp))
-
-                    // Photo below the name
+                    // Photo first
                     if (!user?.photoUri.isNullOrBlank()) {
                         fr.centuryspine.lsgscores.ui.common.RemoteImage(
                             url = user.photoUri,
                             contentDescription = stringResource(R.string.player_detail_photo_description),
                             modifier = Modifier
-                                .size(400.dp)
+                                .size(300.dp)
                                 .background(
                                     MaterialTheme.colorScheme.surface,
                                     shape = MaterialTheme.shapes.medium
                                 )
+                                .clip(CircleShape)
+                                .border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
                         )
                     } else {
                         Icon(
@@ -256,6 +265,23 @@ fun PlayerDetailScreen(
                     }
 
                     Spacer(Modifier.height(32.dp))
+
+                    // Player name under the photo
+                    Text(
+                        text = user?.name ?: "unknown player",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+
+                    // City name under the player's name (if available)
+                    AnimatedVisibility(visible = !cityName.isNullOrBlank()) {
+                        Text(
+                            text = cityName ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(Modifier.height(40.dp))
 
                     // Action buttons row
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
