@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.graphics.pdf.PdfDocument
-import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,13 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.graphics.toColorInt
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.session.Session
@@ -739,8 +738,9 @@ private fun generateAndSharePdf(
             currentY += lineSpacing
 
             // Scoring Mode
-            val scoringMode = try {
-                sessionViewModel.scoringModes.first().find { it.id == pdfData.session.scoringModeId }
+            val scoringMode =
+                try {
+                    sessionViewModel.scoringMode(pdfData.session.scoringModeId)
             } catch (_: Exception) {
                 null
             }
@@ -821,6 +821,9 @@ private fun generateAndSharePdf(
                 (availableWidthForTable - teamNameColWidth - totalColWidth) / numHoles.coerceAtLeast(
                     1
                 )
+
+            // In strokeplay (id = 1), hide strokes/coups values in the table
+            val hideStrokes = (pdfData.session.scoringModeId == 1)
 
             // Helper to wrap text within a max width
             fun wrapText(text: String, p: Paint, maxWidth: Float): List<String> {
@@ -970,30 +973,43 @@ private fun generateAndSharePdf(
 
                     if (scoreData != null) {
                         val scoreString = scoreData.calculatedScore.toString()
-                        val strokesString = "(${scoreData.strokes})"
-                        val separator = " - "
+                        if (hideStrokes) {
+                            // Only draw calculated score, centered
+                            val scoreWidth = boldPaint.measureText(scoreString)
+                            val textX = currentX + (scoreColWidth - scoreWidth) / 2
+                            canvas.drawText(
+                                scoreString,
+                                textX,
+                                rowCenterY - textCenterOffsetYBoldPaint,
+                                boldPaint
+                            )
+                        } else {
+                            // Draw score - (strokes)
+                            val strokesString = "(${scoreData.strokes})"
+                            val separator = " - "
 
-                        val scoreWidth = boldPaint.measureText(scoreString)
-                        val separatorWidth = paint.measureText(separator)
-                        val strokesWidth = italicPaint.measureText(strokesString)
-                        val totalTextWidth = scoreWidth + separatorWidth + strokesWidth
+                            val scoreWidth = boldPaint.measureText(scoreString)
+                            val separatorWidth = paint.measureText(separator)
+                            val strokesWidth = italicPaint.measureText(strokesString)
+                            val totalTextWidth = scoreWidth + separatorWidth + strokesWidth
 
-                        var textX = currentX + (scoreColWidth - totalTextWidth) / 2
-                        canvas.drawText(
-                            scoreString,
-                            textX,
-                            rowCenterY - textCenterOffsetYBoldPaint,
-                            boldPaint
-                        )
-                        textX += scoreWidth
-                        canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
-                        textX += separatorWidth
-                        canvas.drawText(
-                            strokesString,
-                            textX,
-                            rowCenterY - textCenterOffsetYItalicPaint,
-                            italicPaint
-                        )
+                            var textX = currentX + (scoreColWidth - totalTextWidth) / 2
+                            canvas.drawText(
+                                scoreString,
+                                textX,
+                                rowCenterY - textCenterOffsetYBoldPaint,
+                                boldPaint
+                            )
+                            textX += scoreWidth
+                            canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
+                            textX += separatorWidth
+                            canvas.drawText(
+                                strokesString,
+                                textX,
+                                rowCenterY - textCenterOffsetYItalicPaint,
+                                italicPaint
+                            )
+                        }
                     } else {
                         val scoreText = "-"
                         val textWidth = paint.measureText(scoreText)
@@ -1009,30 +1025,42 @@ private fun generateAndSharePdf(
 
                 // Draw total
                 val totalScoreString = teamData.totalCalculatedScore.toString()
-                val totalStrokesString = "(${teamData.totalStrokes})"
-                val separator = " - "
+                if (hideStrokes) {
+                    // Only total score, centered
+                    val totalScoreWidth = boldPaint.measureText(totalScoreString)
+                    val textX = currentX + (totalColWidth - totalScoreWidth) / 2
+                    canvas.drawText(
+                        totalScoreString,
+                        textX,
+                        rowCenterY - textCenterOffsetYBoldPaint,
+                        boldPaint
+                    )
+                } else {
+                    val totalStrokesString = "(${teamData.totalStrokes})"
+                    val separator = " - "
 
-                val totalScoreWidth = boldPaint.measureText(totalScoreString)
-                val separatorWidth = paint.measureText(separator)
-                val totalStrokesWidth = italicPaint.measureText(totalStrokesString)
-                val totalTextWidth = totalScoreWidth + separatorWidth + totalStrokesWidth
+                    val totalScoreWidth = boldPaint.measureText(totalScoreString)
+                    val separatorWidth = paint.measureText(separator)
+                    val totalStrokesWidth = italicPaint.measureText(totalStrokesString)
+                    val totalTextWidth = totalScoreWidth + separatorWidth + totalStrokesWidth
 
-                var textX = currentX + (totalColWidth - totalTextWidth) / 2
-                canvas.drawText(
-                    totalScoreString,
-                    textX,
-                    rowCenterY - textCenterOffsetYBoldPaint,
-                    boldPaint
-                )
-                textX += totalScoreWidth
-                canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
-                textX += separatorWidth
-                canvas.drawText(
-                    totalStrokesString,
-                    textX,
-                    rowCenterY - textCenterOffsetYItalicPaint,
-                    italicPaint
-                )
+                    var textX = currentX + (totalColWidth - totalTextWidth) / 2
+                    canvas.drawText(
+                        totalScoreString,
+                        textX,
+                        rowCenterY - textCenterOffsetYBoldPaint,
+                        boldPaint
+                    )
+                    textX += totalScoreWidth
+                    canvas.drawText(separator, textX, rowCenterY - textCenterOffsetYPaint, paint)
+                    textX += separatorWidth
+                    canvas.drawText(
+                        totalStrokesString,
+                        textX,
+                        rowCenterY - textCenterOffsetYItalicPaint,
+                        italicPaint
+                    )
+                }
 
                 canvas.drawLine(
                     xMargin,
@@ -1141,6 +1169,8 @@ private fun generateAndShareImageExport(
             // Get session data and weather info
             val pdfData = sessionViewModel.loadSessionPdfData(session).first()
             val weatherInfo = session.weatherData ?: sessionViewModel.getCurrentWeatherInfo()
+            // In strokeplay (id = 1), hide strokes/coups in the image export
+            val hideStrokes = (pdfData.session.scoringModeId == 1)
 
             // Load the base image
             val originalBitmap = BitmapFactory.decodeFile(imagePath)
@@ -1233,7 +1263,11 @@ private fun generateAndShareImageExport(
                 val resultText = "${teamData.position}. ${teamData.teamName}"
                 canvas.drawText(resultText, margin, resultsY, smallTextPaint)
 
-                val scoreText = "${teamData.totalCalculatedScore} - ${teamData.totalStrokes}"
+                val scoreText = if (hideStrokes) {
+                    "${teamData.totalCalculatedScore}"
+                } else {
+                    "${teamData.totalCalculatedScore} - ${teamData.totalStrokes}"
+                }
                 canvas.drawText(scoreText, scoreStartX, resultsY, smallTextPaint)
 
                 resultsY -= lineHeight // Go UP instead of down
