@@ -8,6 +8,7 @@ interface PlayerData {
     id: number
     name: string
     photouri: string | null
+    cityid: number
 }
 
 export default function ProfilePage() {
@@ -18,6 +19,7 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false)
     const [editedName, setEditedName] = useState("")
     const [isSaving, setIsSaving] = useState(false)
+    const [cityName, setCityName] = useState<string | null>(null)
     const router = useRouter()
 
     useEffect(() => {
@@ -25,7 +27,7 @@ export default function ProfilePage() {
 
         const fetchPlayerData = async () => {
             try {
-                // Récupérer l'utilisateur authentifié
+                // Retrieve authenticated user
                 const {data: {user}, error: authError} = await supabase.auth.getUser()
 
                 if (authError) {
@@ -33,12 +35,12 @@ export default function ProfilePage() {
                 }
 
                 if (!user) {
-                    // Rediriger vers la page d'authentification si non connecté
+                    // Redirect to the authentication page if not logged in
                     router.replace("/auth")
                     return
                 }
 
-                // Récupérer le player_id depuis user_player_link
+                // Retrieve player_id from user_player_link
                 const {data: linkData, error: linkError} = await supabase
                     .from("user_player_link")
                     .select("player_id")
@@ -47,7 +49,7 @@ export default function ProfilePage() {
 
                 if (linkError) {
                     if (linkError.code === "PGRST116") {
-                        // Aucun joueur associé
+                        // No player linked to this user
                         setError("Aucun joueur associé à ce compte utilisateur.")
                         setLoading(false)
                         return
@@ -61,10 +63,10 @@ export default function ProfilePage() {
                     return
                 }
 
-                // Récupérer les données du joueur
+                // Retrieve player data
                 const {data: player, error: playerError} = await supabase
                     .from("players")
-                    .select("id, name, photouri")
+                    .select("id, name, photouri, cityid")
                     .eq("id", linkData.player_id)
                     .single()
 
@@ -75,11 +77,23 @@ export default function ProfilePage() {
                 if (mounted) {
                     setPlayerData(player)
 
-                    // Transformer l'URL de la photo si elle existe
+                    // Transform the photo URL to a signed URL if needed
                     if (player?.photouri) {
                         const signedUrl = await getSignedUrlForPublicUrl(player.photouri)
                         if (mounted) {
                             setSignedPhotoUrl(signedUrl || player.photouri)
+                        }
+                    }
+
+                    // Load city name from cities table if cityid is available
+                    if (player?.cityid != null) {
+                        const {data: city, error: cityError} = await supabase
+                            .from("cities")
+                            .select("name")
+                            .eq("id", player.cityid)
+                            .single()
+                        if (!cityError && mounted) {
+                            setCityName(city?.name ?? null)
                         }
                     }
 
@@ -127,7 +141,7 @@ export default function ProfilePage() {
                 throw updateError
             }
 
-            // Mettre à jour l'état local
+            // Update local state
             setPlayerData({...playerData, name: editedName.trim()})
             setIsEditing(false)
             setEditedName("")
@@ -242,7 +256,7 @@ export default function ProfilePage() {
                     alignItems: "center",
                     gap: "24px"
                 }}>
-                    {/* Photo du joueur */}
+                    {/* Player photo */}
                     <div style={{
                         width: "150px",
                         height: "150px",
@@ -279,17 +293,8 @@ export default function ProfilePage() {
                         )}
                     </div>
 
-                    {/* Nom du joueur */}
+                    {/* Player name and city */}
                     <div style={{textAlign: "center", width: "100%", maxWidth: "400px"}}>
-                        <label style={{
-                            display: "block",
-                            fontSize: "14px",
-                            fontWeight: 500,
-                            color: "#6B7280",
-                            marginBottom: "8px"
-                        }}>
-                            Nom du joueur
-                        </label>
                         {isEditing ? (
                             <div style={{display: "flex", flexDirection: "column", gap: "12px"}}>
                                 <input
@@ -309,6 +314,15 @@ export default function ProfilePage() {
                                         width: "100%"
                                     }}
                                 />
+                                {cityName && (
+                                    <p style={{
+                                        fontSize: "14px",
+                                        color: "#6B7280",
+                                        margin: 0
+                                    }}>
+                                        {cityName}
+                                    </p>
+                                )}
                                 <div style={{display: "flex", gap: "8px", justifyContent: "center"}}>
                                     <button
                                         onClick={handleSave}
@@ -356,6 +370,15 @@ export default function ProfilePage() {
                                 }}>
                                     {playerData.name}
                                 </p>
+                                {cityName && (
+                                    <p style={{
+                                        fontSize: "14px",
+                                        color: "#6B7280",
+                                        margin: 0
+                                    }}>
+                                        {cityName}
+                                    </p>
+                                )}
                                 <button
                                     onClick={handleEdit}
                                     style={{
