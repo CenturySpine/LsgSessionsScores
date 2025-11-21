@@ -57,6 +57,7 @@ fun SessionHistoryScreen(
     sessionViewModel: SessionViewModel
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsStateWithLifecycle()
+    val scoringModes by sessionViewModel.scoringModes.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var sessionToDelete by remember { mutableStateOf<Session?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -106,8 +107,13 @@ fun SessionHistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(completedSessions, key = { it.id }) { session ->
+                    // Compute localized scoring mode label to display next to date/time using cached list
+                    val scoringModeLabel = scoringModes
+                        .firstOrNull { it.id == session.scoringModeId }
+                        ?.getLocalizedName(context)
                     SessionHistoryCard(
                         session = session,
+                        scoringModeLabel = scoringModeLabel,
                         onExportClick = { selectedSession ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             generateAndSharePdf(context, selectedSession, sessionViewModel)
@@ -368,6 +374,7 @@ fun SessionHistoryScreen(
 @Composable
 private fun SessionHistoryCard(
     session: Session,
+    scoringModeLabel: String? = null,
     onExportClick: (Session) -> Unit,
     onExportPhoto: (Session, String) -> Unit,
     onDeleteClick: (Session) -> Unit,
@@ -381,192 +388,191 @@ private fun SessionHistoryCard(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                val currentLocale = Locale.getDefault()
-                val datePattern = stringResource(R.string.session_history_date_format_pattern)
-                val formattedDate = session.dateTime.format(
-                    DateTimeFormatter.ofPattern(datePattern, currentLocale)
-                )
-                val formattedTime = session.dateTime.format(
-                    DateTimeFormatter.ofPattern("HH:mm", currentLocale)
-                )
-                val displayDate = if (currentLocale.language == "fr") {
-                    formattedDate.replaceFirstChar { it.uppercase() }
-                } else {
-                    formattedDate
-                }
+            // First line: Date - Start time (no "at" label), full width
+            val currentLocale = Locale.getDefault()
+            val datePattern = stringResource(R.string.session_history_date_format_pattern)
+            val formattedDate = session.dateTime.format(
+                DateTimeFormatter.ofPattern(datePattern, currentLocale)
+            )
+            val formattedTime = session.dateTime.format(
+                DateTimeFormatter.ofPattern("HH:mm", currentLocale)
+            )
+            val displayDate = if (currentLocale.language == "fr") {
+                formattedDate.replaceFirstChar { it.uppercase() }
+            } else {
+                formattedDate
+            }
 
-                Text(
-                    text = displayDate,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            // Append scoring mode label (e.g., Stroke play, Match play) on the same line as date/time
+            val headerText = if (scoringModeLabel.isNullOrBlank()) {
+                "$displayDate - $formattedTime"
+            } else {
+                "$displayDate - $formattedTime - $scoringModeLabel"
+            }
+            Text(
+                text = headerText,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Second line: duration (value only) + weather + actions (share/edit/delete)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Duration (only the value, no label), shown if end time exists
+                session.endDateTime?.let { endTime ->
+                    val duration = Duration.between(session.dateTime, endTime)
+                    val hours = duration.toHours()
+                    val minutes = duration.toMinutes() % 60
+                    val durationText = when {
+                        hours > 0 -> if (minutes > 0) stringResource(
+                            R.string.session_history_duration_hours_minutes,
+                            hours,
+                            minutes
+                        ) else stringResource(R.string.session_history_duration_hours, hours)
+
+                        else -> stringResource(R.string.session_history_duration_minutes, minutes)
+                    }
                     Text(
-                        text = "${stringResource(R.string.session_history_time_prefix)} $formattedTime",
+                        text = durationText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    session.endDateTime?.let { endTime ->
-                        val duration = Duration.between(session.dateTime, endTime)
-                        val hours = duration.toHours()
-                        val minutes = duration.toMinutes() % 60
-                        val durationText = when {
-                            hours > 0 -> if (minutes > 0) stringResource(
-                                R.string.session_history_duration_hours_minutes,
-                                hours,
-                                minutes
-                            )
-                            else stringResource(R.string.session_history_duration_hours, hours)
+                }
 
-                            else -> stringResource(
-                                R.string.session_history_duration_minutes,
-                                minutes
+                // Weather info (icon + temperature + wind)
+                session.weatherData?.let { weather ->
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        WeatherIcon(
+                            weatherInfo = weather,
+                            size = 32.dp
+                        )
+                        Column {
+                            Text(
+                                text = "${weather.temperature}°C",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${weather.windSpeedKmh} km/h",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Text(
-                            text = stringResource(R.string.session_history_separator),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${stringResource(R.string.session_history_duration_prefix)} $durationText",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
-            }
-            session.weatherData?.let { weather ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    WeatherIcon(
-                        weatherInfo = weather,
-                        size = 32.dp
-                    )
-                    Column {
-                        Text(
-                            text = "${weather.temperature}°C",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "${weather.windSpeedKmh} km/h",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-            // Export menu
-            var showExportMenu by remember { mutableStateOf(false) }
-            val launchCamera = usePhotoCameraLauncher { photoPath ->
-                photoPath?.let { onExportPhoto(session, it) }
-            }
-            val launchGallery = usePhotoGalleryLauncher { photoPath ->
-                photoPath?.let { onExportPhoto(session, it) }
-            }
 
-            Box {
-                IconButton(onClick = { showExportMenu = true }) {
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Export menu (Share)
+                var showExportMenu by remember { mutableStateOf(false) }
+                val launchCamera = usePhotoCameraLauncher { photoPath ->
+                    photoPath?.let { onExportPhoto(session, it) }
+                }
+                val launchGallery = usePhotoGalleryLauncher { photoPath ->
+                    photoPath?.let { onExportPhoto(session, it) }
+                }
+
+                Box {
+                    IconButton(onClick = { showExportMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.session_history_export_menu_description)
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showExportMenu,
+                        onDismissRequest = { showExportMenu = false }
+                    ) {
+                        // Camera export option
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(stringResource(R.string.session_history_export_camera))
+                                }
+                            },
+                            onClick = {
+                                showExportMenu = false
+                                launchCamera()
+                            }
+                        )
+
+                        // Gallery export option
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(stringResource(R.string.session_history_export_gallery))
+                                }
+                            },
+                            onClick = {
+                                showExportMenu = false
+                                launchGallery()
+                            }
+                        )
+
+                        HorizontalDivider()
+
+                        // PDF export option
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.PictureAsPdf,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(stringResource(R.string.session_history_export_pdf))
+                                }
+                            },
+                            onClick = {
+                                showExportMenu = false
+                                onExportClick(session)
+                            }
+                        )
+                    }
+                }
+
+                // Edit button
+                IconButton(onClick = { onEditClick(session) }) {
                     Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(R.string.session_history_export_menu_description)
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.session_history_edit_icon_description)
                     )
                 }
 
-                DropdownMenu(
-                    expanded = showExportMenu,
-                    onDismissRequest = { showExportMenu = false }
-                ) {
-                    // Camera export option
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.baseline_camera_alt_24),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.session_history_export_camera))
-                            }
-                        },
-                        onClick = {
-                            showExportMenu = false
-                            launchCamera()
-                        }
-                    )
-
-                    // Gallery export option
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.session_history_export_gallery))
-                            }
-                        },
-                        onClick = {
-                            showExportMenu = false
-                            launchGallery()
-                        }
-                    )
-
-                    HorizontalDivider()
-
-                    // PDF export option
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.PictureAsPdf,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.session_history_export_pdf))
-                            }
-                        },
-                        onClick = {
-                            showExportMenu = false
-                            onExportClick(session)
-                        }
+                // Delete button
+                IconButton(onClick = { onDeleteClick(session) }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.session_history_delete_icon_description),
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
-            }
-
-            // Edit button
-            IconButton(onClick = { onEditClick(session) }) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = stringResource(R.string.session_history_edit_icon_description)
-                )
-            }
-
-            // Delete button
-            IconButton(onClick = { onDeleteClick(session) }) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.session_history_delete_icon_description),
-                    tint = MaterialTheme.colorScheme.error
-                )
             }
         }
     }
