@@ -12,8 +12,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import fr.centuryspine.lsgscores.viewmodel.TeamStanding
 import fr.centuryspine.lsgscores.R
+import fr.centuryspine.lsgscores.viewmodel.TeamStanding
 
 @Composable
 fun StandingsTable(
@@ -41,6 +41,8 @@ private fun StandingsTableContent(
     standings: List<TeamStanding>,
     showTitle: Boolean
 ) {
+    // Determine if we should show the strokes column (hide it in stroke play mode id = 1)
+    val showStrokesColumn = standings.firstOrNull()?.scoringModeId != 1
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
@@ -66,7 +68,7 @@ private fun StandingsTableContent(
                 modifier = Modifier.width(40.dp)
             )
 
-            // Spacer identique à celui dans StandingRow
+            // Spacer identical to the one in StandingRow
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
@@ -75,13 +77,15 @@ private fun StandingsTableContent(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
             )
-            Text(
-                text = stringResource(R.string.standings_table_header_strokes),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.width(60.dp),
-                textAlign = TextAlign.Center
-            )
+            if (showStrokesColumn) {
+                Text(
+                    text = stringResource(R.string.standings_table_header_strokes),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.width(60.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
             Text(
                 text = stringResource(R.string.standings_table_header_score),
                 style = MaterialTheme.typography.labelMedium,
@@ -103,7 +107,7 @@ private fun StandingsTableContent(
     }
 }
 
-// Dans StandingsTable.kt, remplacer la fonction StandingRow existante par :
+// Render a single row of the standings table
 @Composable
 private fun StandingRow(
     standing: TeamStanding,
@@ -120,7 +124,7 @@ private fun StandingRow(
             modifier = Modifier.width(40.dp)
         )
 
-        // Spacer entre position et nom d'équipe
+        // Spacer between position and team name
         Spacer(modifier = Modifier.width(12.dp))
 
         // Team name
@@ -130,13 +134,15 @@ private fun StandingRow(
             modifier = Modifier.weight(1f)
         )
 
-        // Total strokes
-        Text(
-            text = standing.totalStrokes.toString(),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.width(60.dp),
-            textAlign = TextAlign.Center
-        )
+        // Total strokes (hidden in stroke play where strokes == score)
+        if (standing.scoringModeId != 1) {
+            Text(
+                text = standing.totalStrokes.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(60.dp),
+                textAlign = TextAlign.Center
+            )
+        }
 
         // Total score
         Text(

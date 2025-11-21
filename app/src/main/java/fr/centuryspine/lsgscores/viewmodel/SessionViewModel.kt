@@ -458,7 +458,8 @@ class SessionViewModel @Inject constructor(
                         teamName = teamName,
                         totalStrokes = totals.first,
                         totalScore = totals.second,
-                        position = 0 // Will be set after sorting
+                        position = 0, // Will be set after sorting
+                        scoringModeId = scoringModeId
                     )
                 }
 
