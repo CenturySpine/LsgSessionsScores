@@ -2,12 +2,13 @@ package fr.centuryspine.lsgscores.data.session
 
 import fr.centuryspine.lsgscores.data.player.Player
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -38,6 +39,7 @@ class TeamDaoSupabase @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getTeamsForSession(sessionId: Long): Flow<List<Team>> =
         supabase.auth.sessionStatus.flatMapLatest { status ->
             when (status) {

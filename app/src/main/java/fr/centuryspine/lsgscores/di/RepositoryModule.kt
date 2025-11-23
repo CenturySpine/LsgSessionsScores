@@ -1,26 +1,19 @@
 package fr.centuryspine.lsgscores.di
 
-import fr.centuryspine.lsgscores.data.hole.HoleDao
-import fr.centuryspine.lsgscores.data.hole.HoleRepository
-import fr.centuryspine.lsgscores.data.holemode.HoleGameModeRepository
-import fr.centuryspine.lsgscores.data.player.PlayerDao
-import fr.centuryspine.lsgscores.data.player.PlayerRepository
-import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
-import fr.centuryspine.lsgscores.data.session.PlayedHoleDao
-import fr.centuryspine.lsgscores.data.session.PlayedHoleRepository
-import fr.centuryspine.lsgscores.data.session.PlayedHoleScoreDao
-import fr.centuryspine.lsgscores.data.session.PlayedHoleScoreRepository
-import fr.centuryspine.lsgscores.data.session.SessionDao
-import fr.centuryspine.lsgscores.data.session.SessionRepository
-import fr.centuryspine.lsgscores.data.session.TeamDao
-import fr.centuryspine.lsgscores.data.session.TeamRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneDao
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneRepository
+import fr.centuryspine.lsgscores.data.hole.HoleDao
+import fr.centuryspine.lsgscores.data.hole.HoleRepository
+import fr.centuryspine.lsgscores.data.holemode.HoleGameModeRepository
+import fr.centuryspine.lsgscores.data.player.PlayerDao
+import fr.centuryspine.lsgscores.data.player.PlayerRepository
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
+import fr.centuryspine.lsgscores.data.scoring.ScoringModeRepository
+import fr.centuryspine.lsgscores.data.session.*
 import fr.centuryspine.lsgscores.utils.SupabaseStorageHelper
 import javax.inject.Singleton
 
@@ -34,9 +27,8 @@ object RepositoryModule {
         playerDao: PlayerDao,
         appPreferences: AppPreferences,
         storageHelper: SupabaseStorageHelper,
-        imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
     ): PlayerRepository {
-        return PlayerRepository(playerDao, appPreferences, storageHelper, imageCacheManager)
+        return PlayerRepository(playerDao, appPreferences, storageHelper)
     }
 
     @Provides
@@ -46,9 +38,9 @@ object RepositoryModule {
         gameZoneDao: GameZoneDao,
         appPreferences: AppPreferences,
         storageHelper: SupabaseStorageHelper,
-        imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
+
     ): HoleRepository {
-        return HoleRepository(holeDao, gameZoneDao, appPreferences, storageHelper, imageCacheManager)
+        return HoleRepository(holeDao, gameZoneDao, appPreferences, storageHelper)
     }
 
     @Provides

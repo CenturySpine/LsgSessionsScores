@@ -42,8 +42,8 @@ fun JoinSessionTeamPickerScreen(
         }
 
         // Auto-join if current user is linked to a player who is in one of the teams of this session
-        LaunchedEffect(session?.id, teamsWithPlayers.size, attemptedAutoJoin) {
-            if (!attemptedAutoJoin && session != null && session.isOngoing && teamsWithPlayers.isNotEmpty()) {
+        LaunchedEffect(session.id, teamsWithPlayers.size, attemptedAutoJoin) {
+            if (!attemptedAutoJoin && teamsWithPlayers.isNotEmpty()) {
 
                 val linkedPlayerId = authViewModel.getLinkedPlayerIdForCurrentUser()
                 if (linkedPlayerId != null) {

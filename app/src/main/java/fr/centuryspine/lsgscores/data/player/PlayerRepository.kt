@@ -14,8 +14,7 @@ import javax.inject.Inject
 class PlayerRepository @Inject constructor(
     private val playerDao: PlayerDao,
     private val appPreferences: AppPreferences,
-    private val storageHelper: SupabaseStorageHelper,
-    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
+    private val storageHelper: SupabaseStorageHelper
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getPlayersByCurrentCity(): Flow<List<Player>> {
@@ -52,9 +51,7 @@ class PlayerRepository @Inject constructor(
         if (!oldUrl.isNullOrBlank() && oldUrl != newPhotoUrl && isRemoteUrl(oldUrl)) {
             storageHelper.deletePlayerPhotoByUrl(oldUrl)
         }
-        if (!newPhotoUrl.isNullOrBlank() && isRemoteUrl(newPhotoUrl)) {
-            imageCacheManager.warmPlayerPhoto(newPhotoUrl)
-        }
+
     }
 
     suspend fun insertPlayer(player: Player): Long = withContext(Dispatchers.IO) {
@@ -67,18 +64,8 @@ class PlayerRepository @Inject constructor(
             else -> storageHelper.uploadPlayerPhoto(player.photoUri.toUri())
         }
         val id = playerDao.insert(player.copy(cityId = cityId, photoUri = finalPhotoUrl))
-        if (!finalPhotoUrl.isNullOrBlank() && isRemoteUrl(finalPhotoUrl)) {
-            imageCacheManager.warmPlayerPhoto(finalPhotoUrl)
-        }
+
         id
     }
 
-    suspend fun deletePlayer(player: Player) = withContext(Dispatchers.IO) {
-        // Optional: delete associated remote photo when deleting the player
-        val oldUrl = playerDao.getById(player.id)?.photoUri
-        playerDao.delete(player)
-        if (!oldUrl.isNullOrBlank() && isRemoteUrl(oldUrl)) {
-            storageHelper.deletePlayerPhotoByUrl(oldUrl)
-        }
-    }
 }

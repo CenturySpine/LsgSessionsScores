@@ -19,7 +19,6 @@ import javax.inject.Inject
 class CityViewModel @Inject constructor(
     private val cityRepository: CityRepository,
     private val appPreferences: AppPreferences,
-    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager,
     private val appUserDao: AppUserDaoSupabase,
     private val playerDao: PlayerDao
 ) : ViewModel() {
@@ -79,10 +78,7 @@ class CityViewModel @Inject constructor(
         appPreferences.setSelectedCityId(cityId)
         _selectedCityId.value = cityId
         _hasCitySelected.value = true
-        // Clear previous cache and warm new city's images in background
-        viewModelScope.launch {
-            imageCacheManager.clearAndWarmForCity(cityId)
-        }
+
     }
 
     suspend fun addCity(name: String): City? {

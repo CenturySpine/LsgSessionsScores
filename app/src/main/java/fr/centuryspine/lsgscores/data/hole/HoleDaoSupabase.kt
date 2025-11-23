@@ -2,17 +2,12 @@ package fr.centuryspine.lsgscores.data.hole
 
 import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,7 +30,7 @@ class HoleDaoSupabase @Inject constructor(
                         .flatMapLatest {
                             flow {
                                 // Owner-only reads for generic hole lists
-                                val uid = currentUser.requireUserId()
+                                currentUser.requireUserId()
                                 val zones = supabase.postgrest["game_zones"].select {
                                     filter { eq("cityid", cityId) }
                                     order("name", Order.ASCENDING)
@@ -67,10 +62,6 @@ class HoleDaoSupabase @Inject constructor(
             }
         }
 
-    override suspend fun getAll(): List<Hole> {
-        val uid = currentUser.requireUserId()
-        return supabase.postgrest["holes"].select { }.decodeList<Hole>()
-    }
 
     override suspend fun getHolesByCityIdList(cityId: Long): List<Hole> {
         return try {
@@ -133,11 +124,12 @@ class HoleDaoSupabase @Inject constructor(
         refreshTrigger.tryEmit(Unit)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getById(id: Long): Flow<Hole> =
         supabase.auth.sessionStatus.flatMapLatest { status ->
             when (status) {
                 is SessionStatus.Authenticated -> flow {
-                    val uid = currentUser.requireUserId()
+                    currentUser.requireUserId()
                     val hole = supabase.postgrest["holes"].select {
                         filter { eq("id", id) }
                     }.decodeList<Hole>().firstOrNull()
@@ -154,7 +146,7 @@ class HoleDaoSupabase @Inject constructor(
     }
 
     override suspend fun getHolesByGameZoneId(gameZoneId: Long): List<Hole> {
-        val uid = currentUser.requireUserId()
+
         return supabase.postgrest["holes"].select {
             filter { eq("gamezoneid", gameZoneId) }
             order("name", Order.ASCENDING)
