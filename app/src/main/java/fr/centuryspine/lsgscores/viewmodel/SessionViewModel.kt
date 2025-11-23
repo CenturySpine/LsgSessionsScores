@@ -133,6 +133,9 @@ class SessionViewModel @Inject constructor(
 
     private val locationHelper by lazy { LocationHelper(context) }
 
+    // Expose current authenticated user's id for UI logic (e.g., ownership checks)
+    fun currentUserIdOrNull(): String? = appUserDao.getCurrentUserId()
+
     // State for session drafts per city
     private val _sessionDrafts = MutableStateFlow<Map<Long, SessionDraft>>(emptyMap())
 
