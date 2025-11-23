@@ -4,18 +4,12 @@ package fr.centuryspine.lsgscores.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import fr.centuryspine.lsgscores.data.gamezone.GameZoneRepository
 import fr.centuryspine.lsgscores.data.preferences.AppPreferences
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -72,4 +66,9 @@ class GameZoneViewModel @Inject constructor(
     fun clearError() {
         _error.value = null
     }
+
+    /**
+     * Get a single GameZone by its id.
+     */
+    suspend fun getGameZoneById(id: Long) = repository.getGameZoneById(id)
 }

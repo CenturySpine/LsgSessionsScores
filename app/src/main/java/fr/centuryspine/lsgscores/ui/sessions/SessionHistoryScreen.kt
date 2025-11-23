@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.session.Session
@@ -46,6 +47,8 @@ fun SessionHistoryScreen(
     val completedSessions by sessionViewModel.completedSessions.collectAsStateWithLifecycle()
     val scoringModes by sessionViewModel.scoringModes.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    // Inject GameZoneViewModel for fetching zone names
+    val gameZoneViewModel: fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel = hiltViewModel()
     // Current authenticated user id used to decide if actions are visible
     val currentUserId = remember { sessionViewModel.currentUserIdOrNull() }
     var sessionToDelete by remember { mutableStateOf<Session?>(null) }
@@ -100,9 +103,21 @@ fun SessionHistoryScreen(
                     val scoringModeLabel = scoringModes
                         .firstOrNull { it.id == session.scoringModeId }
                         ?.getLocalizedName(context)
+                    // Load game zone name from its id (suspend DAO available)
+                    val gameZoneName by produceState<String?>(
+                        initialValue = null,
+                        key1 = session.gameZoneId
+                    ) {
+                        value = try {
+                            gameZoneViewModel.getGameZoneById(session.gameZoneId)?.name
+                        } catch (_: Exception) {
+                            null
+                        }
+                    }
                     SessionHistoryCard(
                         session = session,
                         scoringModeLabel = scoringModeLabel,
+                        gameZoneLabel = gameZoneName,
                         canManageSession = (session.userId == currentUserId),
                         onExportClick = { selectedSession ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -365,6 +380,7 @@ fun SessionHistoryScreen(
 private fun SessionHistoryCard(
     session: Session,
     scoringModeLabel: String? = null,
+    gameZoneLabel: String? = null,
     canManageSession: Boolean,
     onExportClick: (Session) -> Unit,
     onExportPhoto: (Session, String) -> Unit,
@@ -398,21 +414,29 @@ private fun SessionHistoryCard(
             } else {
                 formattedDate
             }
-
-            // Append scoring mode label (e.g., Stroke play, Match play) on the same line as date/time
-            val headerText = if (scoringModeLabel.isNullOrBlank()) {
-                "$displayDate - $formattedTime"
-            } else {
-                "$displayDate - $formattedTime - $scoringModeLabel"
-            }
+            // Header contains only date and time
+            val headerText = "$displayDate - $formattedTime"
             Text(
                 text = headerText,
                 style = MaterialTheme.typography.titleMedium
             )
 
+            // Second line: game zone name and scoring mode label
+            val secondaryLine = listOfNotNull(
+                gameZoneLabel?.takeIf { it.isNotBlank() },
+                scoringModeLabel?.takeIf { it.isNotBlank() }
+            ).joinToString(" - ")
+            if (secondaryLine.isNotBlank()) {
+                Text(
+                    text = secondaryLine,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Second line: duration (value only) + weather + actions (share/edit/delete)
+            // Third line: duration (value only) + weather + actions (share/edit/delete)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically

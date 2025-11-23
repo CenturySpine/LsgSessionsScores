@@ -2,7 +2,6 @@ package fr.centuryspine.lsgscores.data.gamezone
 
 import dagger.hilt.android.scopes.ViewModelScoped
 import fr.centuryspine.lsgscores.data.hole.HoleDao
-import fr.centuryspine.lsgscores.data.preferences.AppPreferences
 import fr.centuryspine.lsgscores.data.session.SessionDao
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -11,12 +10,17 @@ import javax.inject.Inject
 class GameZoneRepository @Inject constructor(
     private val gameZoneDao: GameZoneDao,
     private val holeDao: HoleDao,
-    private val sessionDao: SessionDao,
-    private val appPreferences: AppPreferences
+    private val sessionDao: SessionDao
+    
 ) {
 
     fun getGameZonesByCityId(cityId: Long): Flow<List<GameZone>> =
         gameZoneDao.getGameZonesByCityId(cityId)
+
+    /**
+     * Returns a GameZone by its id, or null if not found.
+     */
+    suspend fun getGameZoneById(id: Long): GameZone? = gameZoneDao.getGameZoneById(id)
 
     suspend fun insert(gameZone: GameZone): Long = gameZoneDao.insert(gameZone)
 
