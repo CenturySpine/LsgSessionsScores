@@ -16,7 +16,6 @@ class HoleRepository @Inject constructor(
     private val gameZoneDao: GameZoneDao,
     private val appPreferences: AppPreferences,
     private val storageHelper: SupabaseStorageHelper,
-    private val imageCacheManager: fr.centuryspine.lsgscores.utils.ImageCacheManager
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -66,7 +65,6 @@ class HoleRepository @Inject constructor(
             val finalStart = startDeferred.await()
             val finalEnd = endDeferred.await()
             val id = holeDao.insert(hole.copy(startPhotoUri = finalStart, endPhotoUri = finalEnd))
-            imageCacheManager.warmHolePhotos(finalStart, finalEnd)
             id
         }
         result
@@ -103,8 +101,7 @@ class HoleRepository @Inject constructor(
         val updated = hole.copy(startPhotoUri = newStartEnd.first, endPhotoUri = newStartEnd.second)
         // Update DB first
         holeDao.update(updated)
-        // Warm new photos in cache
-        imageCacheManager.warmHolePhotos(updated.startPhotoUri, updated.endPhotoUri)
+
         // Best-effort deletions for changed URLs
         val oldStart = existing?.startPhotoUri
         val oldEnd = existing?.endPhotoUri
@@ -129,6 +126,4 @@ class HoleRepository @Inject constructor(
 
     fun getHoleById(id: Long): Flow<Hole> = holeDao.getById(id)
 
-    // Public read by id for session displays (participants)
-    fun getHoleByIdPublic(id: Long): Flow<Hole?> = holeDao.getHoleByIdPublic(id)
 }

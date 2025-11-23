@@ -1,13 +1,14 @@
 package fr.centuryspine.lsgscores.data.gamezone
 
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,11 +19,12 @@ class GameZoneDaoSupabase @Inject constructor(
     private val currentUser: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) : GameZoneDao {
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getGameZonesByCityId(cityId: Long): Flow<List<GameZone>> =
         supabase.auth.sessionStatus.flatMapLatest { status ->
             when (status) {
                 is SessionStatus.Authenticated -> flow {
-                    val uid = currentUser.requireUserId()
+                    currentUser.requireUserId()
                     val list = supabase.postgrest["game_zones"].select {
                         filter { eq("cityid", cityId); }
                         order("name", Order.ASCENDING)
@@ -35,13 +37,13 @@ class GameZoneDaoSupabase @Inject constructor(
         }
 
     override suspend fun getAll(): List<GameZone> {
-        val uid = currentUser.requireUserId()
+        currentUser.requireUserId()
         return supabase.postgrest["game_zones"].select { }.decodeList<GameZone>()
     }
 
     override suspend fun getGameZoneById(id: Long): GameZone? {
         return try {
-            val uid = currentUser.requireUserId()
+            currentUser.requireUserId()
             supabase.postgrest["game_zones"].select {
                 filter { eq("id", id) }
             }.decodeList<GameZone>().firstOrNull()

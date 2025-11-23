@@ -2,19 +2,16 @@ package fr.centuryspine.lsgscores.data.session
 
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseExperimental
-import io.github.jan.supabase.postgrest.postgrest
-
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.realtime.channel
-import io.github.jan.supabase.realtime.realtime
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.realtime.selectAsFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -27,6 +24,7 @@ class SessionDaoSupabase @Inject constructor(
     private val currentUser: fr.centuryspine.lsgscores.data.authuser.CurrentUserProvider
 ) : SessionDao {
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getAll(): Flow<List<Session>> =
         supabase.auth.sessionStatus.flatMapLatest { status ->
             when (status) {
@@ -139,6 +137,7 @@ class SessionDaoSupabase @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getOngoingSessionFlow(): Flow<Session?> =
         supabase.auth.sessionStatus.flatMapLatest { status ->
             when (status) {
@@ -147,6 +146,7 @@ class SessionDaoSupabase @Inject constructor(
             }
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getOngoingSessionFlowForCity(cityId: Long): Flow<Session?> =
         supabase.auth.sessionStatus.flatMapLatest { status ->
             when (status) {

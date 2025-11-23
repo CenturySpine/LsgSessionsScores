@@ -7,8 +7,6 @@ interface HoleDao {
 
     suspend fun getHolesByCityIdList(cityId: Long): List<Hole>
 
-    suspend fun getAll(): List<Hole>
-
     suspend fun insert(hole: Hole): Long
 
     suspend fun update(hole: Hole)
