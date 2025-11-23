@@ -120,6 +120,16 @@ class AppUserDaoSupabase @Inject constructor(
         }
     }
 
+    /**
+     * Returns the current authenticated user's id or null if not authenticated.
+     * Kept here to avoid adding a new dependency surface for retrieving the user id.
+     */
+    fun getCurrentUserId(): String? = try {
+        supabase.auth.currentSessionOrNull()?.user?.id
+    } catch (_: Throwable) {
+        null
+    }
+
     suspend fun getLinkedPlayerId(): Long? {
         // Wait briefly for auth session restoration. On cold start the session can be null for a short time.
         var attempts = 0

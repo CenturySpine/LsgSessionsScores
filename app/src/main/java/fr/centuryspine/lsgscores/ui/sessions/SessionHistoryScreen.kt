@@ -59,6 +59,8 @@ fun SessionHistoryScreen(
     val completedSessions by sessionViewModel.completedSessions.collectAsStateWithLifecycle()
     val scoringModes by sessionViewModel.scoringModes.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    // Current authenticated user id used to decide if actions are visible
+    val currentUserId = remember { sessionViewModel.currentUserIdOrNull() }
     var sessionToDelete by remember { mutableStateOf<Session?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var sessionToEdit by remember { mutableStateOf<Session?>(null) }
@@ -114,6 +116,7 @@ fun SessionHistoryScreen(
                     SessionHistoryCard(
                         session = session,
                         scoringModeLabel = scoringModeLabel,
+                        canManageSession = (session.userId == currentUserId),
                         onExportClick = { selectedSession ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             generateAndSharePdf(context, selectedSession, sessionViewModel)
@@ -375,6 +378,7 @@ fun SessionHistoryScreen(
 private fun SessionHistoryCard(
     session: Session,
     scoringModeLabel: String? = null,
+    canManageSession: Boolean,
     onExportClick: (Session) -> Unit,
     onExportPhoto: (Session, String) -> Unit,
     onDeleteClick: (Session) -> Unit,
@@ -475,103 +479,105 @@ private fun SessionHistoryCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Export menu (Share)
-                var showExportMenu by remember { mutableStateOf(false) }
-                val launchCamera = usePhotoCameraLauncher { photoPath ->
-                    photoPath?.let { onExportPhoto(session, it) }
-                }
-                val launchGallery = usePhotoGalleryLauncher { photoPath ->
-                    photoPath?.let { onExportPhoto(session, it) }
-                }
+                if (canManageSession) {
+                    // Export menu (Share) - visible only to the session owner
+                    var showExportMenu by remember { mutableStateOf(false) }
+                    val launchCamera = usePhotoCameraLauncher { photoPath ->
+                        photoPath?.let { onExportPhoto(session, it) }
+                    }
+                    val launchGallery = usePhotoGalleryLauncher { photoPath ->
+                        photoPath?.let { onExportPhoto(session, it) }
+                    }
 
-                Box {
-                    IconButton(onClick = { showExportMenu = true }) {
+                    Box {
+                        IconButton(onClick = { showExportMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = stringResource(R.string.session_history_export_menu_description)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showExportMenu,
+                            onDismissRequest = { showExportMenu = false }
+                        ) {
+                            // Camera export option
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(stringResource(R.string.session_history_export_camera))
+                                    }
+                                },
+                                onClick = {
+                                    showExportMenu = false
+                                    launchCamera()
+                                }
+                            )
+
+                            // Gallery export option
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(stringResource(R.string.session_history_export_gallery))
+                                    }
+                                },
+                                onClick = {
+                                    showExportMenu = false
+                                    launchGallery()
+                                }
+                            )
+
+                            HorizontalDivider()
+
+                            // PDF export option
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.PictureAsPdf,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(stringResource(R.string.session_history_export_pdf))
+                                    }
+                                },
+                                onClick = {
+                                    showExportMenu = false
+                                    onExportClick(session)
+                                }
+                            )
+                        }
+                    }
+
+                    // Edit button - visible only to the session owner
+                    IconButton(onClick = { onEditClick(session) }) {
                         Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = stringResource(R.string.session_history_export_menu_description)
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.session_history_edit_icon_description)
                         )
                     }
 
-                    DropdownMenu(
-                        expanded = showExportMenu,
-                        onDismissRequest = { showExportMenu = false }
-                    ) {
-                        // Camera export option
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.baseline_camera_alt_24),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.session_history_export_camera))
-                                }
-                            },
-                            onClick = {
-                                showExportMenu = false
-                                launchCamera()
-                            }
-                        )
-
-                        // Gallery export option
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.session_history_export_gallery))
-                                }
-                            },
-                            onClick = {
-                                showExportMenu = false
-                                launchGallery()
-                            }
-                        )
-
-                        HorizontalDivider()
-
-                        // PDF export option
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.PictureAsPdf,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.session_history_export_pdf))
-                                }
-                            },
-                            onClick = {
-                                showExportMenu = false
-                                onExportClick(session)
-                            }
+                    // Delete button - visible only to the session owner
+                    IconButton(onClick = { onDeleteClick(session) }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.session_history_delete_icon_description),
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
-                }
-
-                // Edit button
-                IconButton(onClick = { onEditClick(session) }) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = stringResource(R.string.session_history_edit_icon_description)
-                    )
-                }
-
-                // Delete button
-                IconButton(onClick = { onDeleteClick(session) }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.session_history_delete_icon_description),
-                        tint = MaterialTheme.colorScheme.error
-                    )
                 }
             }
         }
@@ -828,7 +834,7 @@ private fun generateAndSharePdf(
                     1
                 )
 
-            // In strokeplay (id = 1), hide strokes/coups values in the table
+            // In stroke play (id = 1), hide strokes/coups values in the table
             val hideStrokes = (pdfData.session.scoringModeId == 1)
 
             // Helper to wrap text within a max width
@@ -1175,7 +1181,7 @@ private fun generateAndShareImageExport(
             // Get session data and weather info
             val pdfData = sessionViewModel.loadSessionPdfData(session).first()
             val weatherInfo = session.weatherData ?: sessionViewModel.getCurrentWeatherInfo()
-            // In strokeplay (id = 1), hide strokes/coups in the image export
+            // In stroke play (id = 1), hide strokes/coups in the image export
             val hideStrokes = (pdfData.session.scoringModeId == 1)
 
             // Load the base image
