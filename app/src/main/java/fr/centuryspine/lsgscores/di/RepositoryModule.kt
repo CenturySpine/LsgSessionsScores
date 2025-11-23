@@ -94,9 +94,8 @@ object RepositoryModule {
     fun provideGameZoneRepository(
         gameZoneDao: GameZoneDao,
         holeDao: HoleDao,
-        sessionDao: SessionDao,
-        appPreferences: AppPreferences
+        sessionDao: SessionDao
     ): GameZoneRepository {
-        return GameZoneRepository(gameZoneDao, holeDao, sessionDao, appPreferences)
+        return GameZoneRepository(gameZoneDao, holeDao, sessionDao)
     }
 }
