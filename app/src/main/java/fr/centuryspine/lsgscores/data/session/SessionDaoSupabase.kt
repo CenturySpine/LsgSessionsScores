@@ -1,5 +1,6 @@
 package fr.centuryspine.lsgscores.data.session
 
+import fr.centuryspine.lsgscores.data.gamezone.GameZone
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.gotrue.SessionStatus
@@ -29,9 +30,9 @@ class SessionDaoSupabase @Inject constructor(
         supabase.auth.sessionStatus.flatMapLatest { status ->
             when (status) {
                 is SessionStatus.Authenticated -> flow {
-                    val uid = currentUser.requireUserId()
+
                     val list =
-                        supabase.postgrest["sessions"].select { filter { eq("user_id", uid) } }.decodeList<Session>()
+                        supabase.postgrest["sessions"].select().decodeList<Session>()
                     emit(list)
                 }
 
@@ -107,15 +108,17 @@ class SessionDaoSupabase @Inject constructor(
 
     override suspend fun getOngoingSessionForCity(cityId: Long): Session? {
         val uid = currentUser.requireUserId()
+        // Fetch all game zones for the city
+        val zones = supabase.postgrest["game_zones"].select {
+            filter { eq("cityid", cityId) }
+        }.decodeList<GameZone>()
+        val zoneIds = zones.map { it.id }.toSet()
+        if (zoneIds.isEmpty()) return null
+        // Fetch ongoing sessions for user and filter by gameZoneId in memory
         val list = supabase.postgrest["sessions"].select {
-            filter {
-                eq("isongoing", true); eq("cityid", cityId); eq(
-                "user_id",
-                uid
-            )
-            }
+            filter { eq("isongoing", true); eq("user_id", uid) }
         }.decodeList<Session>()
-        return list.firstOrNull()
+        return list.firstOrNull { it.gameZoneId in zoneIds }
     }
 
     override suspend fun clearOngoingSessions() {
@@ -127,12 +130,21 @@ class SessionDaoSupabase @Inject constructor(
     override suspend fun clearOngoingSessionsForCity(cityId: Long) {
         val uid = currentUser.requireUserId()
         val body = buildJsonObject { put("isongoing", JsonPrimitive(false)) }
-        supabase.postgrest["sessions"].update(body) {
-            filter {
-                eq("isongoing", true); eq(
-                "cityid",
-                cityId
-            ); eq("user_id", uid)
+        // Determine sessions to update based on city via game zones
+        val zones = supabase.postgrest["game_zones"].select {
+            filter { eq("cityid", cityId) }
+        }.decodeList<GameZone>()
+        val zoneIds = zones.map { it.id }.toSet()
+        if (zoneIds.isEmpty()) return
+        val sessionsToUpdate = supabase.postgrest["sessions"].select {
+            filter { eq("isongoing", true); eq("user_id", uid) }
+        }.decodeList<Session>()
+            .filter { it.gameZoneId in zoneIds }
+
+        // Update each matching session individually to avoid relying on IN filter support
+        for (s in sessionsToUpdate) {
+            supabase.postgrest["sessions"].update(body) {
+                filter { eq("id", s.id); eq("user_id", uid) }
             }
         }
     }

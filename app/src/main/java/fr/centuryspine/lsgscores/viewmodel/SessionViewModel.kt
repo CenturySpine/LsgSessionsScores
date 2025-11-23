@@ -495,11 +495,18 @@ class SessionViewModel @Inject constructor(
         combine(selectedCityId, refreshCounter) { cityId, _ -> cityId }
             .flatMapLatest { cityId ->
                 if (cityId != null) {
-                    sessionRepository.getAll()
-                        .map { sessions ->
-                            sessions.filter { !it.isOngoing && it.cityId == cityId }
-                                .sortedByDescending { it.dateTime }
-                        }
+                    // We don't have cityId directly on sessions in DB. We must:
+                    // 1) fetch all GameZones for the selected city
+                    // 2) filter sessions whose gameZoneId belongs to this list
+                    combine(
+                        sessionRepository.getAll(),
+                        gameZoneDao.getGameZonesByCityId(cityId)
+                    ) { sessions, zones ->
+                        val zoneIds = zones.map { it.id }.toSet()
+                        sessions
+                            .filter { !it.isOngoing && it.gameZoneId in zoneIds }
+                            .sortedByDescending { it.dateTime }
+                    }
                 } else {
                     // During app startup or when city isn't chosen yet, return empty list
                     // instead of throwing and crashing collectors on other screens

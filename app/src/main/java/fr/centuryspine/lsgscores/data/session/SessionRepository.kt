@@ -15,8 +15,6 @@ class SessionRepository(
 
     fun getById(id: Long): Flow<Session?> = sessionDao.getById(id)
 
-//    fun getRealtimeSessions(): Flow<List<Session>> = sessionDao.getRealtimeSessions()
-
     suspend fun insert(session: Session): Long {
         // Validate that GameZone exists
         val gameZone = gameZoneDao.getGameZoneById(session.gameZoneId)
