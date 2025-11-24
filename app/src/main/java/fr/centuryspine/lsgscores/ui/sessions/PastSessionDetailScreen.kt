@@ -1,20 +1,29 @@
 package fr.centuryspine.lsgscores.ui.sessions
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import fr.centuryspine.lsgscores.ui.components.WeatherSummaryRow
 import fr.centuryspine.lsgscores.ui.sessions.components.SessionHeaderBanner
+import fr.centuryspine.lsgscores.utils.SessionFormatters
 import fr.centuryspine.lsgscores.utils.getLocalizedName
+import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * Read-only screen to display the details of a past (completed) session.
@@ -52,6 +61,63 @@ fun PastSessionDetailScreen(
                 showQr = false,
                 onQrClick = null
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Load game zone name by id using Hilt ViewModel
+            val gameZoneViewModel: GameZoneViewModel = hiltViewModel()
+            val gameZoneLabel by produceState<String?>(initialValue = null, key1 = past.gameZoneId) {
+                value = try {
+                    gameZoneViewModel.getGameZoneById(past.gameZoneId)?.name
+                } catch (_: Exception) {
+                    null
+                }
+            }
+
+            // Info card: line 1 = zone name + start time; line 2 = duration (left) + weather (right)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // First line
+                    val timeText = past.dateTime.format(
+                        DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+                    )
+                    val firstLine = listOfNotNull(
+                        gameZoneLabel?.takeIf { it.isNotBlank() },
+                        timeText
+                    ).joinToString(" - ")
+                    Text(
+                        text = firstLine,
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Second line
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        past.endDateTime?.let { endTime ->
+                            val durationText = SessionFormatters.formatSessionDuration(
+                                context,
+                                past.dateTime,
+                                endTime
+                            )
+                            Text(
+                                text = durationText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        past.weatherData?.let { weather ->
+                            WeatherSummaryRow(weatherInfo = weather, iconSize = 32.dp)
+                        }
+                    }
+                }
+            }
         }
         // Further read-only details will be added later (scores, standings, etc.)
     }

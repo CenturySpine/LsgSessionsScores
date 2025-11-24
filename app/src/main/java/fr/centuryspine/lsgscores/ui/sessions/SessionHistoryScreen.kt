@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,10 +28,10 @@ import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.data.session.Session
 import fr.centuryspine.lsgscores.ui.common.usePhotoCameraLauncher
 import fr.centuryspine.lsgscores.ui.common.usePhotoGalleryLauncher
-import fr.centuryspine.lsgscores.ui.components.WeatherIcon
+import fr.centuryspine.lsgscores.ui.components.WeatherSummaryRow
+import fr.centuryspine.lsgscores.utils.SessionFormatters
 import fr.centuryspine.lsgscores.utils.getLocalizedName
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
-import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -395,6 +394,7 @@ private fun SessionHistoryCard(
     onEditClick: (Session) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -452,18 +452,7 @@ private fun SessionHistoryCard(
             ) {
                 // Duration (only the value, no label), shown if end time exists
                 session.endDateTime?.let { endTime ->
-                    val duration = Duration.between(session.dateTime, endTime)
-                    val hours = duration.toHours()
-                    val minutes = duration.toMinutes() % 60
-                    val durationText = when {
-                        hours > 0 -> if (minutes > 0) stringResource(
-                            R.string.session_history_duration_hours_minutes,
-                            hours,
-                            minutes
-                        ) else stringResource(R.string.session_history_duration_hours, hours)
-
-                        else -> stringResource(R.string.session_history_duration_minutes, minutes)
-                    }
+                    val durationText = SessionFormatters.formatSessionDuration(context, session.dateTime, endTime)
                     Text(
                         text = durationText,
                         style = MaterialTheme.typography.bodyMedium,
@@ -474,27 +463,7 @@ private fun SessionHistoryCard(
                 // Weather info (icon + temperature + wind)
                 session.weatherData?.let { weather ->
                     Spacer(modifier = Modifier.width(12.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        WeatherIcon(
-                            weatherInfo = weather,
-                            size = 32.dp
-                        )
-                        Column {
-                            Text(
-                                text = "${weather.temperature}°C",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "${weather.windSpeedKmh} km/h",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                    WeatherSummaryRow(weatherInfo = weather, iconSize = 32.dp)
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
