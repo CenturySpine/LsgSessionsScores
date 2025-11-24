@@ -6,10 +6,8 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import fr.centuryspine.lsgscores.R
@@ -65,8 +62,7 @@ fun OngoingSessionScreen(
     var showValidateConfirm by remember { mutableStateOf(false) }
     var showGameModeInfo by remember { mutableStateOf(false) }
     var selectedGameModeForInfo by remember { mutableStateOf<HoleGameMode?>(null) }
-    // Affichage du classement : replié par défaut
-    var standingsExpanded by remember { mutableStateOf(false) }
+    // Standings collapse state now handled inside a reusable component
 
 
     // Participant: detect the session end (validated or deleted) via ViewModel events and redirect with a toast
@@ -244,91 +240,10 @@ fun OngoingSessionScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    // Carte unique cliquable pour afficher/masquer
-                    val topTeam = teamStandings.minWithOrNull(
-                        compareBy({ it.totalScore }, { it.totalStrokes })
-                    ) ?: teamStandings.first()
-
-                    Card(
-                        onClick = { standingsExpanded = !standingsExpanded },
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            if (standingsExpanded) {
-                                // En-tête : libellé + chevron vers le bas
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.standings_table_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                // Contenu de la table sans sa propre carte et sans titre
-                                StandingsTable(
-                                    standings = teamStandings,
-                                    wrapInCard = false,
-                                    showTitle = false
-                                )
-                            } else {
-                                // Vue repliée : libellé + équipe leader sur la même ligne + chevron droit
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.standings_table_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    // Bloc leader
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.standings_table_title_lead),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = topTeam.teamName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f)
-                                        )
-
-                                        Text(
-                                            text = topTeam.totalScore.toString(),
-                                            style = MaterialTheme.typography.bodyMedium,
-
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Right
-                                        )
-                                    }
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    // Reusable collapsible standings card
+                    fr.centuryspine.lsgscores.ui.sessions.components.CollapsibleStandingsCard(
+                        standings = teamStandings
+                    )
                 }
                 if (!isParticipant) {
                     Button(

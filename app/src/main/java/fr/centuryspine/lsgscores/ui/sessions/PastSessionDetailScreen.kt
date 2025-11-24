@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import fr.centuryspine.lsgscores.ui.components.WeatherSummaryRow
+import fr.centuryspine.lsgscores.ui.sessions.components.CollapsibleStandingsCard
 import fr.centuryspine.lsgscores.ui.sessions.components.SessionHeaderBanner
 import fr.centuryspine.lsgscores.utils.SessionFormatters
 import fr.centuryspine.lsgscores.utils.getLocalizedName
@@ -39,6 +40,10 @@ fun PastSessionDetailScreen(
     val context = LocalContext.current
     val completedSessions by sessionViewModel.completedSessions.collectAsStateWithLifecycle()
     val scoringModes by sessionViewModel.scoringModes.collectAsStateWithLifecycle()
+    // Past session standings collected via dedicated ViewModel entry point
+    val pastStandings by sessionViewModel
+        .getStandingsForSession(sessionId)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val session = completedSessions.firstOrNull { it.id == sessionId }
 
@@ -117,6 +122,15 @@ fun PastSessionDetailScreen(
                         }
                     }
                 }
+            }
+
+            // Standings for the past session with collapsible/expandable behavior
+            if (pastStandings.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                CollapsibleStandingsCard(
+                    standings = pastStandings,
+                    initiallyExpanded = false
+                )
             }
         }
         // Further read-only details will be added later (scores, standings, etc.)
