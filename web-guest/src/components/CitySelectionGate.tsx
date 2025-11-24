@@ -63,16 +63,12 @@ export default function CitySelectionGate({children}: { children: React.ReactNod
         <>
             {children}
 
-            {hasSession && (needsCitySelection || checking) && (
+            {hasSession && needsCitySelection && (
                 <div style={{
                     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50
                 }}>
-                    {checking ? (
-                        <div style={{background: '#fff', padding: 24, borderRadius: 12}}>Chargement…</div>
-                    ) : (
-                        <CitySelectionDialog onCompleted={checkLink}/>
-                    )}
+                    <CitySelectionDialog onCompleted={checkLink}/>
                 </div>
             )}
         </>
