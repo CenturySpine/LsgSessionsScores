@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import fr.centuryspine.lsgscores.ui.components.WeatherSummaryRow
 import fr.centuryspine.lsgscores.ui.sessions.components.CollapsibleStandingsCard
+import fr.centuryspine.lsgscores.ui.sessions.components.PlayedHoleCard
 import fr.centuryspine.lsgscores.ui.sessions.components.SessionHeaderBanner
 import fr.centuryspine.lsgscores.utils.SessionFormatters
 import fr.centuryspine.lsgscores.utils.getLocalizedName
@@ -43,6 +44,14 @@ fun PastSessionDetailScreen(
     // Past session standings collected via dedicated ViewModel entry point
     val pastStandings by sessionViewModel
         .getStandingsForSession(sessionId)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    // Teams for the session (used to render per-team scores per hole)
+    val teamsForSession by sessionViewModel
+        .getTeamsWithPlayersForSession(sessionId)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    // Played holes with scores for this specific session
+    val playedHoles by sessionViewModel
+        .getPlayedHolesWithScoresForSession(sessionId)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val session = completedSessions.firstOrNull { it.id == sessionId }
@@ -131,6 +140,36 @@ fun PastSessionDetailScreen(
                     standings = pastStandings,
                     initiallyExpanded = false
                 )
+            }
+
+            // Played holes list (read-only): same visuals as ongoing but without click/delete
+            if (playedHoles.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = fr.centuryspine.lsgscores.R.string.ongoing_session_label_holes_played.let { resId ->
+                        // Use stringResource indirectly to avoid adding new labels
+                        androidx.compose.ui.res.stringResource(resId)
+                    },
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                // Add a small space between the section title and the list
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Ensure vertical spacing between hole cards, like in the ongoing screen
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    playedHoles.asReversed().forEach { ph ->
+                        PlayedHoleCard(
+                            playedHole = ph,
+                            teamsForSession = teamsForSession,
+                            scoringModeId = past.scoringModeId,
+                            // In past session details, do not highlight the latest hole
+                            isLatest = false,
+                            onClick = null,
+                            onDelete = null
+                        )
+                    }
+                }
             }
         }
         // Further read-only details will be added later (scores, standings, etc.)
