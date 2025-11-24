@@ -10,7 +10,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,8 +33,6 @@ import fr.centuryspine.lsgscores.utils.getLocalizedName
 import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import kotlinx.coroutines.flow.flowOf
-import java.time.format.DateTimeFormatter
-import java.util.*
 import fr.centuryspine.lsgscores.utils.getLocalizedDescription as getGameModeLocalizedDescription
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -224,85 +220,18 @@ fun OngoingSessionScreen(
                     }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Encart: date (gauche)
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(12.dp),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = session.dateTime.format(
-                                    DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.FRENCH)
-                                ),
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-
-                    // Encart: mode de scoring (centre)
-                    Card(
-                        onClick = { showScoringModeInfo = true },
-                        enabled = currentScoringMode != null,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            currentScoringMode?.let { scoringMode ->
-                                Text(
-                                    text = scoringMode.getLocalizedName(LocalContext.current),
-                                    style = MaterialTheme.typography.titleSmall.copy(fontStyle = FontStyle.Italic),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-
-                    // Encart: QR (droite)
-                    if (!isParticipant) {
-                        Card(
-                            onClick = { navController.navigate("session_qr") },
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.QrCode,
-                                    contentDescription = "Afficher le QR de la session",
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
+                // Reusable header banner: date + scoring mode + optional QR
+                fr.centuryspine.lsgscores.ui.sessions.components.SessionHeaderBanner(
+                    dateTime = session.dateTime,
+                    scoringModeLabel = currentScoringMode?.getLocalizedName(context),
+                    onScoringModeClick = if (currentScoringMode != null) {
+                        { showScoringModeInfo = true }
+                    } else null,
+                    showQr = !isParticipant,
+                    onQrClick = if (!isParticipant) {
+                        { navController.navigate("session_qr") }
+                    } else null
+                )
 
                 // Team standings table (only show if we have data)
                 if (teamStandings.isNotEmpty()) {
