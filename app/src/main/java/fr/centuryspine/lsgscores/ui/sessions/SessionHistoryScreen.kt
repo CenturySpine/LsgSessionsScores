@@ -42,6 +42,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionHistoryScreen(
+    navController: androidx.navigation.NavController,
     sessionViewModel: SessionViewModel
 ) {
     val completedSessions by sessionViewModel.completedSessions.collectAsStateWithLifecycle()
@@ -119,6 +120,11 @@ fun SessionHistoryScreen(
                         scoringModeLabel = scoringModeLabel,
                         gameZoneLabel = gameZoneName,
                         canManageSession = (session.userId == currentUserId),
+                        onCardClick = { selectedSession ->
+                            // Navigate to the new read-only past session details screen
+                            // Important: use actual string interpolation so the route matches the graph
+                            navController.navigate("past_session_detail/${selectedSession.id}")
+                        },
                         onExportClick = { selectedSession ->
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                             ExportHelpers.generateAndSharePdf(context, selectedSession, sessionViewModel)
@@ -382,6 +388,7 @@ private fun SessionHistoryCard(
     scoringModeLabel: String? = null,
     gameZoneLabel: String? = null,
     canManageSession: Boolean,
+    onCardClick: (Session) -> Unit,
     onExportClick: (Session) -> Unit,
     onExportPhoto: (Session, String) -> Unit,
     onDeleteClick: (Session) -> Unit,
@@ -389,7 +396,9 @@ private fun SessionHistoryCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onCardClick(session) },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
