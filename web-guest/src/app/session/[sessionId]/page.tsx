@@ -1,9 +1,64 @@
 "use client"
-import { useEffect, useMemo, useState } from "react"
-import { useParams, useSearchParams, useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
-import { clearLastSession } from "@/lib/resume"
+import {useEffect, useMemo, useState} from "react"
+import {useParams, useRouter, useSearchParams} from "next/navigation"
+import {supabase} from "@/lib/supabaseClient"
+import {clearLastSession} from "@/lib/resume"
 import Link from "next/link"
+
+// All UI texts must be localized (EN/FR) and comments in English only.
+const messages = {
+    en: {
+        title_ongoing: "Ongoing session",
+        title_past: "Past session",
+        loading: "Loading…",
+        invalid_session: "Invalid session",
+        not_found: "Session not found",
+        load_error: "Loading error",
+        selected_team_prefix: "You will enter scores for",
+        ranking: "Ranking",
+        missing_scores_banner: "Missing scores — ranking is not up to date",
+        no_scores_yet: "No scores entered yet.",
+        holes: "Holes",
+        qr_hint: "Scan the QR code and come back here to enter your team's score",
+        no_hole_defined: "No hole defined for this session.",
+        position: "Position",
+        hole_label: "Hole",
+        par: "par",
+        no_scores_for_hole_yet: "No score for this hole yet.",
+        missing_prefix: "Missing",
+        score_singular: "score",
+        score_plural: "scores",
+        session_unavailable_redirect: "This session is no longer available. Redirecting to home…",
+    },
+    fr: {
+        title_ongoing: "Session en cours",
+        title_past: "Session terminée",
+        loading: "Chargement…",
+        invalid_session: "Session invalide",
+        not_found: "Session introuvable",
+        load_error: "Erreur de chargement",
+        selected_team_prefix: "Vous allez saisir les scores pour",
+        ranking: "Classement",
+        missing_scores_banner: "Scores manquants — classement non à jour",
+        no_scores_yet: "Pas encore de scores saisis.",
+        holes: "Trous",
+        qr_hint: "Scannez le QR code et revenez ici pour saisir le score de votre équipe",
+        no_hole_defined: "Aucun trou défini pour cette session.",
+        position: "Position",
+        hole_label: "Trou",
+        par: "par",
+        no_scores_for_hole_yet: "Aucun score saisi pour ce trou pour l'instant.",
+        missing_prefix: "Manque",
+        score_singular: "score",
+        score_plural: "scores",
+        session_unavailable_redirect: "Cette session n'est plus disponible. Redirection vers l'accueil…",
+    },
+} as const
+
+type Locale = keyof typeof messages
+type MessageKey = keyof typeof messages["en"]
+const locale: Locale = typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("fr") ? "fr" : "en"
+const t = (k: MessageKey) => messages[locale][k]
 
 type SessionRow = {
   id: number
@@ -78,7 +133,7 @@ export default function OngoingSessionPage() {
 
       const idNum = Number(sessionIdStr)
       if (!sessionIdStr || Number.isNaN(idNum)) {
-        setError("Session invalide")
+          setError(t("invalid_session"))
         setLoading(false)
         return
       }
@@ -92,7 +147,7 @@ export default function OngoingSessionPage() {
           .limit(1)
 
         if (sErr) {
-          if (!cancelled) setError(sErr.message ?? "Erreur de chargement")
+            if (!cancelled) setError(sErr.message ?? t("load_error"))
           return
         }
         const s = (sRows ?? [])[0] as unknown as SessionRow | undefined
@@ -103,7 +158,7 @@ export default function OngoingSessionPage() {
           } catch {
             try { clearLastSession() } catch { /* noop */ }
           }
-          setError("Session introuvable")
+            setError(t("not_found"))
           setLoading(false)
           return
         }
@@ -116,7 +171,7 @@ export default function OngoingSessionPage() {
           .eq("sessionid", idNum)
           .order("id", { ascending: true })
         if (tErr) {
-          if (!cancelled) setError(tErr.message ?? "Erreur de chargement")
+            if (!cancelled) setError(tErr.message ?? t("load_error"))
           return
         }
         const tlist = (tRows ?? []) as TeamRow[]
@@ -134,7 +189,7 @@ export default function OngoingSessionPage() {
             .select("id, name")
             .in("id", pids)
           if (pErr) {
-            if (!cancelled) setError(pErr.message ?? "Erreur de chargement")
+              if (!cancelled) setError(pErr.message ?? t("load_error"))
             return
           }
           const map: Record<number, PlayerRow> = Object.fromEntries(
@@ -152,7 +207,7 @@ export default function OngoingSessionPage() {
           .eq("sessionid", idNum)
           .order("position", { ascending: true })
         if (phErr) {
-          if (!cancelled) setError(phErr.message ?? "Erreur de chargement")
+            if (!cancelled) setError(phErr.message ?? t("load_error"))
           return
         }
         const phList = (phRows ?? []) as PlayedHoleRow[]
@@ -165,7 +220,7 @@ export default function OngoingSessionPage() {
           .select("id, name, par, gamezoneid")
           .eq("gamezoneid", gzId)
         if (hErr) {
-          if (!cancelled) setError(hErr.message ?? "Erreur de chargement")
+            if (!cancelled) setError(hErr.message ?? t("load_error"))
           return
         }
         const hMap: Record<number, HoleRow> = Object.fromEntries(
@@ -181,7 +236,7 @@ export default function OngoingSessionPage() {
             .select("id, playedholeid, teamid, strokes")
             .in("playedholeid", phIds)
           if (scErr) {
-            if (!cancelled) setError(scErr.message ?? "Erreur de chargement")
+              if (!cancelled) setError(scErr.message ?? t("load_error"))
             return
           }
           if (!cancelled) setScores((scRows ?? []) as PlayedHoleScoreRow[])
@@ -189,7 +244,7 @@ export default function OngoingSessionPage() {
           if (!cancelled) setScores([])
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Erreur de chargement")
+          if (!cancelled) setError(e?.message ?? t("load_error"))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -201,10 +256,14 @@ export default function OngoingSessionPage() {
     }
   }, [sessionIdStr])
 
-  // Polling refresh for played holes and scores (no full page reload)
+    // Polling refresh for played holes and scores (no full page reload).
+    // IMPORTANT: For past sessions (read-only view), we do not redirect and we disable polling.
   useEffect(() => {
     const idNum = Number(sessionIdStr)
     if (!sessionIdStr || Number.isNaN(idNum)) return
+      // Wait until session is loaded; for past sessions, do not poll
+      if (!session) return
+      if (!session.isongoing) return
     let cancelled = false
     const interval = setInterval(async () => {
       if (cancelled) return
@@ -226,7 +285,7 @@ export default function OngoingSessionPage() {
           } catch {
             try { clearLastSession() } catch { /* noop */ }
           }
-          setError("Cette session n'est plus disponible. Redirection vers l'accueil…")
+            setError(t("session_unavailable_redirect"))
           clearInterval(interval)
           setTimeout(() => {
             try {
@@ -277,7 +336,7 @@ export default function OngoingSessionPage() {
       cancelled = true
       clearInterval(interval)
     }
-  }, [sessionIdStr])
+  }, [sessionIdStr, session?.isongoing, session])
 
   // Aggregate scores per team
   const ranking = useMemo(() => {
@@ -291,7 +350,7 @@ export default function OngoingSessionPage() {
     return arr
   }, [teams, scores])
 
-  // Note: on ne met plus en avant un "trou en cours" côté site.
+    // Note: We do not have an explicit "currently playing hole" on the website.
 
   // Build quick lookup: playedHoleId -> { teamId -> strokes }
   const scoresByPlayedHoleId = useMemo(() => {
@@ -325,43 +384,44 @@ export default function OngoingSessionPage() {
   }, [playedHoles, scoresByPlayedHoleId, teams.length])
 
   const selectedTeam = useMemo(() => teams.find((t) => t.id === selectedTeamId) ?? null, [teams, selectedTeamId])
+    const isPast = useMemo(() => !!(session && !session.isongoing), [session])
 
   return (
     <main style={{ padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <h1 style={{ fontSize: 20, marginBottom: 8 }}>Session en cours</h1>
+          <h1 style={{fontSize: 20, marginBottom: 8}}>{t(isPast ? "title_past" : "title_ongoing")}</h1>
       </div>
 
       {error && (
         <div style={{ color: "#b91c1c", background: "#fee2e2", padding: 8, borderRadius: 8 }}>{error}</div>
       )}
 
-      {loading && <div style={{ color: "#6b7280" }}>Chargement…</div>}
+        {loading && <div style={{color: "#6b7280"}}>{t("loading")}</div>}
 
       {!loading && session && (
         <div style={{ display: "grid", gap: 16 }}>
           {/* Selected team */}
-          {selectedTeam && (
+            {selectedTeam && !isPast && (
             <div style={{ background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 8, padding: 12 }}>
-              <div style={{ color: "#6b7280", fontSize: 12 }}>Vous allez saisir les scores pour</div>
+                <div style={{color: "#6b7280", fontSize: 12}}>{t("selected_team_prefix")}</div>
               <div style={{ fontWeight: 600 }}>{teamLabel(selectedTeam)}</div>
             </div>
           )}
 
-          {/* Plus de section "Trou en cours" — on met en avant le dernier trou ajouté dans la liste ci-dessous. */}
+            {/* No dedicated "current hole" section — we optionally emphasize the latest added hole (ongoing sessions only). */}
 
           {/* Ranking */}
           <div style={{ background: "#f9fafb", padding: 12, borderRadius: 8 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <div style={{ fontWeight: 600 }}>Classement</div>
+                <div style={{fontWeight: 600}}>{t("ranking")}</div>
               {hasMissingScores && (
                 <div style={{ color: "#b91c1c", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 6, padding: "2px 8px", fontSize: 12 }}>
-                  Scores manquants — classement non à jour
+                    {t("missing_scores_banner")}
                 </div>
               )}
             </div>
             {ranking.length === 0 ? (
-              <div style={{ color: "#6b7280" }}>Pas encore de scores saisis.</div>
+                <div style={{color: "#6b7280"}}>{t("no_scores_yet")}</div>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
                 {ranking.map((r, idx) => {
@@ -392,29 +452,33 @@ export default function OngoingSessionPage() {
           {/* Holes list */}
           <div style={{ background: "#f3f4f6", padding: 12, borderRadius: 8 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <div style={{ fontWeight: 600 }}>Trous</div>
-              {!selectedTeamId && (
+                <div style={{fontWeight: 600}}>{t("holes")}</div>
+                {!selectedTeamId && !isPast && (
                 <div style={{ color: "#b45309", background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 6, padding: "4px 8px", fontSize: 12 }}>
-                  Scannez le QR code et revenez ici pour saisir le score de votre équipe
+                    {t("qr_hint")}
                 </div>
               )}
             </div>
             {playedHoles.length === 0 ? (
-              <div style={{ color: "#6b7280" }}>Aucun trou défini pour cette session.</div>
+                <div style={{color: "#6b7280"}}>{t("no_hole_defined")}</div>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
                 {[...playedHoles].reverse().map((ph, idx) => {
-                  // Mettre le dernier trou ajouté (premier de la liste) en avant
-                  const isLatest = idx === 0
-                  const href = selectedTeamId ? `/session/${session!.id}/hole/${ph.id}?teamId=${selectedTeamId}` : null
+                    // Emphasize the latest added hole only if the session is ongoing
+                    const isLatest = !isPast && idx === 0
+                    // In read-only (past) view, disable navigation to score entry
+                    const href = !isPast && selectedTeamId ? `/session/${session!.id}/hole/${ph.id}?teamId=${selectedTeamId}` : null
                   const holeScores = scoresByPlayedHoleId[ph.id] ?? {}
                   const missing = missingCountByPlayedHoleId[ph.id] ?? 0
                   const availableTeams = teams.filter((t) => holeScores[t.id] !== undefined)
                   const content = (
                     <div style={{ color: "inherit", textDecoration: "none" }}>
-                      <div style={{ color: "#6b7280", fontSize: 12 }}>Position {ph.position}</div>
+                        <div style={{color: "#6b7280", fontSize: 12}}>{t("position")} {ph.position}</div>
                       <div style={{ fontWeight: 500 }}>
-                        {holesById[ph.holeid]?.name ?? `Trou #${ph.holeid}`} <span style={{ color: "#6b7280", fontWeight: 400 }}>(par {holesById[ph.holeid]?.par ?? "?"})</span>
+                          {holesById[ph.holeid]?.name ?? `${t("hole_label")} #${ph.holeid}`} <span style={{
+                          color: "#6b7280",
+                          fontWeight: 400
+                      }}>({t("par")} {holesById[ph.holeid]?.par ?? "?"})</span>
                       </div>
                       <div style={{ marginTop: 8 }}>
                         {availableTeams.length > 0 ? (
@@ -431,11 +495,11 @@ export default function OngoingSessionPage() {
                             })}
                           </div>
                         ) : (
-                          <div style={{ color: "#6b7280", fontSize: 12 }}>Aucun score saisi pour ce trou pour l'instant.</div>
+                            <div style={{color: "#6b7280", fontSize: 12}}>{t("no_scores_for_hole_yet")}</div>
                         )}
                         {missing > 0 && (
                           <div style={{ color: "#b91c1c", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 6, padding: "2px 6px", fontSize: 12, display: "inline-block", marginTop: 6 }}>
-                            Manque {missing} score{missing > 1 ? "s" : ""}
+                              {t("missing_prefix")} {missing} {missing > 1 ? t("score_plural") : t("score_singular")}
                           </div>
                         )}
                       </div>
