@@ -17,7 +17,6 @@ object WeatherModule {
     @Provides
     @Singleton
     fun provideWeatherRepository(@ApplicationContext context: Context): WeatherRepository {
-        val apiKey = context.getString(R.string.openweather_api_key)
-        return WeatherRepository(apiKey)
+        return WeatherRepository()
     }
 }

@@ -6,7 +6,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.math.roundToInt
 
-class WeatherRepository(private val apiKey: String) {
+class WeatherRepository() {
 
     companion object {
         private const val BASE_URL_OPEN_METEO = "https://archive-api.open-meteo.com/"
