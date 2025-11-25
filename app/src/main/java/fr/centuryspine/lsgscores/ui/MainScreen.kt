@@ -390,7 +390,7 @@ fun MainScreen(
                     HoleListScreen(navController, holeViewModel, currentUserProvider)
                 }
                 composable(DrawerNavItem.SessionHistory.route) {
-                    SessionHistoryScreen(sessionViewModel)
+                    SessionHistoryScreen(navController, sessionViewModel)
                 }
 
                 // Other routes (unchanged)
@@ -452,6 +452,18 @@ fun MainScreen(
                 }
                 composable("join_session_scan") {
                     JoinSessionScannerScreen(navController)
+                }
+                // Past session detail (read-only) route
+                composable(
+                    route = "past_session_detail/{sessionId}",
+                    arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: 0L
+                    PastSessionDetailScreen(
+                        navController = navController,
+                        sessionViewModel = sessionViewModel,
+                        sessionId = sessionId
+                    )
                 }
                 composable(
                     route = "join_session_pick_team/{sessionId}",

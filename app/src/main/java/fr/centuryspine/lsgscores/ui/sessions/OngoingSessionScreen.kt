@@ -2,26 +2,21 @@ package fr.centuryspine.lsgscores.ui.sessions
 
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import fr.centuryspine.lsgscores.R
@@ -35,8 +30,6 @@ import fr.centuryspine.lsgscores.utils.getLocalizedName
 import fr.centuryspine.lsgscores.viewmodel.HoleViewModel
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
 import kotlinx.coroutines.flow.flowOf
-import java.time.format.DateTimeFormatter
-import java.util.*
 import fr.centuryspine.lsgscores.utils.getLocalizedDescription as getGameModeLocalizedDescription
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,8 +62,7 @@ fun OngoingSessionScreen(
     var showValidateConfirm by remember { mutableStateOf(false) }
     var showGameModeInfo by remember { mutableStateOf(false) }
     var selectedGameModeForInfo by remember { mutableStateOf<HoleGameMode?>(null) }
-    // Affichage du classement : replié par défaut
-    var standingsExpanded by remember { mutableStateOf(false) }
+    // Standings collapse state now handled inside a reusable component
 
 
     // Participant: detect the session end (validated or deleted) via ViewModel events and redirect with a toast
@@ -224,85 +216,18 @@ fun OngoingSessionScreen(
                     }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Encart: date (gauche)
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(12.dp),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = session.dateTime.format(
-                                    DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.FRENCH)
-                                ),
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-
-                    // Encart: mode de scoring (centre)
-                    Card(
-                        onClick = { showScoringModeInfo = true },
-                        enabled = currentScoringMode != null,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            currentScoringMode?.let { scoringMode ->
-                                Text(
-                                    text = scoringMode.getLocalizedName(LocalContext.current),
-                                    style = MaterialTheme.typography.titleSmall.copy(fontStyle = FontStyle.Italic),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-
-                    // Encart: QR (droite)
-                    if (!isParticipant) {
-                        Card(
-                            onClick = { navController.navigate("session_qr") },
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.QrCode,
-                                    contentDescription = "Afficher le QR de la session",
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
+                // Reusable header banner: date + scoring mode + optional QR
+                fr.centuryspine.lsgscores.ui.sessions.components.SessionHeaderBanner(
+                    dateTime = session.dateTime,
+                    scoringModeLabel = currentScoringMode?.getLocalizedName(context),
+                    onScoringModeClick = if (currentScoringMode != null) {
+                        { showScoringModeInfo = true }
+                    } else null,
+                    showQr = !isParticipant,
+                    onQrClick = if (!isParticipant) {
+                        { navController.navigate("session_qr") }
+                    } else null
+                )
 
                 // Team standings table (only show if we have data)
                 if (teamStandings.isNotEmpty()) {
@@ -315,91 +240,10 @@ fun OngoingSessionScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    // Carte unique cliquable pour afficher/masquer
-                    val topTeam = teamStandings.minWithOrNull(
-                        compareBy({ it.totalScore }, { it.totalStrokes })
-                    ) ?: teamStandings.first()
-
-                    Card(
-                        onClick = { standingsExpanded = !standingsExpanded },
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            if (standingsExpanded) {
-                                // En-tête : libellé + chevron vers le bas
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.standings_table_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                // Contenu de la table sans sa propre carte et sans titre
-                                StandingsTable(
-                                    standings = teamStandings,
-                                    wrapInCard = false,
-                                    showTitle = false
-                                )
-                            } else {
-                                // Vue repliée : libellé + équipe leader sur la même ligne + chevron droit
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.standings_table_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    // Bloc leader
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.standings_table_title_lead),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = topTeam.teamName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f)
-                                        )
-
-                                        Text(
-                                            text = topTeam.totalScore.toString(),
-                                            style = MaterialTheme.typography.bodyMedium,
-
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Right
-                                        )
-                                    }
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    // Reusable collapsible standings card
+                    fr.centuryspine.lsgscores.ui.sessions.components.CollapsibleStandingsCard(
+                        standings = teamStandings
+                    )
                 }
                 if (!isParticipant) {
                     Button(
@@ -427,85 +271,20 @@ fun OngoingSessionScreen(
 
                     playedHoles.asReversed().forEachIndexed { index, playedHole ->
                         val isLatest = index == 0
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .then(
-                                    if (isLatest) Modifier.border(
-                                        BorderStroke(2.dp, Color(0xFF10B981)),
-                                        shape = MaterialTheme.shapes.medium
-                                    ) else Modifier
-                                )
-                                .clickable { navController.navigate("played_hole_score/${playedHole.playedHoleId}") },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isLatest) Color(0xFFECFDF5) else MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = "${stringResource(R.string.ongoing_session_hole_prefix)} ${playedHole.holeName} (${playedHole.gameModeName})",
-                                        style = MaterialTheme.typography.titleSmall
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Column {
-                                        teamsForSession.forEach { teamWithPlayers ->
-                                            val name = listOfNotNull(
-                                                teamWithPlayers.player1?.name,
-                                                teamWithPlayers.player2?.name
-                                            ).joinToString(" & ")
-                                            val displayName = name.ifBlank { "Equipe ${teamWithPlayers.team.id}" }
-                                            val result = playedHole.teamResults.find { it.teamName == name }
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(
-                                                    text = displayName,
-                                                    color = if (result == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    text = ": ",
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                // Display rule: in Stroke Play (scoring mode id = 1), only show the calculated score.
-                                                // For other modes, show both values as "strokes - calculatedScore".
-                                                val scoreText = when {
-                                                    result == null -> "-"
-                                                    currentScoringMode?.id == 1 -> "${result.calculatedScore}"
-                                                    else -> "${result.strokes} - ${result.calculatedScore}"
-                                                }
-                                                Text(
-                                                    text = scoreText,
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                            }
-                                        }
-                                    }
+                        // Reusable played hole card
+                        fr.centuryspine.lsgscores.ui.sessions.components.PlayedHoleCard(
+                            playedHole = playedHole,
+                            teamsForSession = teamsForSession,
+                            scoringModeId = currentScoringMode?.id,
+                            isLatest = isLatest,
+                            onClick = { navController.navigate("played_hole_score/${playedHole.playedHoleId}") },
+                            onDelete = if (!isParticipant) {
+                                {
+                                    playedHoleToDelete = playedHole.playedHoleId
+                                    showDeletePlayedHoleConfirm = true
                                 }
-
-                                if (!isParticipant) {
-                                    IconButton(
-                                        onClick = {
-                                            playedHoleToDelete = playedHole.playedHoleId
-                                            showDeletePlayedHoleConfirm = true
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = stringResource(R.string.ongoing_session_delete_hole_icon_description),
-                                            tint = MaterialTheme.colorScheme.error
-                                        )
-                                    }
-                                } else {
-                                    // No delete action in participant mode
-                                }
-                            }
-                        }
+                            } else null
+                        )
                     }
                 }
 

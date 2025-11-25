@@ -425,6 +425,64 @@ class SessionViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /**
+     * Played holes with scores for a specific session (including past sessions).
+     * Mirrors the structure used for ongoing sessions but parameterized by sessionId.
+     */
+    fun getPlayedHolesWithScoresForSession(sessionId: Long): Flow<List<PlayedHoleDisplay>> {
+        return sessionRepository.getById(sessionId).flatMapLatest { session ->
+            if (session == null) {
+                flowOf(emptyList())
+            } else {
+                combine(
+                    playedHoleRepository.getPlayedHolesForSession(session.id),
+                    playedHoleScoreRepository.getAllRealtime(),
+                    teamRepository.getTeamsWithPlayersForSession(session.id),
+                    holeRepository.getHolesByCityId(session.cityId),
+                    holeGameModeRepository.getAll()
+                ) { playedHoles, allScores, teamsWithPlayers, holesInCity, gameModes ->
+                    if (playedHoles.isEmpty()) return@combine emptyList()
+
+                    val holeNameById = holesInCity
+                        .filter { it.gameZoneId == session.gameZoneId }
+                        .associateBy({ it.id }, { it.name })
+                    val gameModeNameById = gameModes.associateBy({ it.id }, { it.name })
+
+                    val playedHoleIds = playedHoles.map { it.id }.toHashSet()
+                    val scoresForSession = allScores.filter { it.playedHoleId in playedHoleIds }
+                    val scoresByPlayedHole = scoresForSession.groupBy { it.playedHoleId }
+
+                    playedHoles.sortedBy { it.position }.map { ph ->
+                        val scores = scoresByPlayedHole[ph.id].orEmpty()
+                        val strokesByTeam: Map<Long, Int> = scores.associate { it.teamId to it.strokes }
+                        val calculatedScores = computeScoresForScoringMode(strokesByTeam, session.scoringModeId)
+
+                        val teamResults = teamsWithPlayers.mapNotNull { teamWithPlayers ->
+                            val teamId = teamWithPlayers.team.id
+                            val strokes = strokesByTeam[teamId]
+                            val calc = calculatedScores[teamId]
+                            if (strokes != null && calc != null) {
+                                val teamName = listOfNotNull(
+                                    teamWithPlayers.player1?.name,
+                                    teamWithPlayers.player2?.name
+                                ).joinToString(" & ")
+                                TeamResult(teamName, strokes, calc)
+                            } else null
+                        }
+
+                        PlayedHoleDisplay(
+                            playedHoleId = ph.id,
+                            holeName = holeNameById[ph.holeId] ?: "Unknown Hole",
+                            position = ph.position,
+                            gameModeName = gameModeNameById[ph.gameModeId] ?: "Unknown Mode",
+                            teamResults = teamResults
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val currentScoringModeInfo: StateFlow<ScoringMode?> =
         ongoingSession.flatMapLatest { session ->
@@ -700,10 +758,97 @@ class SessionViewModel @Inject constructor(
     }
 
     fun computeScoresForCurrentScoringMode(strokesByTeam: Map<Long, Int>): Map<Long, Int> {
+        // Delegate to the generic scoring helper so logic is shared between
+        // ongoing sessions and past session computations.
+        return computeScoresForScoringMode(strokesByTeam, scoringModeId)
+    }
 
-        val scoringId = scoringModeId ?: return emptyMap()
-        val calculator: ScoringCalculator = ScoringCalculatorFactory.getCalculatorById(scoringId)
+    /**
+     * Generic helper to compute calculated scores map for a given scoring mode id.
+     * This is reused for both ongoing session flows and past session standings.
+     */
+    private fun computeScoresForScoringMode(
+        strokesByTeam: Map<Long, Int>,
+        scoringId: Int?
+    ): Map<Long, Int> {
+        val id = scoringId ?: return emptyMap()
+        val calculator: ScoringCalculator = ScoringCalculatorFactory.getCalculatorById(id)
         return calculator.calculateScores(strokesByTeam)
+    }
+
+    /**
+     * Compute team standings for a specific session id (including past sessions).
+     * The flow emits updates if underlying data changes.
+     */
+    fun getStandingsForSession(sessionId: Long): Flow<List<TeamStanding>> {
+        return sessionRepository.getById(sessionId).flatMapLatest { session ->
+            if (session == null) {
+                flowOf(emptyList())
+            } else {
+                combine(
+                    playedHoleRepository.getPlayedHolesForSession(sessionId),
+                    playedHoleScoreRepository.getAllRealtime(),
+                    teamRepository.getTeamsWithPlayersForSession(sessionId)
+                ) { playedHoles, allScores, teamsWithPlayers ->
+                    if (playedHoles.isEmpty()) return@combine emptyList()
+
+                    // Filter scores to those belonging to this session
+                    val playedHoleIds = playedHoles.map { it.id }.toHashSet()
+                    val scoresForSession = allScores.filter { it.playedHoleId in playedHoleIds }
+
+                    // Aggregate totals by team id across holes
+                    val totalsByTeamId = mutableMapOf<Long, Pair<Int, Int>>() // teamId -> (strokes, score)
+
+                    playedHoles.sortedBy { it.position }.forEach { ph ->
+                        val holeScores = scoresForSession.filter { it.playedHoleId == ph.id }
+                        if (holeScores.isEmpty()) return@forEach
+                        val strokesByTeam = holeScores.associate { it.teamId to it.strokes }
+                        val calculatedByTeam = computeScoresForScoringMode(strokesByTeam, session.scoringModeId)
+
+                        holeScores.forEach { s ->
+                            val prev = totalsByTeamId[s.teamId] ?: (0 to 0)
+                            val calc = calculatedByTeam[s.teamId] ?: 0
+                            totalsByTeamId[s.teamId] = (prev.first + s.strokes) to (prev.second + calc)
+                        }
+                    }
+
+                    if (totalsByTeamId.isEmpty()) return@combine emptyList()
+
+                    // Build human-readable team names
+                    val nameByTeamId: Map<Long, String> = teamsWithPlayers.associate { twp ->
+                        val team = twp.team
+                        val p1 = twp.player1?.name ?: ""
+                        val p2Suffix = twp.player2?.name?.let { " & $it" } ?: ""
+                        val joined = "$p1$p2Suffix"
+                        // Avoid non-localized fallback words; use an id marker only
+                        val display = joined.takeIf { it.isNotBlank() } ?: "#${team.id}"
+                        team.id to display
+                    }
+
+                    // Convert to standings list
+                    val rawStandings = totalsByTeamId.map { (teamId, totals) ->
+                        TeamStanding(
+                            teamName = nameByTeamId[teamId] ?: "#$teamId",
+                            totalStrokes = totals.first,
+                            totalScore = totals.second,
+                            position = 0,
+                            scoringModeId = session.scoringModeId
+                        )
+                    }
+
+                    // Sort and assign positions based on session scoring mode
+                    val sorted = when (session.scoringModeId) {
+                        1 -> rawStandings.sortedBy { it.totalStrokes }
+                        else -> rawStandings.sortedWith(
+                            compareByDescending<TeamStanding> { it.totalScore }
+                                .thenBy { it.totalStrokes }
+                        )
+                    }
+
+                    sorted.mapIndexed { index, s -> s.copy(position = index + 1) }
+                }
+            }
+        }
     }
 
     fun deleteSessionAndAllData(session: Session, onSessionDeleted: () -> Unit = {}) {

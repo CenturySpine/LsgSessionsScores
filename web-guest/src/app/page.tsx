@@ -23,11 +23,6 @@ export default function Home() {
   const [resume, setResume] = useState<{ sid: string; tid: number } | null>(null)
   const [canResume, setCanResume] = useState(false)
   const [recheck, setRecheck] = useState(0)
-    const [apkInfo, setApkInfo] = useState<{
-        version: string | null;
-        download_link: string | null;
-        release_note_link: string | null
-    } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -71,43 +66,7 @@ export default function Home() {
     else setResume(null)
   }, [userId])
 
-    // Récupère la version d'application courante (is_current = true) depuis Supabase pour afficher le lien APK
-    useEffect(() => {
-        let cancelled = false
-        ;(async () => {
-            try {
-                const {data: rows, error} = await supabase
-                    .from("app_versions")
-                    .select("version, download_link, release_note_link")
-                    .eq("is_current", true)
-                    .limit(1)
-                if (cancelled) return
-                if (error) {
-                    setApkInfo(null)
-                    return
-                }
-                const row = Array.isArray(rows) && rows.length > 0 ? rows[0] as {
-                    version?: string;
-                    download_link?: string;
-                    release_note_link?: string;
-                } : null
-                if (row) {
-                    setApkInfo({
-                        version: row.version ?? null,
-                        download_link: row.download_link ?? null,
-                        release_note_link: row.release_note_link ?? null
-                    })
-                } else {
-                    setApkInfo(null)
-                }
-            } catch {
-                if (!cancelled) setApkInfo(null)
-            }
-        })()
-        return () => {
-            cancelled = true
-        }
-    }, [])
+    // Download info moved to /download page
 
   useEffect(() => {
     let cancelled = false
@@ -210,10 +169,7 @@ export default function Home() {
         </>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center', maxWidth: 560 }}>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>Bienvenue</div>
-          <p style={{ color: '#6b7280', margin: 0 }}>
-            Rejoignez une session en scannant le QR code fourni par votre animateur.
-          </p>
+            <div style={{fontSize: 18, fontWeight: 500}}>Rejoindre une session</div>
           <Link
             href="/join"
             style={{
@@ -227,112 +183,16 @@ export default function Home() {
               textDecoration: 'none',
               boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}
+            aria-label="Scanner un QR de session"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 7h16v10H4z" stroke="currentColor" strokeWidth="2" />
-              <path d="M7 10h3v3H7zM14 10h3v3h-3z" fill="currentColor" />
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                   fill="currentColor">
+                  <title>qrcode</title>
+                  <path
+                      d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H11V13H9V11M15,11H17V13H19V11H21V13H19V15H21V19H19V21H17V19H13V21H11V17H15V15H17V13H15V11M19,19V15H17V19H19M15,3H21V9H15V3M17,5V7H19V5H17M3,3H9V9H3V3M5,5V7H7V5H5M3,15H9V21H3V15M5,17V19H7V17H5Z"/>
             </svg>
-            <span style={{ fontWeight: 500 }}>Scanner un QR de session</span>
           </Link>
 
-            <div
-                style={{
-                    width: '100%',
-                    border: '1px solid #133659',
-                    backgroundColor: '#dce7f2',
-                    borderRadius: 8,
-                    padding: 12,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                    alignItems: 'center'
-                }}
-            >
-                {apkInfo?.download_link ? (
-                <a
-                    href="https://play.google.com/store/apps/details?id=fr.centuryspine.lsgscores"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        background: '#2563eb',
-                        color: '#fff',
-                        padding: '10px 16px',
-                        borderRadius: 8,
-                        textDecoration: 'none',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                    }}
-                >
-                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                              strokeLinejoin="round"/>
-                        <path d="M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <span
-                        style={{fontWeight: 500}}>Télécharger la version de test pour Android {apkInfo.version ? `(v${apkInfo.version})` : ''}</span>
-                </a>
-                ) : (
-                // Fallback discret quand la version n'est pas disponible
-                    <div style={{color: '#6b7280', fontSize: 14}}>
-                        Lien de téléchargement indisponible pour le moment.
-                </div>
-                )}
-                <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    fontSize: 11,
-                    color: "black",
-                    textDecoration: 'none'
-                }}>
-                    Vous devez être inscrit à la campagne de test pour télécharger la version.
-                    <br/>
-                    Cliquez sur le lien ci-dessus : si la page google play s'affiche, c'est que vous êtes inscrit.
-                    <br/>
-                    Dans le cas contraire, demandez au responsable de l'application ou téléchargez l'apk depuis GitHub avec le lien ci-dessous.
-                </span>
-                {apkInfo?.release_note_link ? (
-                    <a
-                        href={apkInfo.release_note_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            color: '#2563eb',
-                            textDecoration: 'none'
-                        }}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none"
-                             xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 6h8v12H8z" stroke="currentColor" strokeWidth="2"/>
-                            <path d="M10 11h6M10 14h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
-                        <span>Notes de version</span>
-                    </a>
-                ) : null}
-
-                {apkInfo?.download_link ? (
-                    <a href={apkInfo.download_link}
-                       target="_blank"
-                       rel="noopener noreferrer">
-                    <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        fontSize: 10,
-                        color: 'black',
-                        textDecoration: 'none'
-                    }}>
-                        Télécharger l'apk depuis GitHub
-                    </span>
-                    </a>
-                ) : null}
-            </div>
           {resume && canResume && (
             <div style={{ marginTop: 12 }}>
               <Link
