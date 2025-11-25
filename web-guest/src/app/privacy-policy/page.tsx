@@ -1,7 +1,3 @@
-export const metadata = {
-  title: 'Privacy Policy • Lsgscores',
-}
-
 export default function PrivacyPolicyPage() {
   return (
     <main style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>

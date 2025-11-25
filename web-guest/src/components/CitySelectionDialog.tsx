@@ -1,3 +1,5 @@
+// noinspection ExceptionCaughtLocallyJS
+
 "use client"
 
 import {useEffect, useMemo, useState} from "react"
@@ -5,7 +7,7 @@ import {supabase} from "@/lib/supabaseClient"
 
 type CityRow = { id: number; name: string }
 
-export default function CitySelectionDialog({onCompleted}: { onCompleted: () => void }) {
+export default ({onCompleted}: { onCompleted: () => void }) => {
     const [cities, setCities] = useState<CityRow[]>([])
     const [selectedCityId, setSelectedCityId] = useState<number | null>(null)
     const [loading, setLoading] = useState(false)

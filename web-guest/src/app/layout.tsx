@@ -2,11 +2,6 @@ import Header from "@/components/Header"
 import CitySelectionGate from "@/components/CitySelectionGate"
 import {SpeedInsights} from "@vercel/speed-insights/next"
 
-export const metadata = {
-  title: 'Lsgscores (Web)',
-  description: 'Web app for Lsgscores',
-}
-
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
