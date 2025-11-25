@@ -96,6 +96,12 @@ export default function Header() {
         router.push("/profile")
     }
 
+    const goDownload = () => {
+        // Close the menu then navigate to the download page
+        setOpen(false)
+        router.push("/download")
+    }
+
   const signOut = async () => {
     // keep last session resume persisted across logout; do not clear here
     await supabase.auth.signOut()
@@ -181,6 +187,21 @@ export default function Header() {
                   </svg>
                 </button>
 
+                  <button onClick={goDownload} role="menuitem" style={{
+                      width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
+                  }}>
+                      <span style={{color: "#111827"}}>Telechargement</span>
+                      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none"
+                           xmlns="http://www.w3.org/2000/svg">
+                          <title>download</title>
+                          <path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"/>
+                          <path d="M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                  </button>
+
                   <button onClick={goProfile} role="menuitem" style={{
                       width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                       padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
@@ -208,7 +229,7 @@ export default function Header() {
             )}
           </div>
         ) : (
-          // Si non connecté: pas de bouton dans le header (le bouton est centré sur la page)
+            // If not authenticated: no button in the header (the button is centered on the page)
           <div style={{ width: 200 }} />
         )}
       </div>
