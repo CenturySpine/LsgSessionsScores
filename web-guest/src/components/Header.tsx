@@ -14,6 +14,32 @@ export default function Header() {
   const btnRef = useRef<HTMLButtonElement | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
+    // Simple EN/FR localization for header labels (no hard-coded user-facing strings)
+    const messages = {
+        en: {
+            loading: "Loading…",
+            user: "User",
+            home: "Home",
+            download: "Download",
+            profile: "Profile",
+            logout: "Log Out",
+            sessionHistory: "Session history",
+        },
+        fr: {
+            loading: "Chargement…",
+            user: "Utilisateur",
+            home: "Accueil",
+            download: "Téléchargement",
+            profile: "Profil",
+            logout: "Déconnexion",
+            sessionHistory: "Historique des sessions",
+        },
+    } as const
+    type Locale = keyof typeof messages
+    type MessageKey = keyof typeof messages["en"]
+    const locale: Locale = typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("fr") ? "fr" : "en"
+    const t = (k: MessageKey) => messages[locale][k]
+
   useEffect(() => {
     let mounted = true
     const safety = setTimeout(() => { if (mounted) setLoading(false) }, 4000)
@@ -109,6 +135,12 @@ export default function Header() {
     router.replace("/auth")
   }
 
+    // Navigate to the session history page
+    const goSessionHistory = () => {
+        setOpen(false)
+        router.push("/session/history")
+    }
+
   return (
     <header style={{
       display: "flex",
@@ -127,7 +159,7 @@ export default function Header() {
 
       <div style={{ position: "relative" }}>
         {loading ? (
-          <span style={{ color: "#6b7280" }}>Chargement…</span>
+            <span style={{color: "#6b7280"}}>{t("loading")}</span>
         ) : email ? (
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
@@ -172,7 +204,7 @@ export default function Header() {
                 zIndex: 50
               }}>
                 <div style={{ padding: "12px 14px", borderBottom: "1px solid #F3F4F6" }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{displayName ?? "Utilisateur"}</div>
+                    <div style={{fontWeight: 600, fontSize: 14, marginBottom: 2}}>{displayName ?? t("user")}</div>
                   <div style={{ fontSize: 12, color: "#6B7280" }}>{email}</div>
                 </div>
 
@@ -180,7 +212,7 @@ export default function Header() {
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
                 }}>
-                  <span style={{ color: "#111827" }}>Home Page</span>
+                    <span style={{color: "#111827"}}>{t("home")}</span>
                   <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                     <title>home</title>
                     <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
@@ -191,7 +223,7 @@ export default function Header() {
                       width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                       padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
                   }}>
-                      <span style={{color: "#111827"}}>Telechargement</span>
+                      <span style={{color: "#111827"}}>{t("download")}</span>
                       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none"
                            xmlns="http://www.w3.org/2000/svg">
                           <title>download</title>
@@ -202,11 +234,24 @@ export default function Header() {
                       </svg>
                   </button>
 
+                  <button onClick={goSessionHistory} role="menuitem" style={{
+                      width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
+                  }}>
+                      <span style={{color: "#111827"}}>{t("sessionHistory")}</span>
+                      <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                           aria-hidden="true">
+                          <title>history</title>
+                          <path d="M13 3a9 9 0 100 18 9 9 0 000-18zm1 9.59l2.3 2.3-1.41 1.41L12 13V7h2v4.59z"
+                                fill="currentColor"/>
+                      </svg>
+                  </button>
+
                   <button onClick={goProfile} role="menuitem" style={{
                       width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                       padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
                   }}>
-                      <span style={{color: "#111827"}}>Profile</span>
+                      <span style={{color: "#111827"}}>{t("profile")}</span>
                       <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                            aria-hidden="true">
                           <title>profile</title>
@@ -219,7 +264,7 @@ export default function Header() {
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer"
                 }}>
-                  <span style={{ color: "#111827" }}>Log Out</span>
+                    <span style={{color: "#111827"}}>{t("logout")}</span>
                   <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                     <title>logout</title>
                     <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12M4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" />
