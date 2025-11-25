@@ -16,6 +16,8 @@ const messages = {
         load_error: "Loading error",
         selected_team_prefix: "You will enter scores for",
         ranking: "Ranking",
+        score_label: "Score",
+        strokes_label: "Strokes",
         missing_scores_banner: "Missing scores — ranking is not up to date",
         no_scores_yet: "No scores entered yet.",
         holes: "Holes",
@@ -39,6 +41,8 @@ const messages = {
         load_error: "Erreur de chargement",
         selected_team_prefix: "Vous allez saisir les scores pour",
         ranking: "Classement",
+        score_label: "Score",
+        strokes_label: "Coups",
         missing_scores_banner: "Scores manquants — classement non à jour",
         no_scores_yet: "Pas encore de scores saisis.",
         holes: "Trous",
@@ -338,20 +342,6 @@ export default function OngoingSessionPage() {
     }
   }, [sessionIdStr, session?.isongoing, session])
 
-  // Aggregate scores per team
-  const ranking = useMemo(() => {
-    const totals = new Map<number, number>()
-    for (const t of teams) totals.set(t.id, 0)
-    for (const s of scores) {
-      totals.set(s.teamid, (totals.get(s.teamid) ?? 0) + (s.strokes ?? 0))
-    }
-    const arr = teams.map((t) => ({ team: t, total: totals.get(t.id) ?? 0 }))
-    arr.sort((a, b) => a.total - b.total)
-    return arr
-  }, [teams, scores])
-
-    // Note: We do not have an explicit "currently playing hole" on the website.
-
   // Build quick lookup: playedHoleId -> { teamId -> strokes }
   const scoresByPlayedHoleId = useMemo(() => {
     const map: Record<number, Record<number, number>> = {}
@@ -361,6 +351,130 @@ export default function OngoingSessionPage() {
     }
     return map
   }, [scores])
+
+    // Scoring helpers and aggregates (totals and per-hole points) based on session scoring mode
+    const {
+        isStrokePlay,
+        pointsByPlayedHoleId,
+        ranking,
+    } = useMemo(() => {
+        // Determine scoring mode
+        const scoringId = session?.scoringmodeid ?? null
+        const isStrokePlayMode = scoringId === 1 // 1 = Stroke Play (see supabase/sql seed)
+
+        // Build quick lookup for hole -> team -> strokes already computed above (scoresByPlayedHoleId)
+
+        // Compute per-hole points depending on scoring mode
+        const pointsPerHole: Record<number, Record<number, number>> = {}
+
+        const awardMatchPlay = (holeScores: Record<number, number>): Record<number, number> => {
+            // Lowest unique strokes gets 1 point, others 0
+            const entries = Object.entries(holeScores)
+            if (entries.length === 0) return {}
+            const minVal = Math.min(...entries.map(([, v]) => v))
+            const winners = entries.filter(([, v]) => v === minVal).map(([k]) => Number(k))
+            const isUnique = winners.length === 1
+            const res: Record<number, number> = {}
+            for (const [k] of entries) res[Number(k)] = isUnique && Number(k) === winners[0] ? 1 : 0
+            return res
+        }
+
+        const awardRedistribution = (holeScores: Record<number, number>): Record<number, number> => {
+            // See seed description. Implement per hole redistribution.
+            const entries = Object.entries(holeScores).map(([k, v]) => ({teamId: Number(k), strokes: v}))
+            if (entries.length === 0) return {}
+            // Group by strokes ascending
+            entries.sort((a, b) => a.strokes - b.strokes)
+            const groups: { strokes: number; teamIds: number[] }[] = []
+            for (const e of entries) {
+                const last = groups[groups.length - 1]
+                if (!last || last.strokes !== e.strokes) groups.push({strokes: e.strokes, teamIds: [e.teamId]})
+                else last.teamIds.push(e.teamId)
+            }
+            const res: Record<number, number> = {}
+            for (const e of entries) res[e.teamId] = 0
+            if (groups.length === 0) return res
+            const first = groups[0]
+            if (first.teamIds.length >= 3) {
+                // Three or more tied for first: nobody scores
+                return res
+            }
+            if (first.teamIds.length === 2) {
+                // Two tied for first: each gets 1 pt
+                for (const id of first.teamIds) res[id] = 1
+                // Solo second (if any) gets 1 pt
+                const second = groups[1]
+                if (second && second.teamIds.length === 1) res[second.teamIds[0]] = (res[second.teamIds[0]] ?? 0) + 1
+                return res
+            }
+            // Solo first: 2 pts
+            res[first.teamIds[0]] = 2
+            const second = groups[1]
+            if (second && second.teamIds.length === 1) res[second.teamIds[0]] = (res[second.teamIds[0]] ?? 0) + 1
+            return res
+        }
+
+        for (const ph of playedHoles) {
+            const holeScores = scoresByPlayedHoleId[ph.id] ?? {}
+            if (Object.keys(holeScores).length === 0) continue
+            let points: Record<number, number>
+            if (isStrokePlayMode) {
+                // Use strokes as score to keep a unified label "score" while showing only one number for stroke play
+                points = {...holeScores}
+            } else if (scoringId === 2) {
+                points = awardMatchPlay(holeScores)
+            } else if (scoringId === 3) {
+                points = awardRedistribution(holeScores)
+            } else {
+                // Default fallback: 0 points
+                points = {}
+                for (const tid of Object.keys(holeScores)) points[Number(tid)] = 0
+            }
+            pointsPerHole[ph.id] = points
+        }
+
+        // Aggregate totals by team
+        const totals = teams.map((t) => ({team: t, totalStrokes: 0, totalPoints: 0}))
+        const totalStrokesById: Record<number, number> = {}
+        const totalPointsById: Record<number, number> = {}
+        for (const t of teams) {
+            totalStrokesById[t.id] = 0;
+            totalPointsById[t.id] = 0
+        }
+
+        // Sum strokes
+        for (const s of scores) {
+            totalStrokesById[s.teamid] = (totalStrokesById[s.teamid] ?? 0) + (s.strokes ?? 0)
+        }
+        // Sum points
+        for (const ph of playedHoles) {
+            const pts = pointsPerHole[ph.id] ?? {}
+            for (const [tidStr, p] of Object.entries(pts)) {
+                const tid = Number(tidStr)
+                totalPointsById[tid] = (totalPointsById[tid] ?? 0) + (p ?? 0)
+            }
+        }
+        for (const entry of totals) {
+            entry.totalStrokes = totalStrokesById[entry.team.id] ?? 0
+            entry.totalPoints = isStrokePlayMode ? entry.totalStrokes : (totalPointsById[entry.team.id] ?? 0)
+        }
+
+        // Sort ranking based on mode
+        const rankingArr = [...totals]
+        if (isStrokePlayMode) {
+            rankingArr.sort((a, b) => a.totalStrokes - b.totalStrokes)
+        } else {
+            rankingArr.sort((a, b) => (b.totalPoints - a.totalPoints) || (a.totalStrokes - b.totalStrokes))
+        }
+
+        return {
+            isStrokePlay: isStrokePlayMode,
+            pointsByPlayedHoleId: pointsPerHole,
+            ranking: rankingArr,
+        }
+    }, [session?.scoringmodeid, playedHoles, scoresByPlayedHoleId, teams, scores])
+
+    // Note: We do not have an explicit "currently playing hole" on the website.
 
   // Missing scores per hole and global flag
   const missingCountByPlayedHoleId = useMemo(() => {
@@ -441,7 +555,20 @@ export default function OngoingSessionPage() {
                         <div style={{ color: "#6b7280", fontSize: 12 }}>#{idx + 1}</div>
                         <div style={{ fontWeight: 500 }}>{teamLabel(r.team)}</div>
                       </div>
-                      <div style={{ fontVariantNumeric: "tabular-nums" }}>{r.total}</div>
+                        {isStrokePlay ? (
+                            // Stroke Play: show a single number (score = strokes)
+                            <div style={{fontVariantNumeric: "tabular-nums"}}>{r.totalStrokes}</div>
+                        ) : (
+                            // Other modes: show Score and Strokes
+                            <div style={{textAlign: "right"}}>
+                                <div style={{fontWeight: 600, fontVariantNumeric: "tabular-nums"}}>
+                                    {t("score_label")} {r.totalPoints}
+                                </div>
+                                <div style={{color: "#6b7280", fontSize: 12, fontVariantNumeric: "tabular-nums"}}>
+                                    {t("strokes_label")} {r.totalStrokes}
+                                </div>
+                            </div>
+                        )}
                     </li>
                   )
                 })}
@@ -469,8 +596,9 @@ export default function OngoingSessionPage() {
                     // In read-only (past) view, disable navigation to score entry
                     const href = !isPast && selectedTeamId ? `/session/${session!.id}/hole/${ph.id}?teamId=${selectedTeamId}` : null
                   const holeScores = scoresByPlayedHoleId[ph.id] ?? {}
+                    const holePoints = pointsByPlayedHoleId[ph.id] ?? {}
                   const missing = missingCountByPlayedHoleId[ph.id] ?? 0
-                  const availableTeams = teams.filter((t) => holeScores[t.id] !== undefined)
+                    const availableTeams = teams.filter((team) => holeScores[team.id] !== undefined)
                   const content = (
                     <div style={{ color: "inherit", textDecoration: "none" }}>
                         <div style={{color: "#6b7280", fontSize: 12}}>{t("position")} {ph.position}</div>
@@ -483,13 +611,36 @@ export default function OngoingSessionPage() {
                       <div style={{ marginTop: 8 }}>
                         {availableTeams.length > 0 ? (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                            {availableTeams.map((t) => {
-                              const val = holeScores[t.id] as number
-                              const isSelTeam = selectedTeamId === t.id
+                              {availableTeams.map((team) => {
+                                  const val = holeScores[team.id] as number
+                                  const isSelTeam = selectedTeamId === team.id
                               return (
-                                <div key={t.id} style={{ background: isSelTeam ? "#EEF2FF" : "#F3F4F6", border: isSelTeam ? "1px solid #6366F1" : "1px solid #E5E7EB", borderRadius: 12, padding: "2px 8px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                                  <span style={{ color: "#374151" }}>{teamLabel(t)}</span>
-                                  <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{val}</span>
+                                  <div key={team.id} style={{
+                                      background: isSelTeam ? "#EEF2FF" : "#F3F4F6",
+                                      border: isSelTeam ? "1px solid #6366F1" : "1px solid #E5E7EB",
+                                      borderRadius: 12,
+                                      padding: "2px 8px",
+                                      fontSize: 12,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: 8
+                                  }}>
+                                      <span style={{color: "#374151"}}>{teamLabel(team)}</span>
+                                      {isStrokePlay ? (
+                                          // Stroke Play: single value (score = strokes)
+                                          <span
+                                              style={{fontWeight: 600, fontVariantNumeric: "tabular-nums"}}>{val}</span>
+                                      ) : (
+                                          // Other modes: show Score and Strokes
+                                          <span style={{display: "inline-flex", alignItems: "center", gap: 6}}>
+                                      <span style={{fontWeight: 600, fontVariantNumeric: "tabular-nums"}}>
+                                        {t("score_label")} {holePoints[team.id] ?? 0}
+                                      </span>
+                                      <span style={{color: "#6b7280", fontVariantNumeric: "tabular-nums"}}>
+                                        {t("strokes_label")} {val}
+                                      </span>
+                                    </span>
+                                      )}
                                 </div>
                               )
                             })}
