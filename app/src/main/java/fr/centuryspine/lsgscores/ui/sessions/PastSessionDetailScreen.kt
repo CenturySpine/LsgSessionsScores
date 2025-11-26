@@ -1,21 +1,28 @@
 package fr.centuryspine.lsgscores.ui.sessions
 
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dagger.hilt.android.EntryPointAccessors
+import fr.centuryspine.lsgscores.R
+import fr.centuryspine.lsgscores.ui.common.RemoteImageEntryPoint
 import fr.centuryspine.lsgscores.ui.components.WeatherSummaryRow
 import fr.centuryspine.lsgscores.ui.sessions.components.CollapsibleStandingsCard
 import fr.centuryspine.lsgscores.ui.sessions.components.PlayedHoleCard
@@ -24,6 +31,7 @@ import fr.centuryspine.lsgscores.utils.SessionFormatters
 import fr.centuryspine.lsgscores.utils.getLocalizedName
 import fr.centuryspine.lsgscores.viewmodel.GameZoneViewModel
 import fr.centuryspine.lsgscores.viewmodel.SessionViewModel
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -77,6 +85,35 @@ fun PastSessionDetailScreen(
             )
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            // Upload photos to Supabase Storage (Sessions bucket) — button under the header
+            val coroutineScope = rememberCoroutineScope()
+            val pickMultipleLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetMultipleContents()
+            ) { uris: List<Uri> ->
+                if (uris.isNotEmpty()) {
+                    val entryPoint = EntryPointAccessors.fromApplication(
+                        context.applicationContext,
+                        RemoteImageEntryPoint::class.java
+                    )
+                    val storage = entryPoint.supabaseStorageHelper()
+                    coroutineScope.launch {
+                        uris.forEach { u ->
+                            runCatching { storage.uploadSessionPhoto(sessionId, u) }
+                                .onFailure { t -> Log.w("PastSession", "Upload failed for $u", t) }
+                        }
+                    }
+                }
+            }
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                IconButton(onClick = { pickMultipleLauncher.launch("image/*") }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                        contentDescription = stringResource(id = R.string.past_session_upload_photos_description)
+                    )
+                }
+            }
 
             // Load game zone name by id using Hilt ViewModel
             val gameZoneViewModel: GameZoneViewModel = hiltViewModel()
@@ -146,7 +183,7 @@ fun PastSessionDetailScreen(
             if (playedHoles.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = fr.centuryspine.lsgscores.R.string.ongoing_session_label_holes_played.let { resId ->
+                    text = R.string.ongoing_session_label_holes_played.let { resId ->
                         // Use stringResource indirectly to avoid adding new labels
                         androidx.compose.ui.res.stringResource(resId)
                     },

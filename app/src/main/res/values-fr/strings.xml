@@ -13,4 +13,7 @@
     <string name="ongoing_session_welcome_generic">Bienvenue !</string>
     <string name="standings_table_title">Classement</string>
     <string name="standings_table_title_lead">1ere place :</string>
+
+    <!-- PastSessionDetailScreen -->
+    <string name="past_session_upload_photos_description">Ajouter des photos de la session</string>
 </resources>

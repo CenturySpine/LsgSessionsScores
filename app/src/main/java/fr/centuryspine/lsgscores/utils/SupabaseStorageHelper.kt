@@ -5,16 +5,16 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.webkit.MimeTypeMap
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import fr.centuryspine.lsgscores.BuildConfig
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
+import java.io.File
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import fr.centuryspine.lsgscores.BuildConfig
-import java.io.File
-import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
-import androidx.core.net.toUri
 
 @Singleton
 class SupabaseStorageHelper @Inject constructor(
@@ -23,6 +23,7 @@ class SupabaseStorageHelper @Inject constructor(
 ) {
     private val playersBucketName: String = BuildConfig.SUPABASE_BUCKET_PLAYERS
     private val holesBucketName: String = BuildConfig.SUPABASE_BUCKET_HOLES
+    private val sessionsBucketName: String = BuildConfig.SUPABASE_BUCKET_SESSIONS
 
     suspend fun uploadPlayerPhoto(uri: Uri): String {
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
@@ -37,6 +38,17 @@ class SupabaseStorageHelper @Inject constructor(
         }
         val path = "hole_${segment}_${UUID.randomUUID()}.$ext"
         return uploadToBucket(uri, holesBucketName, path)
+    }
+
+    /**
+     * Upload a session photo into the Sessions bucket.
+     * The object path always contains the session id for organization: "Session/<id>/<uuid>.<ext>".
+     * Returns the public URL of the uploaded object (signed at render time if bucket is private).
+     */
+    suspend fun uploadSessionPhoto(sessionId: Long, uri: Uri): String {
+        val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
+        val path = "${sessionId}/photo_${UUID.randomUUID()}.${ext}"
+        return uploadToBucket(uri, sessionsBucketName, path)
     }
 
     suspend fun deletePlayerPhotoByUrl(publicUrl: String): Boolean {

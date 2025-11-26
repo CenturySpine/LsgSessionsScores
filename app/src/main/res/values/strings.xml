@@ -100,6 +100,9 @@
     <string name="hole_form_button_cancel">Cancel</string>
     <string name="hole_form_button_save">Save</string>
 
+    <!-- PastSessionDetailScreen -->
+    <string name="past_session_upload_photos_description">Upload session photos</string>
+
     <!-- SessionCreationScreen -->
     <string name="session_creation_label_date">Date</string>
     <string name="session_creation_label_session_type">Session type</string>
