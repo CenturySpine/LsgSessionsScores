@@ -196,6 +196,27 @@ fun PastSessionDetailScreen(
             // Confirmation dialog state for photo deletion in carousel
             var showDeleteConfirm by remember { mutableStateOf(false) }
 
+            // Favorite photo banner (full-width) displayed above thumbnails if present
+            // We detect a favorite by checking if the filename starts with "fav_"
+            val favoritePhotoUrl = remember(sessionPhotos) {
+                sessionPhotos.firstOrNull { url ->
+                    val name = url.substringAfterLast('/')
+                    name.startsWith(prefix = "fav_", ignoreCase = true)
+                }
+            }
+
+            favoritePhotoUrl?.let { favUrl ->
+                RemoteImage(
+                    url = favUrl,
+                    // Reuse existing localized description
+                    contentDescription = stringResource(id = R.string.session_carousel_image_content_description),
+                    modifier = Modifier.fillMaxWidth(),
+                    // Ensure the image takes the full available width while preserving aspect ratio
+                    contentScale = ContentScale.FillWidth
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
