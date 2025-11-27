@@ -183,7 +183,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showOutdatedDialogAndExit(info: AppVersionRow) {
-        val downloadUrl = info.download_link
+        val downloadUrl = "https://play.google.com/store/apps/details?id=fr.centuryspine.lsgscores"
         val message = buildString {
             append("Votre version de l'application n'est pas à jour.\n\n")
             append("Version attendue: ${info.version ?: "?"}\n")
