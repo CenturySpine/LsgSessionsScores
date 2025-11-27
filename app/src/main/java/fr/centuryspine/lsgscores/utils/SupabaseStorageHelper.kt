@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fr.centuryspine.lsgscores.BuildConfig
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.storage.BucketApi
 import io.github.jan.supabase.storage.storage
 import java.io.File
 import java.util.*
@@ -29,6 +30,61 @@ class SupabaseStorageHelper @Inject constructor(
         val ext = detectExtension(context.contentResolver, uri) ?: "jpg"
         val path = "player_${UUID.randomUUID()}.$ext"
         return uploadToBucket(uri, playersBucketName, path)
+    }
+
+    /**
+     * Mark a given session photo (provided as its public URL) as the favorite photo for the session.
+     * This is implemented by ensuring that exactly one object under "<sessionId>/" has a filename
+     * containing the tag "fav_" (e.g. "<sessionId>/fav_photo_xxx.jpg").
+     * - If a previous favorite exists, it is renamed to a non-favorite name.
+     * - If the provided photo is already favorite, this call is a no-op and succeeds.
+     * Returns the public URL of the resulting favorite object on success, or null on failure.
+     */
+    suspend fun markSessionPhotoAsFavorite(sessionId: Long, publicUrl: String): String? {
+        return try {
+            val parsed = parseBucketAndObjectFromPublicUrl(publicUrl) ?: return null
+            val (bucketInUrl, objectPath) = parsed
+            // Ensure we operate on the sessions bucket
+            if (!bucketInUrl.equals(sessionsBucketName, ignoreCase = true)) return null
+
+            val bucketRef = client.storage.from(bucketInUrl)
+
+            val fileName = objectPath.substringAfterLast('/')
+            objectPath.substringBeforeLast('/', missingDelimiterValue = "")
+            val sessionPrefix = sessionId.toString()
+            // Defensive: ensure the provided path matches the requested session prefix
+            if (!objectPath.startsWith("$sessionPrefix/")) return null
+
+            // If already marked as favorite, return as-is
+            if (fileName.startsWith("fav_")) {
+                return bucketRef.publicUrl(objectPath)
+            }
+
+            // Locate existing favorite in the same session directory
+            val items = try {
+                bucketRef.list(sessionPrefix)
+            } catch (t: Throwable) {
+                emptyList()
+            }
+            val currentFavRelName = items.firstOrNull { (it.name ?: "").startsWith("fav_") }?.name
+            // If there is an existing favorite and it's not the target, rename it to a non-favorite name
+            if (!currentFavRelName.isNullOrBlank() && currentFavRelName != fileName) {
+                val ext = getFileExtension(currentFavRelName) ?: "jpg"
+                val newNonFavName = "photo_${UUID.randomUUID()}.$ext"
+                val fromPath = "$sessionPrefix/$currentFavRelName"
+                val toPath = "$sessionPrefix/$newNonFavName"
+                safeMoveObject(bucketRef, fromPath, toPath)
+            }
+
+            // Rename the target to a favorite name
+            val targetExt = getFileExtension(fileName) ?: "jpg"
+            val newFavPath = "$sessionPrefix/fav_photo_${UUID.randomUUID()}.$targetExt"
+            safeMoveObject(bucketRef, objectPath, newFavPath)
+            bucketRef.publicUrl(newFavPath)
+        } catch (t: Throwable) {
+            Log.w("Storage", "Failed to mark favorite for $publicUrl", t)
+            null
+        }
     }
 
     suspend fun uploadHolePhoto(type: PhotoType, uri: Uri): String {
@@ -167,6 +223,61 @@ class SupabaseStorageHelper @Inject constructor(
         } catch (_: Throwable) {
             null
         }
+    }
+
+    // --- Helpers for public URL parsing and object operations ---
+    private fun parseBucketAndObjectFromPublicUrl(publicUrl: String): Pair<String, String>? {
+        return try {
+            val marker = "/storage/v1/object/"
+            val start = publicUrl.indexOf(marker)
+            if (start == -1) return null
+            val after = publicUrl.substring(start + marker.length)
+            val firstSlash = after.indexOf('/')
+            if (firstSlash <= 0) return null
+            val afterVisibility = after.substring(firstSlash + 1)
+            val secondSlash = afterVisibility.indexOf('/')
+            if (secondSlash <= 0) return null
+            val bucketInUrl = afterVisibility.take(secondSlash)
+            var objectPath = afterVisibility.substring(secondSlash + 1)
+            val q = objectPath.indexOf('?')
+            if (q != -1) objectPath = objectPath.take(q)
+            objectPath = Uri.decode(objectPath)
+            if (objectPath.isBlank()) return null
+            bucketInUrl to objectPath
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private suspend fun safeMoveObject(
+        bucketRef: BucketApi,
+        fromPath: String,
+        toPath: String
+    ) {
+        try {
+            // Try native move first (if supported by the library version)
+            bucketRef.move(fromPath, toPath)
+        } catch (t: Throwable) {
+            // Fallback: read via public URL (signed if needed) and upload to new path, then delete old
+            try {
+                val basePublic = bucketRef.publicUrl(fromPath)
+                val signed = getSignedUrlForPublicUrl(basePublic) ?: basePublic
+                val bytes = java.net.URL(signed).openStream().use { it.readBytes() }
+                bucketRef.upload(toPath, bytes, upsert = true)
+                // Attempt delete of the old path regardless of upload success
+                try {
+                    bucketRef.delete(fromPath)
+                } catch (_: Throwable) {
+                }
+            } catch (tt: Throwable) {
+                throw tt
+            }
+        }
+    }
+
+    private fun getFileExtension(fileName: String): String? {
+        val dot = fileName.lastIndexOf('.')
+        return if (dot != -1 && dot < fileName.length - 1) fileName.substring(dot + 1) else null
     }
 
     private fun readBytesFromUri(uri: Uri): ByteArray? {

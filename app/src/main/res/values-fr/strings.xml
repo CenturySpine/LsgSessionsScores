@@ -31,4 +31,8 @@
     </string>
     <string name="session_carousel_delete_confirm_delete_button">Supprimer</string>
     <string name="session_carousel_delete_confirm_cancel_button">Annuler</string>
+
+    <!-- Carousel: mark current photo as favorite (French) -->
+    <string name="session_carousel_mark_favorite_description">Définir cette photo comme photo principale de la session
+    </string>
 </resources>

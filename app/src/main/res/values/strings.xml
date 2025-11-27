@@ -445,4 +445,7 @@
     </string>
     <string name="session_carousel_delete_confirm_delete_button">Delete</string>
     <string name="session_carousel_delete_confirm_cancel_button">Cancel</string>
+
+    <!-- Carousel: mark current photo as favorite (English) -->
+    <string name="session_carousel_mark_favorite_description">Mark this photo as the main session photo</string>
 </resources>

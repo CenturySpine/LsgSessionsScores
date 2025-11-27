@@ -309,6 +309,35 @@ fun PastSessionDetailScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.Center
                                     ) {
+                                        // Favorite toggle button (star icon only)
+                                        val currentUrl = sessionPhotos.getOrNull(selectedIndex)
+                                        val isFavorite = currentUrl?.contains("/fav_", ignoreCase = false) == true
+                                        IconButton(onClick = {
+                                            val url = sessionPhotos.getOrNull(selectedIndex)
+                                            if (url != null) {
+                                                val entryPoint = EntryPointAccessors.fromApplication(
+                                                    context.applicationContext,
+                                                    RemoteImageEntryPoint::class.java
+                                                )
+                                                val storage = entryPoint.supabaseStorageHelper()
+                                                coroutineScope.launch {
+                                                    val newFav = runCatching {
+                                                        storage.markSessionPhotoAsFavorite(sessionId, url)
+                                                    }.onFailure { t ->
+                                                        Log.w("PastSession", "Mark favorite failed for $url", t)
+                                                    }.getOrNull()
+                                                    if (newFav != null) {
+                                                        // Reload the photos to reflect the new favorite state
+                                                        reloadTrigger.value++
+                                                    }
+                                                }
+                                            }
+                                        }) {
+                                            Icon(
+                                                painter = painterResource(id = if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
+                                                contentDescription = stringResource(id = R.string.session_carousel_mark_favorite_description)
+                                            )
+                                        }
                                         IconButton(onClick = { showDeleteConfirm = true }) {
                                             Icon(
                                                 painter = painterResource(id = R.drawable.baseline_delete_24),
