@@ -4,21 +4,22 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -190,30 +191,131 @@ fun PastSessionDetailScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Carousel state (overlay displayed over the current screen, no navigation)
-            var showCarousel by remember { mutableStateOf(false) }
+            // Selected photo index shown in the main RemoteImage (defaults to favorite)
             var selectedIndex by remember { mutableStateOf(0) }
-            // Confirmation dialog state for photo deletion in carousel
+            // Confirmation dialog state for photo deletion
             var showDeleteConfirm by remember { mutableStateOf(false) }
 
-            // Favorite photo banner (full-width) displayed above thumbnails if present
-            // We detect a favorite by checking if the filename starts with "fav_"
-            val favoritePhotoUrl = remember(sessionPhotos) {
-                sessionPhotos.firstOrNull { url ->
+            // Compute favorite index to use as a default/restore point
+            val favoriteIndex = remember(sessionPhotos) {
+                sessionPhotos.indexOfFirst { url ->
                     val name = url.substringAfterLast('/')
                     name.startsWith(prefix = "fav_", ignoreCase = true)
                 }
             }
 
-            favoritePhotoUrl?.let { favUrl ->
-                RemoteImage(
-                    url = favUrl,
-                    // Reuse existing localized description
-                    contentDescription = stringResource(id = R.string.session_carousel_image_content_description),
+            // Keep currently selected URL when the list reloads; otherwise fallback to favorite, then first
+            LaunchedEffect(sessionPhotos) {
+                val currentUrl = sessionPhotos.getOrNull(selectedIndex)
+                val keepIndex = currentUrl?.let { sessionPhotos.indexOf(it) } ?: -1
+                selectedIndex = when {
+                    keepIndex >= 0 -> keepIndex
+                    sessionPhotos.isNotEmpty() && favoriteIndex >= 0 -> favoriteIndex
+                    sessionPhotos.isNotEmpty() -> 0
+                    else -> 0
+                }
+            }
+
+            // Main displayed image with overlay navigation and action buttons
+            if (sessionPhotos.isNotEmpty()) {
+                Box(
                     modifier = Modifier.fillMaxWidth(),
-                    // Ensure the image takes the full available width while preserving aspect ratio
-                    contentScale = ContentScale.FillWidth
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Current image
+                    RemoteImage(
+                        url = sessionPhotos[selectedIndex],
+                        // Reuse existing localized description
+                        contentDescription = stringResource(id = R.string.session_carousel_image_content_description),
+                        modifier = Modifier.fillMaxWidth(),
+                        // Ensure the image takes the full available width while preserving aspect ratio
+                        contentScale = ContentScale.FillWidth
+                    )
+
+                    // Left navigation button (no text, icon only)
+                    IconButton(
+                        onClick = {
+                            val size = sessionPhotos.size
+                            if (size > 0) {
+                                selectedIndex = (selectedIndex - 1 + size) % size
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_chevron_left_24),
+                            contentDescription = stringResource(id = R.string.session_carousel_prev_button)
+                        )
+                    }
+
+                    // Right navigation button (no text, icon only)
+                    IconButton(
+                        onClick = {
+                            val size = sessionPhotos.size
+                            if (size > 0) {
+                                selectedIndex = (selectedIndex + 1) % size
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_chevron_right_24),
+                            contentDescription = stringResource(id = R.string.session_carousel_next_button)
+                        )
+                    }
+
+                    // Floating action container (bottom-right) for favorite and delete
+                    if (canUploadPhotos) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(8.dp)
+                                .background(
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 4.dp)
+                        ) {
+                            val currentUrl = sessionPhotos.getOrNull(selectedIndex)
+                            val isFavorite = currentUrl?.contains("/fav_", ignoreCase = false) == true
+                            // Favorite toggle button (star icon only)
+                            IconButton(onClick = {
+                                val url = sessionPhotos.getOrNull(selectedIndex)
+                                if (url != null) {
+                                    val entryPoint = EntryPointAccessors.fromApplication(
+                                        context.applicationContext,
+                                        RemoteImageEntryPoint::class.java
+                                    )
+                                    val storage = entryPoint.supabaseStorageHelper()
+                                    coroutineScope.launch {
+                                        val newFav = runCatching {
+                                            storage.markSessionPhotoAsFavorite(sessionId, url)
+                                        }.onFailure { t ->
+                                            Log.w("PastSession", "Mark favorite failed for $url", t)
+                                        }.getOrNull()
+                                        if (newFav != null) {
+                                            // Reload the photos to reflect the new favorite state
+                                            reloadTrigger.value++
+                                        }
+                                    }
+                                }
+                            }) {
+                                Icon(
+                                    painter = painterResource(id = if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
+                                    contentDescription = stringResource(id = R.string.session_carousel_mark_favorite_description)
+                                )
+                            }
+                            // Delete current photo
+                            IconButton(onClick = { showDeleteConfirm = true }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_delete_24),
+                                    contentDescription = stringResource(id = R.string.session_carousel_delete_photo_description)
+                                )
+                            }
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
@@ -231,7 +333,7 @@ fun PastSessionDetailScreen(
                         )
                     }
                 }
-                // Thumbnails with click to open the carousel overlay
+                // Thumbnails with click to change the main displayed image
                 sessionPhotos.forEachIndexed { index, url ->
                     RemoteImage(
                         url = url,
@@ -240,194 +342,66 @@ fun PastSessionDetailScreen(
                             .size(48.dp)
                             .clickable(enabled = sessionPhotos.isNotEmpty()) {
                                 selectedIndex = index
-                                showCarousel = true
                             }
                     )
                 }
             }
 
-            // Full-screen dialog carousel (no navigation), with endless previous/next
-            if (showCarousel && sessionPhotos.isNotEmpty()) {
-                Dialog(
-                    onDismissRequest = { showCarousel = false },
-                    properties = DialogProperties(usePlatformDefaultWidth = false)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        color = MaterialTheme.colorScheme.surface
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            // Top bar with close button
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                TextButton(onClick = { showCarousel = false }) {
-                                    Text(text = stringResource(id = R.string.session_carousel_close_button))
-                                }
-                            }
-
-                            // Current image
-                            Box(
-                                modifier = Modifier
-                                    .weight(1.5f)
-                                    .padding(horizontal = 4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                RemoteImage(
-                                    url = sessionPhotos[selectedIndex],
-                                    contentDescription = stringResource(id = R.string.session_carousel_image_content_description),
-                                    // Fill available space and fit the image to avoid cropping
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Fit
+            // Deletion confirmation dialog (only shown when requested)
+            if (showDeleteConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteConfirm = false },
+                    title = {
+                        Text(text = stringResource(id = R.string.session_carousel_delete_confirm_title))
+                    },
+                    text = {
+                        Text(text = stringResource(id = R.string.session_carousel_delete_confirm_message))
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            val url = sessionPhotos.getOrNull(selectedIndex)
+                            if (url != null) {
+                                val entryPoint = EntryPointAccessors.fromApplication(
+                                    context.applicationContext,
+                                    RemoteImageEntryPoint::class.java
                                 )
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(0.5f),
-                                verticalAlignment = Alignment.CenterVertically,
-
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                OutlinedButton(onClick = {
-                                    val size = sessionPhotos.size
-                                    if (size > 0) {
-                                        selectedIndex = (selectedIndex - 1 + size) % size
-                                    }
-                                }) {
-                                    Text(text = stringResource(id = R.string.session_carousel_prev_button))
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedButton(onClick = {
-                                    val size = sessionPhotos.size
-                                    if (size > 0) {
-                                        selectedIndex = (selectedIndex + 1) % size
-                                    }
-                                }) {
-                                    Text(text = stringResource(id = R.string.session_carousel_next_button))
-                                }
-                            }
-                            // Reserved space for future action buttons under the photo
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(72.dp)
-                            ) {
-                                // Action buttons under the photo (e.g., delete current photo)
-                                if (canUploadPhotos) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxSize(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        // Favorite toggle button (star icon only)
-                                        val currentUrl = sessionPhotos.getOrNull(selectedIndex)
-                                        val isFavorite = currentUrl?.contains("/fav_", ignoreCase = false) == true
-                                        IconButton(onClick = {
-                                            val url = sessionPhotos.getOrNull(selectedIndex)
-                                            if (url != null) {
-                                                val entryPoint = EntryPointAccessors.fromApplication(
-                                                    context.applicationContext,
-                                                    RemoteImageEntryPoint::class.java
-                                                )
-                                                val storage = entryPoint.supabaseStorageHelper()
-                                                coroutineScope.launch {
-                                                    val newFav = runCatching {
-                                                        storage.markSessionPhotoAsFavorite(sessionId, url)
-                                                    }.onFailure { t ->
-                                                        Log.w("PastSession", "Mark favorite failed for $url", t)
-                                                    }.getOrNull()
-                                                    if (newFav != null) {
-                                                        // Reload the photos to reflect the new favorite state
-                                                        reloadTrigger.value++
-                                                    }
-                                                }
-                                            }
-                                        }) {
-                                            Icon(
-                                                painter = painterResource(id = if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
-                                                contentDescription = stringResource(id = R.string.session_carousel_mark_favorite_description)
+                                val storage = entryPoint.supabaseStorageHelper()
+                                coroutineScope.launch {
+                                    val ok = runCatching { storage.deleteSessionPhotoByUrl(url) }
+                                        .onFailure { t ->
+                                            Log.w(
+                                                "PastSession",
+                                                "Delete failed for $url",
+                                                t
                                             )
                                         }
-                                        IconButton(onClick = { showDeleteConfirm = true }) {
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.baseline_delete_24),
-                                                contentDescription = stringResource(id = R.string.session_carousel_delete_photo_description)
-                                            )
+                                        .getOrElse { false }
+
+                                    if (ok) {
+                                        // Adjust selection and refresh the list
+                                        val newCount = (sessionPhotos.size - 1).coerceAtLeast(0)
+                                        if (newCount <= 0) {
+                                            selectedIndex = 0
+                                        } else if (selectedIndex >= newCount) {
+                                            selectedIndex = newCount - 1
                                         }
+                                        reloadTrigger.value++
                                     }
+                                    showDeleteConfirm = false
                                 }
+                            } else {
+                                showDeleteConfirm = false
                             }
-
-                            // Deletion confirmation dialog (only shown when requested)
-                            if (showDeleteConfirm) {
-                                AlertDialog(
-                                    onDismissRequest = { showDeleteConfirm = false },
-                                    title = {
-                                        Text(text = stringResource(id = R.string.session_carousel_delete_confirm_title))
-                                    },
-                                    text = {
-                                        Text(text = stringResource(id = R.string.session_carousel_delete_confirm_message))
-                                    },
-                                    confirmButton = {
-                                        TextButton(onClick = {
-                                            val url = sessionPhotos.getOrNull(selectedIndex)
-                                            if (url != null) {
-                                                val entryPoint = EntryPointAccessors.fromApplication(
-                                                    context.applicationContext,
-                                                    RemoteImageEntryPoint::class.java
-                                                )
-                                                val storage = entryPoint.supabaseStorageHelper()
-                                                coroutineScope.launch {
-                                                    val ok = runCatching { storage.deleteSessionPhotoByUrl(url) }
-                                                        .onFailure { t ->
-                                                            Log.w(
-                                                                "PastSession",
-                                                                "Delete failed for $url",
-                                                                t
-                                                            )
-                                                        }
-                                                        .getOrElse { false }
-
-                                                    if (ok) {
-                                                        // Adjust carousel state and refresh the list
-                                                        val newCount = (sessionPhotos.size - 1).coerceAtLeast(0)
-                                                        if (newCount <= 0) {
-                                                            showCarousel = false
-                                                        } else if (selectedIndex >= newCount) {
-                                                            selectedIndex = newCount - 1
-                                                        }
-                                                        reloadTrigger.value++
-                                                    }
-                                                    showDeleteConfirm = false
-                                                }
-                                            } else {
-                                                showDeleteConfirm = false
-                                            }
-                                        }) {
-                                            Text(text = stringResource(id = R.string.session_carousel_delete_confirm_delete_button))
-                                        }
-                                    },
-                                    dismissButton = {
-                                        TextButton(onClick = { showDeleteConfirm = false }) {
-                                            Text(text = stringResource(id = R.string.session_carousel_delete_confirm_cancel_button))
-                                        }
-                                    }
-                                )
-                            }
+                        }) {
+                            Text(text = stringResource(id = R.string.session_carousel_delete_confirm_delete_button))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteConfirm = false }) {
+                            Text(text = stringResource(id = R.string.session_carousel_delete_confirm_cancel_button))
                         }
                     }
-                }
+                )
             }
 
             // Standings for the past session with collapsible/expandable behavior
