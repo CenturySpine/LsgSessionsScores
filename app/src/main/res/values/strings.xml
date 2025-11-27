@@ -100,6 +100,10 @@
     <string name="hole_form_button_cancel">Cancel</string>
     <string name="hole_form_button_save">Save</string>
 
+    <!-- PastSessionDetailScreen -->
+    <string name="past_session_upload_photos_description">Upload session photos</string>
+    <string name="past_session_photo_thumbnail_description">Session photo thumbnail</string>
+
     <!-- SessionCreationScreen -->
     <string name="session_creation_label_date">Date</string>
     <string name="session_creation_label_session_type">Session type</string>
@@ -427,4 +431,21 @@
     <string name="ongoing_session_welcome_two_names">Welcome %1$s &amp; %2$s!</string>
     <string name="ongoing_session_welcome_one_name">Welcome %1$s!</string>
     <string name="ongoing_session_welcome_generic">Welcome!</string>
+
+    <!-- Strings for session photo carousel (English) -->
+    <string name="session_carousel_close_button">Close</string>
+    <string name="session_carousel_prev_button">Previous</string>
+    <string name="session_carousel_next_button">Next</string>
+    <string name="session_carousel_image_content_description">Session photo</string>
+    <!-- Delete photo action in carousel (English) -->
+    <string name="session_carousel_delete_photo_description">Delete this photo</string>
+    <string name="session_carousel_delete_confirm_title">Delete photo?</string>
+    <string name="session_carousel_delete_confirm_message">Are you sure you want to delete this photo from the
+        session?
+    </string>
+    <string name="session_carousel_delete_confirm_delete_button">Delete</string>
+    <string name="session_carousel_delete_confirm_cancel_button">Cancel</string>
+
+    <!-- Carousel: mark current photo as favorite (English) -->
+    <string name="session_carousel_mark_favorite_description">Mark this photo as the main session photo</string>
 </resources>

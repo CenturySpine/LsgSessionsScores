@@ -19,6 +19,7 @@ val supabaseUrl = (localProps.getProperty("supabase.url") ?: "")
 val supabaseAnonKey = (localProps.getProperty("supabase.anonKey") ?: "")
 val supabaseBucketPlayers = (localProps.getProperty("supabase.bucket.players") ?: "players")
 val supabaseBucketHoles = (localProps.getProperty("supabase.bucket.holes") ?: "holes")
+val supabaseBucketSessions = (localProps.getProperty("supabase.bucket.sessions") ?: "sessions")
 
 // Release signing credentials from user/global gradle.properties or environment variables (do not commit secrets)
 val releaseStoreFile = (project.findProperty("RELEASE_STORE_FILE") as String?) ?: System.getenv("RELEASE_STORE_FILE")
@@ -49,6 +50,7 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseAnonKey}\"")
         buildConfigField("String", "SUPABASE_BUCKET_PLAYERS", "\"${supabaseBucketPlayers}\"")
         buildConfigField("String", "SUPABASE_BUCKET_HOLES", "\"${supabaseBucketHoles}\"")
+        buildConfigField("String", "SUPABASE_BUCKET_SESSIONS", "\"${supabaseBucketSessions}\"")
     }
 
     buildTypes {
