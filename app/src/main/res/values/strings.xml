@@ -102,6 +102,7 @@
 
     <!-- PastSessionDetailScreen -->
     <string name="past_session_upload_photos_description">Upload session photos</string>
+    <string name="past_session_photo_thumbnail_description">Session photo thumbnail</string>
 
     <!-- SessionCreationScreen -->
     <string name="session_creation_label_date">Date</string>

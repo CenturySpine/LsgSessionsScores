@@ -51,6 +51,15 @@ class SupabaseStorageHelper @Inject constructor(
         return uploadToBucket(uri, sessionsBucketName, path)
     }
 
+    /**
+     * List all photo object URLs for a given session id from the Sessions bucket.
+     * Objects are expected to be stored under the "<sessionId>/" prefix.
+     * Returns public (or authenticated) URLs; UI will sign them at render time if required.
+     */
+    suspend fun listSessionPhotos(sessionId: Long): List<String> {
+        return listAllObjectsInBucket(sessionsBucketName, sessionId.toString())
+    }
+
     suspend fun deletePlayerPhotoByUrl(publicUrl: String): Boolean {
         return deleteByPublicUrl(publicUrl, playersBucketName)
     }
@@ -97,6 +106,28 @@ class SupabaseStorageHelper @Inject constructor(
         bucketRef.upload(path, bytes, upsert = true)
         // Return a "public" URL; if the bucket is private, the UI will generate a signed URL at render time.
         return bucketRef.publicUrl(path)
+    }
+
+    /**
+     * Fetches all object public URLs under a given prefix in a bucket, using pagination.
+     */
+    private suspend fun listAllObjectsInBucket(bucket: String, prefix: String): List<String> {
+        val bucketRef = client.storage.from(bucket)
+        val normalizedPrefix = prefix.trim('/', '\\')
+        return try {
+            // Use the first positional parameter for compatibility across supabase-kt versions
+            val items = bucketRef.list(normalizedPrefix)
+            items.mapNotNull { item ->
+                val name = item.name
+                if (name.isNullOrBlank()) null else {
+                    val objectPath = if (normalizedPrefix.isBlank()) name else "$normalizedPrefix/$name"
+                    bucketRef.publicUrl(objectPath)
+                }
+            }
+        } catch (t: Throwable) {
+            Log.w("Storage", "Failed to list objects in $bucket at prefix $normalizedPrefix", t)
+            emptyList()
+        }
     }
 
     suspend fun getSignedUrlForPublicUrl(url: String, expiresInSeconds: Int = 604800): String? {

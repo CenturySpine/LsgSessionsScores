@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -22,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dagger.hilt.android.EntryPointAccessors
 import fr.centuryspine.lsgscores.R
+import fr.centuryspine.lsgscores.ui.common.RemoteImage
 import fr.centuryspine.lsgscores.ui.common.RemoteImageEntryPoint
 import fr.centuryspine.lsgscores.ui.components.WeatherSummaryRow
 import fr.centuryspine.lsgscores.ui.sessions.components.CollapsibleStandingsCard
@@ -86,8 +84,10 @@ fun PastSessionDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Upload photos to Supabase Storage (Sessions bucket) — button under the header
+            // Upload photos to Supabase Storage (Sessions bucket) and display thumbnails next to the picker
             val coroutineScope = rememberCoroutineScope()
+            // Trigger to reload the session photos after uploads complete
+            val reloadTrigger = remember { mutableStateOf(0) }
             val pickMultipleLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetMultipleContents()
             ) { uris: List<Uri> ->
@@ -102,18 +102,13 @@ fun PastSessionDetailScreen(
                             runCatching { storage.uploadSessionPhoto(sessionId, u) }
                                 .onFailure { t -> Log.w("PastSession", "Upload failed for $u", t) }
                         }
+                        // After finishing all uploads, trigger a refresh of the thumbnails
+                        reloadTrigger.value++
                     }
                 }
             }
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = { pickMultipleLauncher.launch("image/*") }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
-                        contentDescription = stringResource(id = R.string.past_session_upload_photos_description)
-                    )
-                }
-            }
+
 
             // Load game zone name by id using Hilt ViewModel
             val gameZoneViewModel: GameZoneViewModel = hiltViewModel()
@@ -167,6 +162,43 @@ fun PastSessionDetailScreen(
                             WeatherSummaryRow(weatherInfo = weather, iconSize = 32.dp)
                         }
                     }
+                }
+            }
+
+            // Load all session photos from storage (Sessions/<sessionId>/...) and display as thumbnails
+            val sessionPhotos by produceState(
+                initialValue = emptyList<String>(),
+                key1 = sessionId,
+                key2 = reloadTrigger.value
+            ) {
+                value = try {
+                    val entryPoint = EntryPointAccessors.fromApplication(
+                        context.applicationContext,
+                        RemoteImageEntryPoint::class.java
+                    )
+                    entryPoint.supabaseStorageHelper().listSessionPhotos(sessionId)
+                } catch (_: Exception) {
+                    emptyList()
+                }
+            }
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                IconButton(onClick = { pickMultipleLauncher.launch("image/*") }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                        contentDescription = stringResource(id = R.string.past_session_upload_photos_description)
+                    )
+                }
+                sessionPhotos.forEach { url ->
+                    RemoteImage(
+                        url = url,
+                        contentDescription = stringResource(id = R.string.past_session_photo_thumbnail_description),
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
             }
 
