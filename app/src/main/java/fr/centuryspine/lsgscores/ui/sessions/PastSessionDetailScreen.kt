@@ -69,6 +69,9 @@ fun PastSessionDetailScreen(
             .padding(24.dp)
     ) {
         session?.let { past ->
+            // Current authenticated user ID to check ownership (only owner can upload photos)
+            val currentUserId = remember { sessionViewModel.currentUserIdOrNull() }
+            val canUploadPhotos = currentUserId != null && past.userId == currentUserId
             val scoringLabel = scoringModes
                 .firstOrNull { it.id == past.scoringModeId }
                 ?.getLocalizedName(context)
@@ -181,17 +184,20 @@ fun PastSessionDetailScreen(
                     emptyList()
                 }
             }
-
+            Spacer(modifier = Modifier.height(8.dp))
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                IconButton(onClick = { pickMultipleLauncher.launch("image/*") }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
-                        contentDescription = stringResource(id = R.string.past_session_upload_photos_description)
-                    )
+                // Show the add-photos button only for the session owner (admin)
+                if (canUploadPhotos) {
+                    IconButton(onClick = { pickMultipleLauncher.launch("image/*") }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_add_photo_alternate_24),
+                            contentDescription = stringResource(id = R.string.past_session_upload_photos_description)
+                        )
+                    }
                 }
                 sessionPhotos.forEach { url ->
                     RemoteImage(
