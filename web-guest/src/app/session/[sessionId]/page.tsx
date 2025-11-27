@@ -4,6 +4,7 @@ import {useParams, useRouter, useSearchParams} from "next/navigation"
 import {supabase} from "@/lib/supabaseClient"
 import {clearLastSession} from "@/lib/resume"
 import Link from "next/link"
+import {getSignedUrlForPublicUrl} from "@/lib/supabaseStorageHelper"
 
 // All UI texts must be localized (EN/FR) and comments in English only.
 const messages = {
@@ -31,6 +32,19 @@ const messages = {
         score_singular: "score",
         score_plural: "scores",
         session_unavailable_redirect: "This session is no longer available. Redirecting to home…",
+        // Past session extra info
+        info_date: "Date",
+        info_start: "Start",
+        info_duration: "Duration",
+        info_scoring: "Scoring",
+        info_game_zone: "Game zone",
+        hours_suffix: "h",
+        minutes_suffix: "m",
+        scoring_mode_1: "Stroke Play",
+        scoring_mode_2: "Match Play",
+        scoring_mode_3: "Redistribution",
+        photo_main_alt: "Session photo",
+        photo_thumbnail_alt: "Session photo thumbnail",
     },
     fr: {
         title_ongoing: "Session en cours",
@@ -56,6 +70,19 @@ const messages = {
         score_singular: "score",
         score_plural: "scores",
         session_unavailable_redirect: "Cette session n'est plus disponible. Redirection vers l'accueil…",
+        // Past session extra info
+        info_date: "Date",
+        info_start: "Début",
+        info_duration: "Durée",
+        info_scoring: "Mode",
+        info_game_zone: "Zone de jeu",
+        hours_suffix: "h",
+        minutes_suffix: "min",
+        scoring_mode_1: "Stroke Play",
+        scoring_mode_2: "Match Play",
+        scoring_mode_3: "Redistribution",
+        photo_main_alt: "Photo de la session",
+        photo_thumbnail_alt: "Vignette de la photo de la session",
     },
 } as const
 
@@ -119,6 +146,11 @@ export default function OngoingSessionPage() {
   const [holesById, setHolesById] = useState<Record<number, HoleRow>>({})
   const [playedHoles, setPlayedHoles] = useState<PlayedHoleRow[]>([])
   const [scores, setScores] = useState<PlayedHoleScoreRow[]>([])
+
+    // Past session header extras
+    const [gameZoneName, setGameZoneName] = useState<string | null>(null)
+    const [photoUrls, setPhotoUrls] = useState<string[]>([])
+    const [selectedPhotoIdx, setSelectedPhotoIdx] = useState<number>(0)
 
   const selectedTeamId = useMemo(() => (teamIdStr ? Number(teamIdStr) : null), [teamIdStr])
 
@@ -500,6 +532,109 @@ export default function OngoingSessionPage() {
   const selectedTeam = useMemo(() => teams.find((t) => t.id === selectedTeamId) ?? null, [teams, selectedTeamId])
     const isPast = useMemo(() => !!(session && !session.isongoing), [session])
 
+    // Load game zone name when session is loaded
+    useEffect(() => {
+        let cancelled = false
+        const loadGz = async () => {
+            if (!session) return
+            try {
+                const {data, error} = await supabase
+                    .from("game_zones")
+                    .select("id, name")
+                    .eq("id", session.gamezoneid)
+                    .limit(1)
+                if (error) return
+                const row = (data ?? [])[0] as { id: number; name: string } | undefined
+                if (!cancelled) setGameZoneName(row?.name ?? null)
+            } catch {
+                // ignore
+            }
+        }
+        void loadGz()
+        return () => {
+            cancelled = true
+        }
+    }, [session?.gamezoneid, session])
+
+    // Load session photos from Supabase Storage for past sessions only
+    useEffect(() => {
+        let cancelled = false
+        const loadPhotos = async () => {
+            if (!session || !isPast) {
+                if (!cancelled) setPhotoUrls([])
+                return
+            }
+            try {
+                const folder = String(session.id)
+                const {data: list, error} = await supabase.storage
+                    .from("Sessions")
+                    .list(folder, {limit: 100, sortBy: {column: "name", order: "asc"}})
+                if (error) {
+                    if (!cancelled) setPhotoUrls([])
+                    return
+                }
+                const files = (list ?? []).filter((f) => !f.name.endsWith("/"))
+                // Build signed URLs for each object to ensure visibility even when the bucket is private
+                const signedUrls = await Promise.all(
+                    files.map(async (f) => {
+                        const objectPath = `${folder}/${f.name}`
+                        const publicUrl = supabase.storage.from("Sessions").getPublicUrl(objectPath).data.publicUrl
+                        // Try to sign the URL; fallback to public one if signing fails
+                        const signed = publicUrl ? await getSignedUrlForPublicUrl(publicUrl) : null
+                        return signed || publicUrl
+                    })
+                )
+                if (!cancelled) {
+                    setPhotoUrls(signedUrls)
+                    // Default selected = favorite if any, else first
+                    // Detect favorite using the original file names to avoid issues with signed query params
+                    const favIdx = files.findIndex((f) => f.name.toLowerCase().startsWith("fav_"))
+                    setSelectedPhotoIdx((prev) => {
+                        // Keep same index if still valid to avoid issues with refreshed signed tokens
+                        if (signedUrls[prev]) return prev
+                        if (favIdx >= 0) return favIdx
+                        return 0
+                    })
+                }
+            } catch {
+                if (!cancelled) setPhotoUrls([])
+            }
+        }
+        void loadPhotos()
+        return () => {
+            cancelled = true
+        }
+    }, [session?.id, isPast])
+
+    // Helpers: formatters and labels
+    const formatDate = (iso: string | null | undefined) => {
+        if (!iso) return ""
+        const d = new Date(iso)
+        return d.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US")
+    }
+    const formatTime = (iso: string | null | undefined) => {
+        if (!iso) return ""
+        const d = new Date(iso)
+        return d.toLocaleTimeString(locale === "fr" ? "fr-FR" : "en-US", {hour: "2-digit", minute: "2-digit"})
+    }
+    const formatDuration = (startIso: string | null | undefined, endIso: string | null | undefined) => {
+        if (!startIso || !endIso) return ""
+        const ms = Math.max(0, new Date(endIso).getTime() - new Date(startIso).getTime())
+        const h = Math.floor(ms / 3600000)
+        const m = Math.round((ms % 3600000) / 60000)
+        const parts: string[] = []
+        parts.push(`${h}${t("hours_suffix")}`)
+        parts.push(`${m}${t("minutes_suffix")}`)
+        return parts.join(" ")
+    }
+    const scoringModeLabel = (id: number | null | undefined) => {
+        if (!id) return ""
+        if (id === 1) return t("scoring_mode_1")
+        if (id === 2) return t("scoring_mode_2")
+        if (id === 3) return t("scoring_mode_3")
+        return String(id)
+    }
+
   return (
     <main style={{ padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
@@ -523,6 +658,100 @@ export default function OngoingSessionPage() {
           )}
 
             {/* No dedicated "current hole" section — we optionally emphasize the latest added hole (ongoing sessions only). */}
+
+            {/* Past session header info and photos */}
+            {isPast && (
+                <div style={{display: "grid", gap: 12}}>
+                    {/* Header information row */}
+                    <div style={{
+                        background: "#FFFFFF",
+                        border: "1px solid #E5E7EB",
+                        borderRadius: 8,
+                        padding: 12,
+                        display: "grid",
+                        gap: 8
+                    }}>
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                            gap: 8
+                        }}>
+                            <div>
+                                <div style={{color: "#6b7280", fontSize: 12}}>{t("info_date")}</div>
+                                <div>{formatDate(session.datetime)}</div>
+                            </div>
+                            <div>
+                                <div style={{color: "#6b7280", fontSize: 12}}>{t("info_start")}</div>
+                                <div>{formatTime(session.datetime)}</div>
+                            </div>
+                            <div>
+                                <div style={{color: "#6b7280", fontSize: 12}}>{t("info_duration")}</div>
+                                <div>{formatDuration(session.datetime, session.enddatetime)}</div>
+                            </div>
+                            <div>
+                                <div style={{color: "#6b7280", fontSize: 12}}>{t("info_scoring")}</div>
+                                <div>{scoringModeLabel(session.scoringmodeid)}</div>
+                            </div>
+                            <div>
+                                <div style={{color: "#6b7280", fontSize: 12}}>{t("info_game_zone")}</div>
+                                <div>{gameZoneName ?? `#${session.gamezoneid}`}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Photos viewer */}
+                    {photoUrls.length > 0 && (
+                        <div style={{display: "grid", gap: 8}}>
+                            {/* Main photo */}
+                            <div style={{
+                                width: "100%",
+                                background: "#00000010",
+                                borderRadius: 8,
+                                overflow: "hidden",
+                                border: "1px solid #E5E7EB"
+                            }}>
+                                <img
+                                    src={photoUrls[selectedPhotoIdx]}
+                                    alt={t("photo_main_alt")}
+                                    style={{width: "100%", height: "auto", display: "block", objectFit: "contain"}}
+                                />
+                            </div>
+                            {/* Thumbnails */}
+                            <div style={{display: "flex", gap: 8, flexWrap: "wrap"}}>
+                                {photoUrls.map((u, idx) => {
+                                    // Extract a readable file name (strip query params if any)
+                                    let name: string
+                                    try {
+                                        const urlObj = new URL(u)
+                                        name = decodeURIComponent(urlObj.pathname.split("/").pop() ?? "")
+                                    } catch {
+                                        name = u.split("/").pop() ?? ""
+                                    }
+                                    const isSel = idx === selectedPhotoIdx
+                                    return (
+                                        <button
+                                            key={u}
+                                            onClick={() => setSelectedPhotoIdx(idx)}
+                                            title={name}
+                                            style={{
+                                                padding: 0,
+                                                border: isSel ? "2px solid #6366F1" : "1px solid #E5E7EB",
+                                                borderRadius: 6,
+                                                overflow: "hidden",
+                                                background: "transparent",
+                                                cursor: "pointer"
+                                            }}
+                                        >
+                                            <img src={u} alt={t("photo_thumbnail_alt")}
+                                                 style={{width: 56, height: 56, objectFit: "cover", display: "block"}}/>
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
           {/* Ranking */}
           <div style={{ background: "#f9fafb", padding: 12, borderRadius: 8 }}>

@@ -460,7 +460,6 @@ fun MainScreen(
                 ) { backStackEntry ->
                     val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: 0L
                     PastSessionDetailScreen(
-                        navController = navController,
                         sessionViewModel = sessionViewModel,
                         sessionId = sessionId
                     )

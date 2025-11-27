@@ -22,7 +22,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import dagger.hilt.android.EntryPointAccessors
 import fr.centuryspine.lsgscores.R
 import fr.centuryspine.lsgscores.ui.common.RemoteImage
@@ -46,7 +45,6 @@ import java.util.*
  */
 @Composable
 fun PastSessionDetailScreen(
-    navController: NavController,
     sessionViewModel: SessionViewModel,
     sessionId: Long
 ) {
