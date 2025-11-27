@@ -60,6 +60,14 @@ class SupabaseStorageHelper @Inject constructor(
         return listAllObjectsInBucket(sessionsBucketName, sessionId.toString())
     }
 
+    /**
+     * Delete a single session photo by its public URL from the Sessions bucket.
+     * Returns true if the deletion succeeds, false otherwise.
+     */
+    suspend fun deleteSessionPhotoByUrl(publicUrl: String): Boolean {
+        return deleteByPublicUrl(publicUrl, sessionsBucketName)
+    }
+
     suspend fun deletePlayerPhotoByUrl(publicUrl: String): Boolean {
         return deleteByPublicUrl(publicUrl, playersBucketName)
     }

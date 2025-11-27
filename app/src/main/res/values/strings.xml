@@ -437,4 +437,12 @@
     <string name="session_carousel_prev_button">Previous</string>
     <string name="session_carousel_next_button">Next</string>
     <string name="session_carousel_image_content_description">Session photo</string>
+    <!-- Delete photo action in carousel (English) -->
+    <string name="session_carousel_delete_photo_description">Delete this photo</string>
+    <string name="session_carousel_delete_confirm_title">Delete photo?</string>
+    <string name="session_carousel_delete_confirm_message">Are you sure you want to delete this photo from the
+        session?
+    </string>
+    <string name="session_carousel_delete_confirm_delete_button">Delete</string>
+    <string name="session_carousel_delete_confirm_cancel_button">Cancel</string>
 </resources>

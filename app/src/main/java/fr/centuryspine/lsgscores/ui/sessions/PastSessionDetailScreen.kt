@@ -193,6 +193,8 @@ fun PastSessionDetailScreen(
             // Carousel state (overlay displayed over the current screen, no navigation)
             var showCarousel by remember { mutableStateOf(false) }
             var selectedIndex by remember { mutableStateOf(0) }
+            // Confirmation dialog state for photo deletion in carousel
+            var showDeleteConfirm by remember { mutableStateOf(false) }
 
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -299,7 +301,79 @@ fun PastSessionDetailScreen(
                                     .fillMaxWidth()
                                     .height(72.dp)
                             ) {
-                                // Intentionally left empty for future action buttons
+                                // Action buttons under the photo (e.g., delete current photo)
+                                if (canUploadPhotos) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        IconButton(onClick = { showDeleteConfirm = true }) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.baseline_delete_24),
+                                                contentDescription = stringResource(id = R.string.session_carousel_delete_photo_description)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Deletion confirmation dialog (only shown when requested)
+                            if (showDeleteConfirm) {
+                                AlertDialog(
+                                    onDismissRequest = { showDeleteConfirm = false },
+                                    title = {
+                                        Text(text = stringResource(id = R.string.session_carousel_delete_confirm_title))
+                                    },
+                                    text = {
+                                        Text(text = stringResource(id = R.string.session_carousel_delete_confirm_message))
+                                    },
+                                    confirmButton = {
+                                        TextButton(onClick = {
+                                            val url = sessionPhotos.getOrNull(selectedIndex)
+                                            if (url != null) {
+                                                val entryPoint = EntryPointAccessors.fromApplication(
+                                                    context.applicationContext,
+                                                    RemoteImageEntryPoint::class.java
+                                                )
+                                                val storage = entryPoint.supabaseStorageHelper()
+                                                coroutineScope.launch {
+                                                    val ok = runCatching { storage.deleteSessionPhotoByUrl(url) }
+                                                        .onFailure { t ->
+                                                            Log.w(
+                                                                "PastSession",
+                                                                "Delete failed for $url",
+                                                                t
+                                                            )
+                                                        }
+                                                        .getOrElse { false }
+
+                                                    if (ok) {
+                                                        // Adjust carousel state and refresh the list
+                                                        val newCount = (sessionPhotos.size - 1).coerceAtLeast(0)
+                                                        if (newCount <= 0) {
+                                                            showCarousel = false
+                                                        } else if (selectedIndex >= newCount) {
+                                                            selectedIndex = newCount - 1
+                                                        }
+                                                        reloadTrigger.value++
+                                                    }
+                                                    showDeleteConfirm = false
+                                                }
+                                            } else {
+                                                showDeleteConfirm = false
+                                            }
+                                        }) {
+                                            Text(text = stringResource(id = R.string.session_carousel_delete_confirm_delete_button))
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { showDeleteConfirm = false }) {
+                                            Text(text = stringResource(id = R.string.session_carousel_delete_confirm_cancel_button))
+                                        }
+                                    }
+                                )
                             }
                         }
                     }

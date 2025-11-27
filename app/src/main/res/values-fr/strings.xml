@@ -23,4 +23,12 @@
     <string name="session_carousel_prev_button">Précédent</string>
     <string name="session_carousel_next_button">Suivant</string>
     <string name="session_carousel_image_content_description">Photo de la session</string>
+
+    <!-- Delete photo action in carousel (French) -->
+    <string name="session_carousel_delete_photo_description">Supprimer cette photo</string>
+    <string name="session_carousel_delete_confirm_title">Supprimer la photo ?</string>
+    <string name="session_carousel_delete_confirm_message">Voulez-vous vraiment supprimer cette photo de la session ?
+    </string>
+    <string name="session_carousel_delete_confirm_delete_button">Supprimer</string>
+    <string name="session_carousel_delete_confirm_cancel_button">Annuler</string>
 </resources>
