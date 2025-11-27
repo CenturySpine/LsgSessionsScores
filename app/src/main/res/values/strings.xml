@@ -431,4 +431,10 @@
     <string name="ongoing_session_welcome_two_names">Welcome %1$s &amp; %2$s!</string>
     <string name="ongoing_session_welcome_one_name">Welcome %1$s!</string>
     <string name="ongoing_session_welcome_generic">Welcome!</string>
+
+    <!-- Strings for session photo carousel (English) -->
+    <string name="session_carousel_close_button">Close</string>
+    <string name="session_carousel_prev_button">Previous</string>
+    <string name="session_carousel_next_button">Next</string>
+    <string name="session_carousel_image_content_description">Session photo</string>
 </resources>

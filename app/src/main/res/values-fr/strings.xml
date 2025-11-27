@@ -17,4 +17,10 @@
     <!-- PastSessionDetailScreen -->
     <string name="past_session_upload_photos_description">Ajouter des photos de la session</string>
     <string name="past_session_photo_thumbnail_description">Vignette photo de la session</string>
+
+    <!-- Strings for session photo carousel (French translations) -->
+    <string name="session_carousel_close_button">Fermer</string>
+    <string name="session_carousel_prev_button">Précédent</string>
+    <string name="session_carousel_next_button">Suivant</string>
+    <string name="session_carousel_image_content_description">Photo de la session</string>
 </resources>

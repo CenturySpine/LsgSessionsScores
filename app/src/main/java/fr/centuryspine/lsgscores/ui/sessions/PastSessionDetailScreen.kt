@@ -4,16 +4,21 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -111,8 +116,6 @@ fun PastSessionDetailScreen(
                 }
             }
 
-
-
             // Load game zone name by id using Hilt ViewModel
             val gameZoneViewModel: GameZoneViewModel = hiltViewModel()
             val gameZoneLabel by produceState<String?>(initialValue = null, key1 = past.gameZoneId) {
@@ -184,7 +187,13 @@ fun PastSessionDetailScreen(
                     emptyList()
                 }
             }
+
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Carousel state (overlay displayed over the current screen, no navigation)
+            var showCarousel by remember { mutableStateOf(false) }
+            var selectedIndex by remember { mutableStateOf(0) }
+
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -199,12 +208,101 @@ fun PastSessionDetailScreen(
                         )
                     }
                 }
-                sessionPhotos.forEach { url ->
+                // Thumbnails with click to open the carousel overlay
+                sessionPhotos.forEachIndexed { index, url ->
                     RemoteImage(
                         url = url,
                         contentDescription = stringResource(id = R.string.past_session_photo_thumbnail_description),
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clickable(enabled = sessionPhotos.isNotEmpty()) {
+                                selectedIndex = index
+                                showCarousel = true
+                            }
                     )
+                }
+            }
+
+            // Full-screen dialog carousel (no navigation), with endless previous/next
+            if (showCarousel && sessionPhotos.isNotEmpty()) {
+                Dialog(
+                    onDismissRequest = { showCarousel = false },
+                    properties = DialogProperties(usePlatformDefaultWidth = false)
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Top bar with close button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = { showCarousel = false }) {
+                                    Text(text = stringResource(id = R.string.session_carousel_close_button))
+                                }
+                            }
+
+                            // Current image
+                            Box(
+                                modifier = Modifier
+                                    .weight(1.5f)
+                                    .padding(horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                RemoteImage(
+                                    url = sessionPhotos[selectedIndex],
+                                    contentDescription = stringResource(id = R.string.session_carousel_image_content_description),
+                                    // Fill available space and fit the image to avoid cropping
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(0.5f),
+                                verticalAlignment = Alignment.CenterVertically,
+
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                OutlinedButton(onClick = {
+                                    val size = sessionPhotos.size
+                                    if (size > 0) {
+                                        selectedIndex = (selectedIndex - 1 + size) % size
+                                    }
+                                }) {
+                                    Text(text = stringResource(id = R.string.session_carousel_prev_button))
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                OutlinedButton(onClick = {
+                                    val size = sessionPhotos.size
+                                    if (size > 0) {
+                                        selectedIndex = (selectedIndex + 1) % size
+                                    }
+                                }) {
+                                    Text(text = stringResource(id = R.string.session_carousel_next_button))
+                                }
+                            }
+                            // Reserved space for future action buttons under the photo
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(72.dp)
+                            ) {
+                                // Intentionally left empty for future action buttons
+                            }
+                        }
+                    }
                 }
             }
 
