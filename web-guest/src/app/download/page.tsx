@@ -150,6 +150,20 @@ export default function DownloadPage() {
                         </span>
                     </a>
                 ) : null}
+
+                <a href="https://play.google.com/apps/testing/fr.centuryspine.lsgscores" target="_blank"
+                   rel="noopener noreferrer">Participer à la campagne de test</a>
+                <a href="mailto:bruno.chappe@gmail.com" target="_blank" rel="noopener noreferrer">
+                    <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 12,
+                        color: 'black'
+                    }}>
+                           Contacter l'administrateur
+                        </span>
+                </a>
             </div>
         </main>
     )
