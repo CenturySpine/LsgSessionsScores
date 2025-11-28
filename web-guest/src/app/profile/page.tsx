@@ -297,6 +297,18 @@ export default function ProfilePage() {
             if (updatedPhotouri) {
                 const signedUrl = await getSignedUrlForPublicUrl(updatedPhotouri)
                 setSignedPhotoUrl(signedUrl || updatedPhotouri)
+                // Inform other parts of the app (e.g., Header) that the player's profile photo changed
+                // so they can refresh the displayed avatar immediately without a full reload
+                try {
+                    window.dispatchEvent(new CustomEvent("playerProfileUpdated", {
+                        detail: {
+                            signedUrl: signedUrl || null,
+                            photouri: updatedPhotouri,
+                        },
+                    }))
+                } catch (_) {
+                    // Ignore if dispatching fails (e.g., non-browser env)
+                }
             }
 
             // Clear selection and exit edit mode
