@@ -1,5 +1,5 @@
 "use client"
-import {useEffect, useState} from "react"
+import {useEffect, useRef, useState} from "react"
 import {useRouter} from "next/navigation"
 import {supabase} from "@/lib/supabaseClient"
 import {getSignedUrlForPublicUrl} from "@/lib/supabaseStorageHelper"
@@ -20,7 +20,58 @@ export default function ProfilePage() {
     const [editedName, setEditedName] = useState("")
     const [isSaving, setIsSaving] = useState(false)
     const [cityName, setCityName] = useState<string | null>(null)
+    // Photo selection state (new profile picture to upload)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const cameraInputRef = useRef<HTMLInputElement | null>(null)
+    const galleryInputRef = useRef<HTMLInputElement | null>(null)
+    const [photoUploadInProgress, setPhotoUploadInProgress] = useState(false)
     const router = useRouter()
+
+    // Minimal in-page i18n (English/French)
+    const locale = typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("fr") ? "fr" : "en"
+    const t = {
+        fr: {
+            pageTitle: "Édition du profil",
+            loadingProfile: "Chargement du profil...",
+            errorTitle: "Erreur",
+            authError: "Erreur d'authentification",
+            noLinkedPlayer: "Aucun joueur associé à ce compte utilisateur.",
+            profileLoadError: "Erreur lors du chargement du profil",
+            saveError: "Erreur lors de l'enregistrement",
+            saveButton: "Sauvegarder",
+            saving: "Sauvegarde...",
+            cancelButton: "Annuler",
+            editButton: "Éditer",
+            noData: "Aucune donnée disponible.",
+            takePhoto: "Prendre une photo",
+            chooseFromGallery: "Choisir depuis la galerie",
+            photoTooLarge: "La photo est trop volumineuse.",
+            uploadError: "Échec du téléversement de la photo.",
+            updateError: "Échec de la mise à jour du profil.",
+            deleteOldError: "La suppression de l'ancienne photo a échoué.",
+        },
+        en: {
+            pageTitle: "Profile editing",
+            loadingProfile: "Loading profile...",
+            errorTitle: "Error",
+            authError: "Authentication error",
+            noLinkedPlayer: "No player linked to this user account.",
+            profileLoadError: "Error while loading profile",
+            saveError: "Error while saving",
+            saveButton: "Save",
+            saving: "Saving...",
+            cancelButton: "Cancel",
+            editButton: "Edit",
+            noData: "No data available.",
+            takePhoto: "Take a photo",
+            chooseFromGallery: "Choose from gallery",
+            photoTooLarge: "Photo file is too large.",
+            uploadError: "Photo upload failed.",
+            updateError: "Profile update failed.",
+            deleteOldError: "Deleting the old photo failed.",
+        },
+    }[locale]
 
     useEffect(() => {
         let mounted = true
@@ -31,7 +82,7 @@ export default function ProfilePage() {
                 const {data: {user}, error: authError} = await supabase.auth.getUser()
 
                 if (authError) {
-                    throw new Error("Erreur d'authentification")
+                    throw new Error(t.authError)
                 }
 
                 if (!user) {
@@ -50,7 +101,7 @@ export default function ProfilePage() {
                 if (linkError) {
                     if (linkError.code === "PGRST116") {
                         // No player linked to this user
-                        setError("Aucun joueur associé à ce compte utilisateur.")
+                        setError(t.noLinkedPlayer)
                         setLoading(false)
                         return
                     }
@@ -58,7 +109,7 @@ export default function ProfilePage() {
                 }
 
                 if (!linkData?.player_id) {
-                    setError("Aucun joueur associé à ce compte utilisateur.")
+                    setError(t.noLinkedPlayer)
                     setLoading(false)
                     return
                 }
@@ -101,7 +152,7 @@ export default function ProfilePage() {
                 }
             } catch (err) {
                 if (mounted) {
-                    setError(err instanceof Error ? err.message : "Erreur lors du chargement du profil")
+                    setError(err instanceof Error ? err.message : t.profileLoadError)
                     setLoading(false)
                 }
             }
@@ -122,6 +173,43 @@ export default function ProfilePage() {
     const handleCancel = () => {
         setIsEditing(false)
         setEditedName("")
+        // Reset pending photo selection
+        if (previewUrl) URL.revokeObjectURL(previewUrl)
+        setPreviewUrl(null)
+        setSelectedFile(null)
+    }
+
+    // Extract bucket and object path from a Supabase Storage URL or bucket-relative path
+    function extractBucketAndObjectPath(url: string): { bucket: string; objectPath: string } | null {
+        try {
+            if (!url) return null
+            // If it's a full URL to Supabase storage
+            if (url.includes("/storage/v1/object/")) {
+                const u = new URL(url)
+                const marker = "/storage/v1/object/"
+                const idx = u.pathname.indexOf(marker)
+                if (idx === -1) return null
+                const after = u.pathname.substring(idx + marker.length) // e.g., public/Players/folder/file.jpg
+                const firstSlash = after.indexOf("/")
+                if (firstSlash <= 0) return null
+                const afterVisibility = after.substring(firstSlash + 1) // e.g., Players/folder/file.jpg
+                const secondSlash = afterVisibility.indexOf("/")
+                if (secondSlash <= 0) return null
+                const bucket = afterVisibility.substring(0, secondSlash)
+                const objectPath = decodeURIComponent(afterVisibility.substring(secondSlash + 1))
+                return {bucket, objectPath}
+            }
+            // If it's a bucket-relative path like "Players/folder/file.jpg"
+            const parts = url.split("/")
+            if (parts.length >= 2) {
+                const bucket = parts[0]
+                const objectPath = parts.slice(1).join("/")
+                return {bucket, objectPath}
+            }
+            return null
+        } catch {
+            return null
+        }
     }
 
     const handleSave = async () => {
@@ -130,26 +218,125 @@ export default function ProfilePage() {
         }
 
         setIsSaving(true)
+        setPhotoUploadInProgress(true)
 
         try {
+            let newPublicUrl: string | null = null
+            let newObjectFullPath: { bucket: string; objectPath: string } | null = null
+
+            // If a new photo has been selected, upload it to bucket "Players"
+            if (selectedFile) {
+                const extFromName = selectedFile.name?.split(".").pop()?.toLowerCase()
+                const extFromType = selectedFile.type?.split("/")[1]?.toLowerCase()
+                const ext = extFromName || extFromType || "jpg"
+                // Match Android app naming pattern: player_<UUID>.<ext>
+                const uuid = typeof crypto !== "undefined" && typeof (crypto as any).randomUUID === "function"
+                    ? (crypto as any).randomUUID()
+                    : `${Math.random().toString(16).slice(2)}-${Date.now()}`
+                const objectPath = `player_${uuid}.${ext}`
+                const bucket = "Players"
+
+                const {error: uploadError} = await supabase.storage
+                    .from(bucket)
+                    .upload(objectPath, selectedFile, {
+                        upsert: true,
+                        contentType: selectedFile.type || "image/jpeg",
+                        cacheControl: "3600",
+                    })
+
+                if (uploadError) {
+                    throw new Error(t.uploadError)
+                }
+
+                const {data: pub} = supabase.storage.from(bucket).getPublicUrl(objectPath)
+                newPublicUrl = pub?.publicUrl || null
+                if (!newPublicUrl) {
+                    throw new Error(t.uploadError)
+                }
+                newObjectFullPath = {bucket, objectPath}
+            }
+
+            // Build update payload for "players" table
+            const updatePayload: Partial<PlayerData> & { name: string } = {
+                name: editedName.trim(),
+            }
+            if (newPublicUrl) {
+                // @ts-ignore - photouri exists in DB but not in PlayerData update payload typing
+                ;(updatePayload as any).photouri = newPublicUrl
+            }
+
             const {error: updateError} = await supabase
                 .from("players")
-                .update({name: editedName.trim()})
+                .update(updatePayload)
                 .eq("id", playerData.id)
 
             if (updateError) {
-                throw updateError
+                throw new Error(t.updateError)
+            }
+
+            // If DB update succeeded and there was a previous photo and a new one, delete the old one
+            if (newPublicUrl && playerData.photouri) {
+                const parsed = extractBucketAndObjectPath(playerData.photouri)
+                if (parsed) {
+                    const {error: removeError} = await supabase.storage
+                        .from(parsed.bucket)
+                        .remove([parsed.objectPath])
+                    if (removeError) {
+                        // Non-blocking: keep going but set an error message for user feedback
+                        console.warn("Failed to delete old profile photo:", removeError)
+                        setError(t.deleteOldError)
+                    }
+                }
             }
 
             // Update local state
-            setPlayerData({...playerData, name: editedName.trim()})
+            const updatedPhotouri = newPublicUrl ?? playerData.photouri ?? null
+            setPlayerData({...playerData, name: editedName.trim(), photouri: updatedPhotouri} as PlayerData)
+
+            // Update displayed photo URL: use signed URL if necessary
+            if (updatedPhotouri) {
+                const signedUrl = await getSignedUrlForPublicUrl(updatedPhotouri)
+                setSignedPhotoUrl(signedUrl || updatedPhotouri)
+            }
+
+            // Clear selection and exit edit mode
+            if (previewUrl) URL.revokeObjectURL(previewUrl)
+            setPreviewUrl(null)
+            setSelectedFile(null)
             setIsEditing(false)
             setEditedName("")
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
+            setError(err instanceof Error ? err.message : t.saveError)
         } finally {
             setIsSaving(false)
+            setPhotoUploadInProgress(false)
         }
+    }
+
+    const triggerCamera = () => {
+        if (!isSaving) cameraInputRef.current?.click()
+    }
+
+    const triggerGallery = () => {
+        if (!isSaving) galleryInputRef.current?.click()
+    }
+
+    const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            // Simple file size guard (e.g., 10 MB)
+            const maxSize = 10 * 1024 * 1024
+            if (file.size > maxSize) {
+                setError(t.photoTooLarge)
+                e.target.value = ""
+                return
+            }
+            if (previewUrl) URL.revokeObjectURL(previewUrl)
+            setSelectedFile(file)
+            setPreviewUrl(URL.createObjectURL(file))
+        }
+        // Allow selecting the same file again later
+        e.target.value = ""
     }
 
     if (loading) {
@@ -171,7 +358,7 @@ export default function ProfilePage() {
                         margin: "0 auto 16px",
                         animation: "spin 1s linear infinite"
                     }}/>
-                    <p style={{color: "#6B7280"}}>Chargement du profil...</p>
+                    <p style={{color: "#6B7280"}}>{t.loadingProfile}</p>
                 </div>
                 <style jsx>{`
                     @keyframes spin {
@@ -206,7 +393,7 @@ export default function ProfilePage() {
                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                     </svg>
                     <h2 style={{margin: "0 0 8px", fontSize: "20px", fontWeight: 600, color: "#991B1B"}}>
-                        Erreur
+                        {t.errorTitle}
                     </h2>
                     <p style={{margin: 0, color: "#7F1D1D"}}>{error}</p>
                 </div>
@@ -223,7 +410,7 @@ export default function ProfilePage() {
                 minHeight: "calc(100vh - 200px)",
                 padding: "20px"
             }}>
-                <p style={{color: "#6B7280"}}>Aucune donnée disponible.</p>
+                <p style={{color: "#6B7280"}}>{t.noData}</p>
             </div>
         )
     }
@@ -240,7 +427,7 @@ export default function ProfilePage() {
                 marginBottom: "32px",
                 color: "#111827"
             }}>
-                Édition du Profil
+                {t.pageTitle}
             </h1>
 
             <div style={{
@@ -265,10 +452,10 @@ export default function ProfilePage() {
                         border: "4px solid #E5E7EB",
                         background: "#F3F4F6"
                     }}>
-                        {signedPhotoUrl ? (
+                        {(previewUrl || signedPhotoUrl) ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                                src={signedPhotoUrl}
+                                src={previewUrl || signedPhotoUrl || undefined}
                                 alt={playerData.name}
                                 style={{
                                     width: "100%",
@@ -292,6 +479,63 @@ export default function ProfilePage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Photo action buttons (visible only in edit mode) */}
+                    {isEditing && (
+                        <div style={{display: "flex", gap: "8px", justifyContent: "center"}}>
+                            <button
+                                onClick={triggerCamera}
+                                disabled={isSaving || photoUploadInProgress}
+                                style={{
+                                    padding: "8px 16px",
+                                    fontSize: "14px",
+                                    fontWeight: 500,
+                                    color: "#fff",
+                                    background: (isSaving || photoUploadInProgress) ? "#9CA3AF" : "#10B981",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    cursor: (isSaving || photoUploadInProgress) ? "not-allowed" : "pointer",
+                                    transition: "background 0.2s",
+                                }}
+                            >
+                                {t.takePhoto}
+                            </button>
+                            <button
+                                onClick={triggerGallery}
+                                disabled={isSaving || photoUploadInProgress}
+                                style={{
+                                    padding: "8px 16px",
+                                    fontSize: "14px",
+                                    fontWeight: 500,
+                                    color: "#374151",
+                                    background: "#E5E7EB",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    cursor: (isSaving || photoUploadInProgress) ? "not-allowed" : "pointer",
+                                    transition: "background 0.2s",
+                                }}
+                            >
+                                {t.chooseFromGallery}
+                            </button>
+
+                            {/* Hidden file inputs */}
+                            <input
+                                ref={cameraInputRef}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                style={{display: "none"}}
+                                onChange={handleFileChange}
+                            />
+                            <input
+                                ref={galleryInputRef}
+                                type="file"
+                                accept="image/*"
+                                style={{display: "none"}}
+                                onChange={handleFileChange}
+                            />
+                        </div>
+                    )}
 
                     {/* Player name and city */}
                     <div style={{textAlign: "center", width: "100%", maxWidth: "400px"}}>
@@ -339,7 +583,7 @@ export default function ProfilePage() {
                                             transition: "background 0.2s"
                                         }}
                                     >
-                                        {isSaving ? "Sauvegarde..." : "Sauvegarder"}
+                                        {isSaving ? t.saving : t.saveButton}
                                     </button>
                                     <button
                                         onClick={handleCancel}
@@ -356,7 +600,7 @@ export default function ProfilePage() {
                                             transition: "background 0.2s"
                                         }}
                                     >
-                                        Annuler
+                                        {t.cancelButton}
                                     </button>
                                 </div>
                             </div>
@@ -395,7 +639,7 @@ export default function ProfilePage() {
                                     onMouseOver={(e) => e.currentTarget.style.background = "#2563EB"}
                                     onMouseOut={(e) => e.currentTarget.style.background = "#3B82F6"}
                                 >
-                                    Éditer
+                                    {t.editButton}
                                 </button>
                             </div>
                         )}
