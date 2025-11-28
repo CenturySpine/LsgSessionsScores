@@ -2,6 +2,7 @@
 import {useEffect, useRef, useState} from "react"
 import {useRouter} from "next/navigation"
 import {supabase} from "@/lib/supabaseClient"
+import {getSignedUrlForPublicUrl} from "@/lib/supabaseStorageHelper"
 
 export default function Header() {
   const [email, setEmail] = useState<string | null>(null)
@@ -44,6 +45,60 @@ export default function Header() {
     let mounted = true
     const safety = setTimeout(() => { if (mounted) setLoading(false) }, 4000)
 
+      // Fetch the player's profile picture (players.photouri) linked to the authenticated user
+      // via user_player_link. Always attempts to convert a public Storage URL to a signed URL
+      // before returning it (per project guideline). Falls back to the auth avatar if not found.
+      const fetchPlayerPhoto = async (userId: string): Promise<string | null> => {
+          try {
+              // 1) Find linked player_id for this user
+              const {data: linkRow, error: linkErr} = await supabase
+                  .from("user_player_link")
+                  .select("player_id")
+                  .eq("user_id", userId)
+                  .limit(1)
+                  .single()
+
+              if (linkErr) {
+                  // eslint-disable-next-line no-console
+                  console.warn("user_player_link query error:", linkErr)
+                  return null
+              }
+              const playerId = linkRow?.player_id
+              if (!playerId) return null
+
+              // 2) Fetch player's photouri
+              const {data: playerRow, error: playerErr} = await supabase
+                  .from("players")
+                  .select("photouri")
+                  .eq("id", playerId)
+                  .limit(1)
+                  .single()
+
+              if (playerErr) {
+                  // eslint-disable-next-line no-console
+                  console.warn("players query error:", playerErr)
+                  return null
+              }
+
+              const photouri = (playerRow?.photouri ?? null) as string | null
+              if (typeof photouri === "string" && photouri.trim().length > 0) {
+                  // Try to sign the URL if it is a Supabase Storage public/authenticated URL.
+                  // If signing fails or it's not a Storage URL, return the original value.
+                  try {
+                      const signed = await getSignedUrlForPublicUrl(photouri)
+                      return signed ?? photouri
+                  } catch {
+                      return photouri
+                  }
+              }
+              return null
+          } catch (e) {
+              // eslint-disable-next-line no-console
+              console.warn("fetchPlayerPhoto() threw:", e)
+              return null
+          }
+      }
+
     const extractProfile = (user: any) => {
       const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
       const name = typeof meta["full_name"] === "string" ? (meta["full_name"] as string)
@@ -60,9 +115,16 @@ export default function Header() {
       const user = session?.user ?? null
       setUserId(user?.id ?? null)
       setEmail(user?.email ?? null)
-      const { name, avatar } = extractProfile(user)
+            const {name, avatar: authAvatar} = extractProfile(user)
       setDisplayName(name)
-      setAvatar(avatar)
+            setAvatar(authAvatar)
+            // Try to override with player's profile photo if available
+            if (user?.id) {
+                fetchPlayerPhoto(user.id).then((uri) => {
+                    if (!mounted) return
+                    if (uri) setAvatar(uri)
+                })
+            }
       setLoading(false)
     })
 
@@ -77,9 +139,14 @@ export default function Header() {
         const user = data?.session?.user ?? null
         setUserId(user?.id ?? null)
         setEmail(user?.email ?? null)
-        const { name, avatar } = extractProfile(user)
+          const {name, avatar: authAvatar} = extractProfile(user)
         setDisplayName(name)
-        setAvatar(avatar)
+          setAvatar(authAvatar)
+          // Try to override with player's profile photo if available
+          if (user?.id) {
+              const uri = await fetchPlayerPhoto(user.id)
+              if (mounted && uri) setAvatar(uri)
+          }
       } catch (e) {
         // eslint-disable-next-line no-console
         console.warn("getSession() threw:", e)
@@ -94,6 +161,29 @@ export default function Header() {
       sub.subscription.unsubscribe()
     }
   }, [])
+
+    // Listen for profile update events to refresh the avatar in real time after profile save
+    useEffect(() => {
+        // Handler receives either a signedUrl or a raw photouri and updates the avatar
+        const onProfileUpdated = (e: Event) => {
+            const detail = (e as CustomEvent<{ signedUrl?: string | null; photouri?: string | null }>).detail || {}
+            const incoming = detail.signedUrl || detail.photouri || null
+            if (!incoming) return
+            // If it's a Supabase Storage URL, ensure we use a signed URL per project guideline
+            if (incoming.includes("/storage/v1/object/")) {
+                getSignedUrlForPublicUrl(incoming)
+                    .then((signed) => setAvatar(signed ?? incoming))
+                    .catch(() => setAvatar(incoming))
+            } else {
+                setAvatar(incoming)
+            }
+        }
+
+        window.addEventListener("playerProfileUpdated", onProfileUpdated as EventListener)
+        return () => {
+            window.removeEventListener("playerProfileUpdated", onProfileUpdated as EventListener)
+        }
+    }, [])
 
   useEffect(() => {
     if (!open) return
